@@ -94,6 +94,152 @@ func Test_String(t *testing.T) {
 	}
 }
 
+func Test_ProjectExtraction(t *testing.T) {
+	testCases := map[string]struct {
+		item             *Item
+		expectedProjects []Project
+	}{
+		"No Projects defined": {
+			item:             dummyTask(withDescription("A description without projects")),
+			expectedProjects: []Project{},
+		},
+		"A Project defined in the beginning": {
+			item:             dummyTask(withDescription("+projectFoo A description with projects")),
+			expectedProjects: []Project{"+projectFoo"},
+		},
+		"A Project defined in the end": {
+			item:             dummyTask(withDescription("A description with projects +projectFoo")),
+			expectedProjects: []Project{"+projectFoo"},
+		},
+		"A Project defined in middle": {
+			item:             dummyTask(withDescription("A description +projectFoo with projects")),
+			expectedProjects: []Project{"+projectFoo"},
+		},
+		"Multiple Projects defined": {
+			item:             dummyTask(withDescription("+projectFoo A description +projectBar with projects +projectBaz")),
+			expectedProjects: []Project{"+projectFoo", "+projectBar", "+projectBaz"},
+		},
+		"A plus sign within a word": {
+			item:             dummyTask(withDescription("A description with this+is not a project")),
+			expectedProjects: []Project{},
+		},
+		"A plus sign within a project name": {
+			item:             dummyTask(withDescription("A description with +this+is a project")),
+			expectedProjects: []Project{"+this+is"},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			assert.ElementsMatch(t, tc.expectedProjects, tc.item.Projects())
+		})
+	}
+}
+
+func Test_ContextExtraction(t *testing.T) {
+	testCases := map[string]struct {
+		item             *Item
+		expectedContexts []Context
+	}{
+		"No Contexts defined": {
+			item:             dummyTask(withDescription("A description without contexts")),
+			expectedContexts: []Context{},
+		},
+		"A Context defined in the beginning": {
+			item:             dummyTask(withDescription("@contextFoo A description with contexts")),
+			expectedContexts: []Context{"@contextFoo"},
+		},
+		"A Context defined in the end": {
+			item:             dummyTask(withDescription("A description with Contexts @contextFoo")),
+			expectedContexts: []Context{"@contextFoo"},
+		},
+		"A Context defined in middle": {
+			item:             dummyTask(withDescription("A description @contextFoo with contexts")),
+			expectedContexts: []Context{"@contextFoo"},
+		},
+		"Multiple Contexts defined": {
+			item:             dummyTask(withDescription("@contextFoo A description @contextBar with Contexts @contextBaz")),
+			expectedContexts: []Context{"@contextFoo", "@contextBar", "@contextBaz"},
+		},
+		"An at sign within a word": {
+			item:             dummyTask(withDescription("A description with this@is not a context")),
+			expectedContexts: []Context{},
+		},
+		"An at sign within a context name": {
+			item:             dummyTask(withDescription("A description with @this@is a context")),
+			expectedContexts: []Context{"@this@is"},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			assert.ElementsMatch(t, tc.expectedContexts, tc.item.Contexts())
+		})
+	}
+}
+
+func Test_TagsExtraction(t *testing.T) {
+	testCases := map[string]struct {
+		item         *Item
+		expectedTags Tags
+	}{
+		"No tags defined": {
+			item:         dummyTask(withDescription("This is a description")),
+			expectedTags: Tags{},
+		},
+		"A tag at the beginning": {
+			item:         dummyTask(withDescription("foo:bar This is a description")),
+			expectedTags: Tags{"foo": {"bar"}},
+		},
+		"A tag at the end": {
+			item:         dummyTask(withDescription("This is a description foo:bar")),
+			expectedTags: Tags{"foo": {"bar"}},
+		},
+		"A tag in the middle": {
+			item:         dummyTask(withDescription("This is a foo:bar description")),
+			expectedTags: Tags{"foo": {"bar"}},
+		},
+		"Multiple tags with different names": {
+			item:         dummyTask(withDescription("foo:bar This is a bar:baz description baz:foo")),
+			expectedTags: Tags{"foo": {"bar"}, "bar": {"baz"}, "baz": {"foo"}},
+		},
+		"Multiple tags with the same name": {
+			item:         dummyTask(withDescription("foo:foo This is a foo:bar description foo:baz")),
+			expectedTags: Tags{"foo": {"foo", "bar", "baz"}},
+		},
+		"Colon within a context": {
+			item:         dummyTask(withDescription("This is a @foo:bar description")),
+			expectedTags: Tags{},
+		},
+		"Colon within a project": {
+			item:         dummyTask(withDescription("This is a +foo:bar description")),
+			expectedTags: Tags{},
+		},
+		"The key may be empty": {
+			item:         dummyTask(withDescription(":foo This :baz is a description :bar")),
+			expectedTags: Tags{"": {"foo", "baz", "bar"}},
+		},
+		"The value may not be empty": {
+			item:         dummyTask(withDescription("baz: This is a foo: description bar:")),
+			expectedTags: Tags{},
+		},
+		"Tag value can contain colons and other special characters": {
+			item:         dummyTask(withDescription("This is a foo:baz@bar:fo+o description")),
+			expectedTags: Tags{"foo": {"baz@bar:fo+o"}},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			tags := tc.item.Tags()
+			assert.Equal(t, len(tc.expectedTags), len(tags), "Number of found tags differ from expectation")
+			for k, v := range tc.expectedTags {
+				assert.ElementsMatch(t, v, tags[k], "Values for tag %s did not match", k)
+			}
+		})
+	}
+}
+
 func Test_StringPanicsOnInvalidTask(t *testing.T) {
 	item := Item{completionDate: time.Now()}
 
@@ -135,4 +281,10 @@ func withoutCompletionDate(item *Item) {
 
 func withoutCreationDate(item *Item) {
 	item.creationDate = time.Time{}
+}
+
+func withDescription(desc string) func(i *Item) {
+	return func(i *Item) {
+		i.EditDescription(desc)
+	}
 }
