@@ -1,6 +1,8 @@
 package todotxt
 
 import (
+	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -12,6 +14,11 @@ type List struct {
 	version   time.Time
 	todoItems []Item
 }
+
+var ErrCreationDateUnset = errors.New("completion date can not be set while creation date is not")
+var ErrCompleteBeforeCreation = errors.New("completion date can not be before creation date")
+var ErrCompletionDateWhileUndone = errors.New("completion date can not be set on undone task")
+var ErrEmptyDescription = errors.New("description must not be empty")
 
 type Item struct {
 	nowFunc        func() time.Time
@@ -112,6 +119,29 @@ func (i *Item) PrioritizeAs(prio Priority) {
 
 func (i *Item) EditDescription(desc string) {
 	i.description = desc
+}
+
+func (i *Item) String() string {
+	if err := i.Validate(); err != nil {
+		return fmt.Sprintf("%#v", i)
+	}
+	return DefaultFormatter.Format(i)
+}
+
+func (i *Item) Validate() error {
+	if len(strings.TrimSpace(i.description)) == 0 {
+		return ErrEmptyDescription
+	}
+	if i.completionDate != nil && i.creationDate == nil {
+		return ErrCreationDateUnset
+	}
+	if i.completionDate != nil && i.creationDate != nil && i.completionDate.Before(*i.CreationDate()) {
+		return ErrCompleteBeforeCreation
+	}
+	if !i.done && i.completionDate != nil {
+		return ErrCompletionDateWhileUndone
+	}
+	return nil
 }
 
 func truncateToDate(t time.Time) *time.Time {

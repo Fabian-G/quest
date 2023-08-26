@@ -1,12 +1,10 @@
-package tfmt
+package todotxt
 
 import (
-	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/Fabian-G/todotxt/todotxt"
 )
 
 // Tests whether or not a description needs a leading space when formatted to avoid being ambiguous.
@@ -20,10 +18,9 @@ type Formatter struct {
 }
 
 // Format formats an item according to the todotxt spec
-func (f *Formatter) Format(i *todotxt.Item) string {
-	if i.CompletionDate() != nil && i.CreationDate() == nil {
-		// In fact this can not really happen
-		panic(errors.New("trying to serialize invalid task. CompletionDate set, but CreationDate is not"))
+func (f *Formatter) Format(i *Item) string {
+	if err := i.Validate(); err != nil {
+		panic(fmt.Errorf("can not format an invalid item: %w", err))
 	}
 	if i.Description() == "" {
 		return ""
@@ -33,7 +30,7 @@ func (f *Formatter) Format(i *todotxt.Item) string {
 		builder.WriteString("x")
 		builder.WriteString(" ")
 	}
-	if i.Priority() != todotxt.PrioNone {
+	if i.Priority() != PrioNone {
 		builder.WriteString(i.Priority().String())
 		builder.WriteString(" ")
 	}

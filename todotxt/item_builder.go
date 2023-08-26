@@ -1,35 +1,25 @@
 package todotxt
 
 import (
-	"errors"
 	"time"
 )
 
 type BuildFunc func(*Item) *Item
 
-var ErrCreationDateUnset = errors.New("completion date can not be set while creation date is not")
-var ErrCompleteBeforeCreation = errors.New("completion date can not be before creation date")
-var ErrCompletionDateWhileUndone = errors.New("completion date can not be set on undone task")
-
 func Build(modifier ...BuildFunc) (*Item, error) {
-	item := Create(time.Now())
+	item := &Item{}
 	for _, m := range modifier {
 		item = m(item)
 	}
-	return item, validate(item)
+	return item, item.Validate()
 }
 
-func validate(item *Item) error {
-	if item.completionDate != nil && item.creationDate == nil {
-		return ErrCreationDateUnset
+func MustBuild(m ...BuildFunc) *Item {
+	i, err := Build(m...)
+	if err != nil {
+		panic(err)
 	}
-	if item.completionDate != nil && item.creationDate != nil && item.completionDate.Before(*item.CreationDate()) {
-		return ErrCompleteBeforeCreation
-	}
-	if !item.done && item.completionDate != nil {
-		return ErrCompletionDateWhileUndone
-	}
-	return nil
+	return i
 }
 
 func WithDescription(desc string) BuildFunc {
