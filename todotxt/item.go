@@ -56,7 +56,7 @@ func (i *Item) Description() string {
 
 func (i *Item) Projects() []Project {
 	matches := projectRegex.FindAllString(i.description, -1)
-	toProject := fp.Map(func(s string) Project { return Project(strings.TrimSpace(s)) })
+	toProject := fp.Map(func(s string) Project { return Project(strings.TrimSpace(s)[1:]) })
 	sort := func(in []Project) []Project {
 		slices.Sort(in)
 		return in
@@ -67,7 +67,7 @@ func (i *Item) Projects() []Project {
 
 func (i *Item) Contexts() []Context {
 	matches := contextRegex.FindAllString(i.description, -1)
-	toContext := fp.Map(func(s string) Context { return Context(strings.TrimSpace(s)) })
+	toContext := fp.Map(func(s string) Context { return Context(strings.TrimSpace(s)[1:]) })
 	sort := func(in []Context) []Context {
 		slices.Sort(in)
 		return in

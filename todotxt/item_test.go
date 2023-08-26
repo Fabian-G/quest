@@ -63,19 +63,19 @@ func Test_ProjectExtraction(t *testing.T) {
 		},
 		"A Project defined in the beginning": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("+projectFoo A description with projects")),
-			expectedProjects: []todotxt.Project{"+projectFoo"},
+			expectedProjects: []todotxt.Project{"projectFoo"},
 		},
 		"A Project defined in the end": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("A description with projects +projectFoo")),
-			expectedProjects: []todotxt.Project{"+projectFoo"},
+			expectedProjects: []todotxt.Project{"projectFoo"},
 		},
 		"A Project defined in middle": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("A description +projectFoo with projects")),
-			expectedProjects: []todotxt.Project{"+projectFoo"},
+			expectedProjects: []todotxt.Project{"projectFoo"},
 		},
 		"Multiple Projects defined": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("+projectFoo A description +projectBar with projects +projectBaz")),
-			expectedProjects: []todotxt.Project{"+projectFoo", "+projectBar", "+projectBaz"},
+			expectedProjects: []todotxt.Project{"projectFoo", "projectBar", "projectBaz"},
 		},
 		"A plus sign within a word": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("A description with this+is not a project")),
@@ -83,11 +83,11 @@ func Test_ProjectExtraction(t *testing.T) {
 		},
 		"A plus sign within a project name": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("A description with +this+is a project")),
-			expectedProjects: []todotxt.Project{"+this+is"},
+			expectedProjects: []todotxt.Project{"this+is"},
 		},
 		"Duplicate Projects only occur once": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("A description +foo with duplicate +foo projects")),
-			expectedProjects: []todotxt.Project{"+foo"},
+			expectedProjects: []todotxt.Project{"foo"},
 		},
 	}
 
@@ -109,19 +109,19 @@ func Test_ContextExtraction(t *testing.T) {
 		},
 		"A Context defined in the beginning": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("@contextFoo A description with contexts")),
-			expectedContexts: []todotxt.Context{"@contextFoo"},
+			expectedContexts: []todotxt.Context{"contextFoo"},
 		},
 		"A Context defined in the end": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("A description with Contexts @contextFoo")),
-			expectedContexts: []todotxt.Context{"@contextFoo"},
+			expectedContexts: []todotxt.Context{"contextFoo"},
 		},
 		"A Context defined in middle": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("A description @contextFoo with contexts")),
-			expectedContexts: []todotxt.Context{"@contextFoo"},
+			expectedContexts: []todotxt.Context{"contextFoo"},
 		},
 		"Multiple Contexts defined": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("@contextFoo A description @contextBar with Contexts @contextBaz")),
-			expectedContexts: []todotxt.Context{"@contextFoo", "@contextBar", "@contextBaz"},
+			expectedContexts: []todotxt.Context{"contextFoo", "contextBar", "contextBaz"},
 		},
 		"An at sign within a word": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("A description with this@is not a context")),
@@ -129,11 +129,11 @@ func Test_ContextExtraction(t *testing.T) {
 		},
 		"An at sign within a context name": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("A description with @this@is a context")),
-			expectedContexts: []todotxt.Context{"@this@is"},
+			expectedContexts: []todotxt.Context{"this@is"},
 		},
 		"Duplicate Contexts only occur once": {
 			item:             todotxt.DummyItem(todotxt.WithDescription("A description with @foo duplicate @foo contexts")),
-			expectedContexts: []todotxt.Context{"@foo"},
+			expectedContexts: []todotxt.Context{"foo"},
 		},
 	}
 
