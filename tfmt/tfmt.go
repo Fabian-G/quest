@@ -1,10 +1,12 @@
-package todotxt
+package tfmt
 
 import (
 	"errors"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/Fabian-G/todotxt/todotxt"
 )
 
 // Tests whether or not a description needs a leading space when formatted to avoid being ambiguous.
@@ -18,12 +20,12 @@ type Formatter struct {
 }
 
 // Format formats an item according to the todotxt spec
-func (f *Formatter) Format(i *Item) string {
-	if i.completionDate != zeroTime && i.creationDate == zeroTime {
+func (f *Formatter) Format(i *todotxt.Item) string {
+	if i.CompletionDate() != nil && i.CreationDate() == nil {
 		// In fact this can not really happen
 		panic(errors.New("trying to serialize invalid task. CompletionDate set, but CreationDate is not"))
 	}
-	if i.description == "" {
+	if i.Description() == "" {
 		return ""
 	}
 	builder := strings.Builder{}
@@ -31,21 +33,21 @@ func (f *Formatter) Format(i *Item) string {
 		builder.WriteString("x")
 		builder.WriteString(" ")
 	}
-	if i.Priority() != PrioNone {
-		builder.WriteString(i.prio.String())
+	if i.Priority() != todotxt.PrioNone {
+		builder.WriteString(i.Priority().String())
 		builder.WriteString(" ")
 	}
-	if i.completionDate != zeroTime {
-		builder.WriteString(i.completionDate.Format(time.DateOnly))
+	if i.CompletionDate() != nil {
+		builder.WriteString(i.CompletionDate().Format(time.DateOnly))
 		builder.WriteString(" ")
 	}
-	if i.creationDate != zeroTime {
-		builder.WriteString(i.creationDate.Format(time.DateOnly))
+	if i.CreationDate() != nil {
+		builder.WriteString(i.CreationDate().Format(time.DateOnly))
 		builder.WriteString(" ")
 	}
-	if builder.Len() == 0 && leadingSpaceNeeded.MatchString(i.description) {
+	if builder.Len() == 0 && leadingSpaceNeeded.MatchString(i.Description()) {
 		builder.WriteString(" ")
 	}
-	builder.WriteString(i.description)
+	builder.WriteString(i.Description())
 	return builder.String()
 }

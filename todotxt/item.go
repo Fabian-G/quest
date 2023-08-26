@@ -8,9 +8,6 @@ import (
 	"github.com/repeale/fp-go"
 )
 
-// Used to determine whether or not the completionDate/creationDate was initialized
-var zeroTime = time.Time{}
-
 type List struct {
 	version   time.Time
 	todoItems []Item
@@ -20,8 +17,8 @@ type Item struct {
 	nowFunc        func() time.Time
 	done           bool
 	prio           Priority
-	completionDate time.Time
-	creationDate   time.Time
+	completionDate *time.Time
+	creationDate   *time.Time
 	description    string
 }
 
@@ -42,11 +39,11 @@ func (i *Item) Priority() Priority {
 	return i.prio
 }
 
-func (i *Item) CompletionDate() time.Time {
+func (i *Item) CompletionDate() *time.Time {
 	return i.completionDate
 }
 
-func (i *Item) CreationDate() time.Time {
+func (i *Item) CreationDate() *time.Time {
 	return i.creationDate
 }
 
@@ -99,14 +96,14 @@ func (i *Item) Tags() Tags {
 func (i *Item) Complete() {
 	i.done = true
 	i.completionDate = truncateToDate(i.now())
-	if i.creationDate == zeroTime || i.creationDate.After(i.completionDate) {
+	if i.creationDate == nil || i.creationDate.After(*i.completionDate) {
 		i.creationDate = i.completionDate
 	}
 }
 
 func (i *Item) MarkUndone() {
 	i.done = false
-	i.completionDate = time.Time{}
+	i.completionDate = nil
 }
 
 func (i *Item) PrioritizeAs(prio Priority) {
@@ -117,12 +114,9 @@ func (i *Item) EditDescription(desc string) {
 	i.description = desc
 }
 
-func truncateToDate(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
-}
-
-func (i *Item) String() string {
-	return DefaultFormatter.Format(i)
+func truncateToDate(t time.Time) *time.Time {
+	truncatedDate := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+	return &truncatedDate
 }
 
 func (i *Item) now() time.Time {
