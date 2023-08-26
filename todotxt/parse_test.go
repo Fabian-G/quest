@@ -52,13 +52,12 @@ func TestParse(t *testing.T) {
 			),
 		},
 		"A full task item": {
-			line: "x (F) 2022-02-02 2020-03-04 A +full @item",
+			line: "x 2022-02-02 2020-03-04 A +full @item",
 			expectedItem: todotxt.MustBuild(
 				todotxt.WithDone(true),
 				todotxt.WithCompletionDate(datePtr(2022, 2, 2)),
 				todotxt.WithCreationDate(datePtr(2020, 3, 4)),
 				todotxt.WithDescription("A +full @item"),
-				todotxt.WithPriority(todotxt.PrioF),
 			),
 		},
 		"A task with an invalid date produces a parser error": {
@@ -74,13 +73,12 @@ func TestParse(t *testing.T) {
 			expectedItem: todotxt.MustBuild(todotxt.WithDescription("xTask")),
 		},
 		"Too much whitespace is ignored": {
-			line: "x     (F)    2022-02-02     2020-03-04     A +full @item     ",
+			line: "x         2022-02-02     2020-03-04     A +full @item     ",
 			expectedItem: todotxt.MustBuild(
 				todotxt.WithDone(true),
 				todotxt.WithCompletionDate(datePtr(2022, 2, 2)),
 				todotxt.WithCreationDate(datePtr(2020, 3, 4)),
 				todotxt.WithDescription("A +full @item"),
-				todotxt.WithPriority(todotxt.PrioF),
 			),
 		},
 		"A task starting with whitespace is treated as description": {
@@ -123,7 +121,7 @@ func Test_WellFormattedItemsShouldNotChangeAfterParsingPlusSerializing(t *testin
 			line: "x 2022-02-02 A done item",
 		},
 		"A full task item": {
-			line: "x (F) 2022-02-02 2020-03-04 A +full @item",
+			line: "x 2022-02-02 2020-03-04 A +full @item",
 		},
 		"A task starting with whitespace is treated as description": {
 			line: " x (F) 2022-02-02 2020-03-04 A +full @item",

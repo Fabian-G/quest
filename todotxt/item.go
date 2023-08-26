@@ -19,6 +19,7 @@ var ErrCreationDateUnset = errors.New("completion date can not be set while crea
 var ErrCompleteBeforeCreation = errors.New("completion date can not be before creation date")
 var ErrCompletionDateWhileUndone = errors.New("completion date can not be set on undone task")
 var ErrEmptyDescription = errors.New("description must not be empty")
+var ErrNoPrioWhenDone = errors.New("done tasks must not have a priority")
 
 type Item struct {
 	nowFunc        func() time.Time
@@ -102,6 +103,7 @@ func (i *Item) Tags() Tags {
 
 func (i *Item) Complete() {
 	i.done = true
+	i.prio = PrioNone
 	i.completionDate = truncateToDate(i.now())
 	if i.creationDate == nil || i.creationDate.After(*i.completionDate) {
 		i.creationDate = i.completionDate
@@ -140,6 +142,9 @@ func (i *Item) Validate() error {
 	}
 	if !i.done && i.completionDate != nil {
 		return ErrCompletionDateWhileUndone
+	}
+	if i.done && i.prio != PrioNone {
+		return ErrNoPrioWhenDone
 	}
 	return nil
 }

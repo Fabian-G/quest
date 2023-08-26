@@ -11,7 +11,7 @@ import (
 func Test_DefaultFormat(t *testing.T) {
 	creationDate := time.Date(2020, 4, 5, 6, 7, 8, 9, time.UTC)
 	completionDate := time.Date(2023, 4, 5, 7, 8, 9, 10, time.UTC)
-	dummy := todotxt.MustBuild(todotxt.WithMeta(true, todotxt.PrioF, completionDate, creationDate), todotxt.WithDescription("This is a dummy task"))
+	dummy := todotxt.MustBuild(todotxt.WithMeta(true, todotxt.PrioNone, completionDate, creationDate), todotxt.WithDescription("This is a dummy task"))
 	testCases := map[string]struct {
 		item           *todotxt.Item
 		expectedFormat string
@@ -22,19 +22,19 @@ func Test_DefaultFormat(t *testing.T) {
 		},
 		"A full dummy task": {
 			item:           todotxt.MustBuild(todotxt.CopyOf(dummy)),
-			expectedFormat: "x (F) 2023-04-05 2020-04-05 This is a dummy task",
+			expectedFormat: "x 2023-04-05 2020-04-05 This is a dummy task",
 		},
 		"An uncompleted task": {
-			item:           todotxt.MustBuild(todotxt.CopyOf(dummy), todotxt.WithCompletionDate(nil), todotxt.WithDone(false)),
+			item:           todotxt.MustBuild(todotxt.CopyOf(dummy), todotxt.WithDone(false), todotxt.WithCompletionDate(nil), todotxt.WithPriority(todotxt.PrioF)),
 			expectedFormat: "(F) 2020-04-05 This is a dummy task",
 		},
 		"A task without priority": {
-			item:           todotxt.MustBuild(todotxt.CopyOf(dummy), todotxt.WithPriority(todotxt.PrioNone)),
+			item:           todotxt.MustBuild(todotxt.CopyOf(dummy), todotxt.WithDone(true)),
 			expectedFormat: "x 2023-04-05 2020-04-05 This is a dummy task",
 		},
 		"A task without any dates": {
 			item:           todotxt.MustBuild(todotxt.CopyOf(dummy), todotxt.WithCompletionDate(nil), todotxt.WithCreationDate(nil)),
-			expectedFormat: "x (F) This is a dummy task",
+			expectedFormat: "x This is a dummy task",
 		},
 		"Description with x in the beginning should start with space": {
 			item:           todotxt.MustBuild(todotxt.WithDescription("x test")),
