@@ -1,4 +1,4 @@
-package item_factory
+package test
 
 import (
 	"time"
@@ -49,7 +49,7 @@ func WithoutCreationDate(item *todotxt.Item) *todotxt.Item {
 	return MustBuild(todotxt.CopyOf(item), todotxt.WithCreationDate(nil))
 }
 
-func MustBuild(m ...func(*todotxt.Item) *todotxt.Item) *todotxt.Item {
+func MustBuild(m ...todotxt.BuildFunc) *todotxt.Item {
 	i, err := todotxt.Build(m...)
 	if err != nil {
 		panic(err)

@@ -5,11 +5,13 @@ import (
 	"time"
 )
 
+type BuildFunc func(*Item) *Item
+
 var ErrCreationDateUnset = errors.New("completion date can not be set while creation date is not")
 var ErrCompleteBeforeCreation = errors.New("completion date can not be before creation date")
 var ErrCompletionDateWhileUndone = errors.New("completion date can not be set on undone task")
 
-func Build(modifier ...func(*Item) *Item) (*Item, error) {
+func Build(modifier ...BuildFunc) (*Item, error) {
 	item := Create(time.Now())
 	for _, m := range modifier {
 		item = m(item)
@@ -30,14 +32,14 @@ func validate(item *Item) error {
 	return nil
 }
 
-func WithDescription(desc string) func(*Item) *Item {
+func WithDescription(desc string) BuildFunc {
 	return func(i *Item) *Item {
 		i.description = desc
 		return i
 	}
 }
 
-func WithMeta(done bool, prio Priority, completionDate time.Time, creationDate time.Time) func(*Item) *Item {
+func WithMeta(done bool, prio Priority, completionDate time.Time, creationDate time.Time) BuildFunc {
 	return func(i *Item) *Item {
 		i.done = done
 		i.completionDate = truncateToDate(completionDate)
@@ -47,14 +49,14 @@ func WithMeta(done bool, prio Priority, completionDate time.Time, creationDate t
 	}
 }
 
-func WithDone(done bool) func(*Item) *Item {
+func WithDone(done bool) BuildFunc {
 	return func(i *Item) *Item {
 		i.done = done
 		return i
 	}
 }
 
-func WithCreationDate(date *time.Time) func(*Item) *Item {
+func WithCreationDate(date *time.Time) BuildFunc {
 	return func(i *Item) *Item {
 		if date == nil {
 			i.creationDate = nil
@@ -65,7 +67,7 @@ func WithCreationDate(date *time.Time) func(*Item) *Item {
 	}
 }
 
-func WithCompletionDate(date *time.Time) func(*Item) *Item {
+func WithCompletionDate(date *time.Time) BuildFunc {
 	return func(i *Item) *Item {
 		if date == nil {
 			i.completionDate = nil
@@ -76,21 +78,21 @@ func WithCompletionDate(date *time.Time) func(*Item) *Item {
 	}
 }
 
-func WithPriority(prio Priority) func(*Item) *Item {
+func WithPriority(prio Priority) BuildFunc {
 	return func(i *Item) *Item {
 		i.prio = prio
 		return i
 	}
 }
 
-func WithNowFunc(now func() time.Time) func(i *Item) *Item {
+func WithNowFunc(now func() time.Time) BuildFunc {
 	return func(i *Item) *Item {
 		i.nowFunc = now
 		return i
 	}
 }
 
-func CopyOf(item *Item) func(*Item) *Item {
+func CopyOf(item *Item) BuildFunc {
 	return func(i *Item) *Item {
 		copy := *item
 		return &copy

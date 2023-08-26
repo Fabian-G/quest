@@ -23,3 +23,21 @@ func TestPriority_ToString(t *testing.T) {
 		})
 	}
 }
+
+func TestPriority_FromString(t *testing.T) {
+	tests := []struct {
+		name string
+		want todotxt.Priority
+		p    string
+	}{
+		{"A", todotxt.PrioA, "(A)"},
+		{"Z", todotxt.PrioZ, "(Z)"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			prio, err := todotxt.PriorityFromString(tt.p)
+			assert.Nil(t, err)
+			assert.Equal(t, tt.want, prio)
+		})
+	}
+}
