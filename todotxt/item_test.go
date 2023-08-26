@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/Fabian-G/todotxt/todotxt"
+	"github.com/Fabian-G/todotxt/todotxt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,7 +43,7 @@ func Test_Complete(t *testing.T) {
 	now := nowFuncForDay("2023-08-22")
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			item := Apply(Create(tc.cDate), WithNowFunc(now))
+			item := todotxt.Apply(todotxt.Create(tc.cDate), todotxt.WithNowFunc(now))
 			item.Complete()
 			assert.True(t, item.Done())
 			assert.Equal(t, tc.expectedCompletionDate, item.CompletionDate())
@@ -52,108 +52,42 @@ func Test_Complete(t *testing.T) {
 	}
 }
 
-func Test_String(t *testing.T) {
-	testCases := map[string]struct {
-		item           *Item
-		expectedFormat string
-	}{
-		"Empty task": {
-			item:           &Item{},
-			expectedFormat: "",
-		},
-		"Empty description": {
-			item:           DummyItem(WithEmptyDescription),
-			expectedFormat: "",
-		},
-		"A task with nothing but a description": {
-			item:           EmptyItem(WithDescription("this is a test")),
-			expectedFormat: "this is a test",
-		},
-		"A full dummy task": {
-			item:           DummyItem(),
-			expectedFormat: "x (F) 2023-04-05 2020-04-05 This is a dummy task",
-		},
-		"An uncompleted task": {
-			item:           DummyItem(Uncompleted),
-			expectedFormat: "(F) 2020-04-05 This is a dummy task",
-		},
-		"A task without priority": {
-			item:           DummyItem(WithoutPriority),
-			expectedFormat: "x 2023-04-05 2020-04-05 This is a dummy task",
-		},
-		"A task without any dates": {
-			item:           DummyItem(WithoutCreationDate, WithoutCompletionDate),
-			expectedFormat: "x (F) This is a dummy task",
-		},
-		"Description with x in the beginning should start with space": {
-			item:           EmptyItem(WithDescription("x test")),
-			expectedFormat: " x test",
-		},
-		"Description with date in the beginning should start with space": {
-			item:           EmptyItem(WithDescription("2012-03-04 test")),
-			expectedFormat: " 2012-03-04 test",
-		},
-		"Description with Prio in the beginning should start with space": {
-			item:           EmptyItem(WithDescription("(A) test")),
-			expectedFormat: " (A) test",
-		},
-		"Description with x in the beginning, but without space should not start with space": {
-			item:           EmptyItem(WithDescription("xTest")),
-			expectedFormat: "xTest",
-		},
-		"Description with date in the beginning, but without space should not start with space": {
-			item:           EmptyItem(WithDescription("2012-03-04Test")),
-			expectedFormat: "2012-03-04Test",
-		},
-		"Description with Prio in the beginning, but without space should not start with space": {
-			item:           EmptyItem(WithDescription("(A)test")),
-			expectedFormat: "(A)test",
-		},
-	}
-
-	for name, tc := range testCases {
-		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedFormat, tc.item.String())
-		})
-	}
-}
-
 func Test_ProjectExtraction(t *testing.T) {
 	testCases := map[string]struct {
-		item             *Item
-		expectedProjects []Project
+		item             *todotxt.Item
+		expectedProjects []todotxt.Project
 	}{
 		"No Projects defined": {
-			item:             DummyItem(WithDescription("A description without projects")),
-			expectedProjects: []Project{},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description without projects")),
+			expectedProjects: []todotxt.Project{},
 		},
 		"A Project defined in the beginning": {
-			item:             DummyItem(WithDescription("+projectFoo A description with projects")),
-			expectedProjects: []Project{"+projectFoo"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("+projectFoo A description with projects")),
+			expectedProjects: []todotxt.Project{"+projectFoo"},
 		},
 		"A Project defined in the end": {
-			item:             DummyItem(WithDescription("A description with projects +projectFoo")),
-			expectedProjects: []Project{"+projectFoo"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description with projects +projectFoo")),
+			expectedProjects: []todotxt.Project{"+projectFoo"},
 		},
 		"A Project defined in middle": {
-			item:             DummyItem(WithDescription("A description +projectFoo with projects")),
-			expectedProjects: []Project{"+projectFoo"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description +projectFoo with projects")),
+			expectedProjects: []todotxt.Project{"+projectFoo"},
 		},
 		"Multiple Projects defined": {
-			item:             DummyItem(WithDescription("+projectFoo A description +projectBar with projects +projectBaz")),
-			expectedProjects: []Project{"+projectFoo", "+projectBar", "+projectBaz"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("+projectFoo A description +projectBar with projects +projectBaz")),
+			expectedProjects: []todotxt.Project{"+projectFoo", "+projectBar", "+projectBaz"},
 		},
 		"A plus sign within a word": {
-			item:             DummyItem(WithDescription("A description with this+is not a project")),
-			expectedProjects: []Project{},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description with this+is not a project")),
+			expectedProjects: []todotxt.Project{},
 		},
 		"A plus sign within a project name": {
-			item:             DummyItem(WithDescription("A description with +this+is a project")),
-			expectedProjects: []Project{"+this+is"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description with +this+is a project")),
+			expectedProjects: []todotxt.Project{"+this+is"},
 		},
 		"Duplicate Projects only occur once": {
-			item:             DummyItem(WithDescription("A description +foo with duplicate +foo projects")),
-			expectedProjects: []Project{"+foo"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description +foo with duplicate +foo projects")),
+			expectedProjects: []todotxt.Project{"+foo"},
 		},
 	}
 
@@ -166,40 +100,40 @@ func Test_ProjectExtraction(t *testing.T) {
 
 func Test_ContextExtraction(t *testing.T) {
 	testCases := map[string]struct {
-		item             *Item
-		expectedContexts []Context
+		item             *todotxt.Item
+		expectedContexts []todotxt.Context
 	}{
 		"No Contexts defined": {
-			item:             DummyItem(WithDescription("A description without contexts")),
-			expectedContexts: []Context{},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description without contexts")),
+			expectedContexts: []todotxt.Context{},
 		},
 		"A Context defined in the beginning": {
-			item:             DummyItem(WithDescription("@contextFoo A description with contexts")),
-			expectedContexts: []Context{"@contextFoo"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("@contextFoo A description with contexts")),
+			expectedContexts: []todotxt.Context{"@contextFoo"},
 		},
 		"A Context defined in the end": {
-			item:             DummyItem(WithDescription("A description with Contexts @contextFoo")),
-			expectedContexts: []Context{"@contextFoo"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description with Contexts @contextFoo")),
+			expectedContexts: []todotxt.Context{"@contextFoo"},
 		},
 		"A Context defined in middle": {
-			item:             DummyItem(WithDescription("A description @contextFoo with contexts")),
-			expectedContexts: []Context{"@contextFoo"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description @contextFoo with contexts")),
+			expectedContexts: []todotxt.Context{"@contextFoo"},
 		},
 		"Multiple Contexts defined": {
-			item:             DummyItem(WithDescription("@contextFoo A description @contextBar with Contexts @contextBaz")),
-			expectedContexts: []Context{"@contextFoo", "@contextBar", "@contextBaz"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("@contextFoo A description @contextBar with Contexts @contextBaz")),
+			expectedContexts: []todotxt.Context{"@contextFoo", "@contextBar", "@contextBaz"},
 		},
 		"An at sign within a word": {
-			item:             DummyItem(WithDescription("A description with this@is not a context")),
-			expectedContexts: []Context{},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description with this@is not a context")),
+			expectedContexts: []todotxt.Context{},
 		},
 		"An at sign within a context name": {
-			item:             DummyItem(WithDescription("A description with @this@is a context")),
-			expectedContexts: []Context{"@this@is"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description with @this@is a context")),
+			expectedContexts: []todotxt.Context{"@this@is"},
 		},
 		"Duplicate Contexts only occur once": {
-			item:             DummyItem(WithDescription("A description with @foo duplicate @foo contexts")),
-			expectedContexts: []Context{"@foo"},
+			item:             todotxt.DummyItem(todotxt.WithDescription("A description with @foo duplicate @foo contexts")),
+			expectedContexts: []todotxt.Context{"@foo"},
 		},
 	}
 
@@ -212,52 +146,52 @@ func Test_ContextExtraction(t *testing.T) {
 
 func Test_TagsExtraction(t *testing.T) {
 	testCases := map[string]struct {
-		item         *Item
-		expectedTags Tags
+		item         *todotxt.Item
+		expectedTags todotxt.Tags
 	}{
 		"No tags defined": {
-			item:         DummyItem(WithDescription("This is a description")),
-			expectedTags: Tags{},
+			item:         todotxt.DummyItem(todotxt.WithDescription("This is a description")),
+			expectedTags: todotxt.Tags{},
 		},
 		"A tag at the beginning": {
-			item:         DummyItem(WithDescription("foo:bar This is a description")),
-			expectedTags: Tags{"foo": {"bar"}},
+			item:         todotxt.DummyItem(todotxt.WithDescription("foo:bar This is a description")),
+			expectedTags: todotxt.Tags{"foo": {"bar"}},
 		},
 		"A tag at the end": {
-			item:         DummyItem(WithDescription("This is a description foo:bar")),
-			expectedTags: Tags{"foo": {"bar"}},
+			item:         todotxt.DummyItem(todotxt.WithDescription("This is a description foo:bar")),
+			expectedTags: todotxt.Tags{"foo": {"bar"}},
 		},
 		"A tag in the middle": {
-			item:         DummyItem(WithDescription("This is a foo:bar description")),
-			expectedTags: Tags{"foo": {"bar"}},
+			item:         todotxt.DummyItem(todotxt.WithDescription("This is a foo:bar description")),
+			expectedTags: todotxt.Tags{"foo": {"bar"}},
 		},
 		"Multiple tags with different names": {
-			item:         DummyItem(WithDescription("foo:bar This is a bar:baz description baz:foo")),
-			expectedTags: Tags{"foo": {"bar"}, "bar": {"baz"}, "baz": {"foo"}},
+			item:         todotxt.DummyItem(todotxt.WithDescription("foo:bar This is a bar:baz description baz:foo")),
+			expectedTags: todotxt.Tags{"foo": {"bar"}, "bar": {"baz"}, "baz": {"foo"}},
 		},
 		"Multiple tags with the same name": {
-			item:         DummyItem(WithDescription("foo:foo This is a foo:bar description foo:baz")),
-			expectedTags: Tags{"foo": {"foo", "bar", "baz"}},
+			item:         todotxt.DummyItem(todotxt.WithDescription("foo:foo This is a foo:bar description foo:baz")),
+			expectedTags: todotxt.Tags{"foo": {"foo", "bar", "baz"}},
 		},
 		"Colon within a context": {
-			item:         DummyItem(WithDescription("This is a @foo:bar description")),
-			expectedTags: Tags{},
+			item:         todotxt.DummyItem(todotxt.WithDescription("This is a @foo:bar description")),
+			expectedTags: todotxt.Tags{},
 		},
 		"Colon within a project": {
-			item:         DummyItem(WithDescription("This is a +foo:bar description")),
-			expectedTags: Tags{},
+			item:         todotxt.DummyItem(todotxt.WithDescription("This is a +foo:bar description")),
+			expectedTags: todotxt.Tags{},
 		},
 		"The key may be empty": {
-			item:         DummyItem(WithDescription(":foo This :baz is a description :bar")),
-			expectedTags: Tags{"": {"foo", "baz", "bar"}},
+			item:         todotxt.DummyItem(todotxt.WithDescription(":foo This :baz is a description :bar")),
+			expectedTags: todotxt.Tags{"": {"foo", "baz", "bar"}},
 		},
 		"The value may not be empty": {
-			item:         DummyItem(WithDescription("baz: This is a foo: description bar:")),
-			expectedTags: Tags{},
+			item:         todotxt.DummyItem(todotxt.WithDescription("baz: This is a foo: description bar:")),
+			expectedTags: todotxt.Tags{},
 		},
 		"Tag value can contain colons and other special characters": {
-			item:         DummyItem(WithDescription("This is a foo:baz@bar:fo+o description")),
-			expectedTags: Tags{"foo": {"baz@bar:fo+o"}},
+			item:         todotxt.DummyItem(todotxt.WithDescription("This is a foo:baz@bar:fo+o description")),
+			expectedTags: todotxt.Tags{"foo": {"baz@bar:fo+o"}},
 		},
 	}
 
@@ -273,9 +207,9 @@ func Test_TagsExtraction(t *testing.T) {
 }
 
 func Test_StringPanicsOnInvalidTask(t *testing.T) {
-	item := &Item{}
+	item := &todotxt.Item{}
 	item.Complete()
-	item = Apply(item, WithoutCreationDate)
+	item = todotxt.Apply(item, todotxt.WithoutCreationDate)
 
 	assert.Panics(t, func() {
 		_ = item.String()
