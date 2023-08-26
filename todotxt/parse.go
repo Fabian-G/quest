@@ -10,7 +10,7 @@ import (
 
 const dateLength = 10
 
-var doneRegex = regexp.MustCompile("^x( |$)")
+var doneRegex = regexp.MustCompile("^x([[:space:]]|$)")
 var prioRegex = regexp.MustCompile("^\\([A-Z]\\)([[:space:]]|$)")
 var dateRegex = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}([[:space:]]|$)")
 var twoDatesRegex = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+[0-9]{4}-[0-9]{2}-[0-9]{2}([[:space:]]|$)")
@@ -24,23 +24,23 @@ func (p ParseError) Error() string {
 	return fmt.Sprintf("ParseError at %s: %v", p.subStr, p.baseErr)
 }
 
-type stateFunc func(lexer *lexer) (stateFunc, error)
+type stateFunc func(lexer *parser) (stateFunc, error)
 
-type lexer struct {
+type parser struct {
 	remainingLine string
 	builderParts  []BuildFunc
 }
 
-func (lex *lexer) Advance(bytes int) {
-	lex.remainingLine = lex.remainingLine[bytes:]
+func (p *parser) Advance(bytes int) {
+	p.remainingLine = p.remainingLine[bytes:]
 }
 
-func (lex *lexer) SkipWhiteSpace() {
-	lex.remainingLine = strings.TrimSpace(lex.remainingLine)
+func (p *parser) SkipWhiteSpace() {
+	p.remainingLine = strings.TrimSpace(p.remainingLine)
 }
 
 func ParseItem(todoItem string) (*Item, error) {
-	lexer := lexer{
+	parser := parser{
 		remainingLine: todoItem,
 		builderParts:  make([]BuildFunc, 0),
 	}
@@ -48,79 +48,79 @@ func ParseItem(todoItem string) (*Item, error) {
 	state := doneMarker
 	var err error
 	for state != nil {
-		state, err = state(&lexer)
+		state, err = state(&parser)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	item, err := Build(lexer.builderParts...)
+	item, err := Build(parser.builderParts...)
 	if err != nil {
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
 	return item, nil
 }
 
-func doneMarker(lex *lexer) (stateFunc, error) {
-	if doneRegex.MatchString(lex.remainingLine) {
-		lex.builderParts = append(lex.builderParts, WithDone(true))
-		lex.Advance(1)
-		lex.SkipWhiteSpace()
-	} else if startsWithSpace(lex.remainingLine) {
-		lex.SkipWhiteSpace()
+func doneMarker(p *parser) (stateFunc, error) {
+	if doneRegex.MatchString(p.remainingLine) {
+		p.builderParts = append(p.builderParts, WithDone(true))
+		p.Advance(1)
+		p.SkipWhiteSpace()
+	} else if startsWithSpace(p.remainingLine) {
+		p.SkipWhiteSpace()
 		return description, nil
 	}
 	return prio, nil
 }
 
-func prio(lex *lexer) (stateFunc, error) {
-	if prioRegex.MatchString(lex.remainingLine) {
-		prio, err := PriorityFromString(lex.remainingLine[:3])
+func prio(p *parser) (stateFunc, error) {
+	if prioRegex.MatchString(p.remainingLine) {
+		prio, err := PriorityFromString(p.remainingLine[:3])
 		if err != nil {
-			return nil, ParseError{lex.remainingLine[:3], err}
+			return nil, ParseError{p.remainingLine[:3], err}
 		}
-		lex.builderParts = append(lex.builderParts, WithPriority(prio))
-		lex.Advance(3)
-		lex.SkipWhiteSpace()
+		p.builderParts = append(p.builderParts, WithPriority(prio))
+		p.Advance(3)
+		p.SkipWhiteSpace()
 	}
 	return dates, nil
 }
 
-func dates(lex *lexer) (stateFunc, error) {
-	if twoDatesRegex.MatchString(lex.remainingLine) {
+func dates(p *parser) (stateFunc, error) {
+	if twoDatesRegex.MatchString(p.remainingLine) {
 		return completionDate, nil
-	} else if dateRegex.MatchString(lex.remainingLine) {
+	} else if dateRegex.MatchString(p.remainingLine) {
 		return creationDate, nil
 	}
 	return description, nil
 }
 
-func completionDate(lex *lexer) (stateFunc, error) {
-	dateString := lex.remainingLine[:dateLength]
+func completionDate(p *parser) (stateFunc, error) {
+	dateString := p.remainingLine[:dateLength]
 	completionDate, err := time.Parse(time.DateOnly, dateString)
 	if err != nil {
 		return nil, ParseError{dateString, err}
 	}
-	lex.builderParts = append(lex.builderParts, WithCompletionDate(&completionDate))
-	lex.Advance(len(dateString))
-	lex.SkipWhiteSpace()
+	p.builderParts = append(p.builderParts, WithCompletionDate(&completionDate))
+	p.Advance(len(dateString))
+	p.SkipWhiteSpace()
 	return creationDate, nil
 }
 
-func creationDate(lex *lexer) (stateFunc, error) {
-	dateString := lex.remainingLine[:dateLength]
+func creationDate(p *parser) (stateFunc, error) {
+	dateString := p.remainingLine[:dateLength]
 	creationDate, err := time.Parse(time.DateOnly, dateString)
 	if err != nil {
 		return nil, ParseError{dateString, err}
 	}
-	lex.builderParts = append(lex.builderParts, WithCreationDate(&creationDate))
-	lex.Advance(len(dateString))
-	lex.SkipWhiteSpace()
+	p.builderParts = append(p.builderParts, WithCreationDate(&creationDate))
+	p.Advance(len(dateString))
+	p.SkipWhiteSpace()
 	return description, nil
 }
 
-func description(lex *lexer) (stateFunc, error) {
-	lex.builderParts = append(lex.builderParts, WithDescription(lex.remainingLine))
+func description(p *parser) (stateFunc, error) {
+	p.builderParts = append(p.builderParts, WithDescription(p.remainingLine))
 	return nil, nil
 }
 

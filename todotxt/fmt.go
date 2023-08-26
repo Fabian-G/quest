@@ -19,7 +19,7 @@ type Formatter struct {
 
 // Format formats an item according to the todotxt spec
 func (f *Formatter) Format(i *Item) string {
-	if err := i.Validate(); err != nil {
+	if err := i.valid(); err != nil {
 		panic(fmt.Errorf("can not format an invalid item: %w", err))
 	}
 	if i.Description() == "" {

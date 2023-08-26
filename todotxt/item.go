@@ -116,21 +116,28 @@ func (i *Item) MarkUndone() {
 }
 
 func (i *Item) PrioritizeAs(prio Priority) {
+	i.done = false
 	i.prio = prio
 }
 
-func (i *Item) EditDescription(desc string) {
+func (i *Item) EditDescription(desc string) error {
+	if len(strings.TrimSpace(desc)) == 0 {
+		return ErrEmptyDescription
+	}
 	i.description = desc
+	return nil
 }
 
 func (i *Item) String() string {
-	if err := i.Validate(); err != nil {
+	if err := i.valid(); err != nil {
 		return fmt.Sprintf("%#v", i)
 	}
 	return DefaultFormatter.Format(i)
 }
 
-func (i *Item) Validate() error {
+// This method is unexported, because the API is designed in a way that should make
+// it impossible for the user t create invalid tasks
+func (i *Item) valid() error {
 	if len(strings.TrimSpace(i.description)) == 0 {
 		return ErrEmptyDescription
 	}
