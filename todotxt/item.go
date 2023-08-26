@@ -3,23 +3,20 @@ package todotxt
 import (
 	"errors"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/repeale/fp-go"
 )
 
-// Used to determine whether or not the completionDate/creationDate way initialized
+// Used to determine whether or not the completionDate/creationDate was initialized
 var zeroTime = time.Time{}
-var projectRegex = regexp.MustCompile("(^| )\\+[^[:space:]]+( |$)")
-var contextRegex = regexp.MustCompile("(^| )@[^[:space:]]+( |$)")
-var tagRegex = regexp.MustCompile("(^| )[^[:space:]:@+]*:[^[:space:]]+( |$)")
 
-type Project string
-
-type Context string
-
-type Tags map[string][]string
+// Tests whether or not a description needs a leading space when formatted to avoid being ambiguous.
+// For example when serializing the description "x test" it would be deserialized to {done: true, desc: test} unless
+// we add an additional space when serializing: " x test"
+var leadingSpaceNeeded = regexp.MustCompile("^x |^[0-9]{4}-[0-9]{2}-[0-9]{2} |^\\([A-Z]\\) ")
 
 type List struct {
 	version   time.Time
@@ -67,13 +64,23 @@ func (i *Item) Description() string {
 func (i *Item) Projects() []Project {
 	matches := projectRegex.FindAllString(i.description, -1)
 	toProject := fp.Map(func(s string) Project { return Project(strings.TrimSpace(s)) })
-	return toProject(matches)
+	sort := func(in []Project) []Project {
+		slices.Sort(in)
+		return in
+	}
+	uniq := slices.Compact[[]Project]
+	return fp.Pipe3(toProject, sort, uniq)(matches)
 }
 
 func (i *Item) Contexts() []Context {
 	matches := contextRegex.FindAllString(i.description, -1)
 	toContext := fp.Map(func(s string) Context { return Context(strings.TrimSpace(s)) })
-	return toContext(matches)
+	sort := func(in []Context) []Context {
+		slices.Sort(in)
+		return in
+	}
+	uniq := slices.Compact[[]Context]
+	return fp.Pipe3(toContext, sort, uniq)(matches)
 }
 
 func (i *Item) Tags() Tags {
@@ -147,6 +154,9 @@ func (i *Item) String() string {
 	}
 	if i.creationDate != zeroTime {
 		builder.WriteString(i.creationDate.Format(time.DateOnly))
+		builder.WriteString(" ")
+	}
+	if builder.Len() == 0 && leadingSpaceNeeded.MatchString(i.description) {
 		builder.WriteString(" ")
 	}
 	builder.WriteString(i.description)
