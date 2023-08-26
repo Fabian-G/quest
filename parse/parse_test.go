@@ -6,6 +6,7 @@ import (
 
 	"github.com/Fabian-G/todotxt/parse"
 	"github.com/Fabian-G/todotxt/test"
+	"github.com/Fabian-G/todotxt/tfmt"
 	"github.com/Fabian-G/todotxt/todotxt"
 	"github.com/stretchr/testify/assert"
 )
@@ -76,13 +77,19 @@ func TestParse(t *testing.T) {
 			expectedItem: test.MustBuild(todotxt.WithDescription("xTask")),
 		},
 		"Too much whitespace is ignored": {
-			line: "    x     (F)    2022-02-02     2020-03-04     A +full @item     ",
+			line: "x     (F)    2022-02-02     2020-03-04     A +full @item     ",
 			expectedItem: test.MustBuild(
 				todotxt.WithDone(true),
 				todotxt.WithCompletionDate(datePtr(2022, 2, 2)),
 				todotxt.WithCreationDate(datePtr(2020, 3, 4)),
 				todotxt.WithDescription("A +full @item"),
 				todotxt.WithPriority(todotxt.PrioF),
+			),
+		},
+		"A task starting with whitespace is treated as description": {
+			line: " x (F) 2022-02-02 2020-03-04 A +full @item",
+			expectedItem: test.MustBuild(
+				todotxt.WithDescription("x (F) 2022-02-02 2020-03-04 A +full @item"),
 			),
 		},
 	}
@@ -94,6 +101,49 @@ func TestParse(t *testing.T) {
 			if tc.expectedError == nil {
 				assert.Equal(t, tc.expectedItem, item)
 			}
+		})
+	}
+}
+
+func Test_WellFormattedItemsShouldNotChangeAfterParsingPlusSerializing(t *testing.T) {
+	testCases := map[string]struct {
+		line         string
+		expectedItem *todotxt.Item
+	}{
+		"Item with only a description": {
+			line: "This is a description",
+		},
+		"Item marked as done": {
+			line: "x a done item",
+		},
+		"Item with empty description": {
+			line: "x",
+		},
+		"Item with priority": {
+			line: "(D) an item with prio",
+		},
+		"Item with priority and empty description": {
+			line: "(D)",
+		},
+		"A done item without completion date": {
+			line: "x 2022-02-02 A done item",
+		},
+		"A full task item": {
+			line: "x (F) 2022-02-02 2020-03-04 A +full @item",
+		},
+		"A task starting with whitespace is treated as description": {
+			line: " x (F) 2022-02-02 2020-03-04 A +full @item",
+			expectedItem: test.MustBuild(
+				todotxt.WithDescription("x (F) 2022-02-02 2020-03-04 A +full @item"),
+			),
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			item, err := parse.Item(tc.line)
+			assert.Nil(t, err)
+			assert.Equal(t, tc.line, tfmt.DefaultFormatter.Format(item))
 		})
 	}
 }

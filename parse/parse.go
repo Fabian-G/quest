@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/Fabian-G/todotxt/todotxt"
 )
@@ -35,8 +36,7 @@ func (lex *lexer) SkipWhiteSpace() {
 }
 
 func Item(todoItem string) (*todotxt.Item, error) {
-	todoItem = strings.TrimSpace(todoItem)
-	if len(todoItem) == 0 {
+	if len(strings.TrimSpace(todoItem)) == 0 {
 		return nil, ErrEmpty
 	}
 
@@ -58,6 +58,9 @@ func doneMarker(lex *lexer) stateFunc {
 		lex.builderParts = append(lex.builderParts, todotxt.WithDone(true))
 		lex.Advance(1)
 		lex.SkipWhiteSpace()
+	} else if startsWithSpace(lex.remainingLine) {
+		lex.SkipWhiteSpace()
+		return description
 	}
 	return prio
 }
@@ -114,4 +117,11 @@ func creationDate(lex *lexer) stateFunc {
 func description(lex *lexer) stateFunc {
 	lex.builderParts = append(lex.builderParts, todotxt.WithDescription(lex.remainingLine))
 	return nil
+}
+
+func startsWithSpace(s string) bool {
+	for _, c := range s {
+		return unicode.IsSpace(c)
+	}
+	return false
 }
