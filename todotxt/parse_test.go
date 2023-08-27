@@ -60,6 +60,10 @@ func TestParse(t *testing.T) {
 				todotxt.WithDescription("A +full @item"),
 			),
 		},
+		"A task containing a newline in the description": {
+			line:         "This is a task\\nWith a new line in it",
+			expectedItem: todotxt.MustBuildItem(todotxt.WithDescription("This is a task\nWith a new line in it")),
+		},
 		"A task with an invalid date produces a parser error": {
 			line:          "2022-13-12 A task",
 			expectedError: &todotxt.ParseError{},

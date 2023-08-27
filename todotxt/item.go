@@ -115,9 +115,6 @@ func (i *Item) PrioritizeAs(prio Priority) {
 }
 
 func (i *Item) EditDescription(desc string) {
-	desc = strings.TrimSpace(desc)
-	desc = strings.ReplaceAll(desc, "\n", "\\n")
-	desc = strings.ReplaceAll(desc, "\r", "\\r")
 	i.description = desc
 }
 

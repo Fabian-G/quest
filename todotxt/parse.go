@@ -120,7 +120,11 @@ func creationDate(p *parser) (stateFunc, error) {
 }
 
 func description(p *parser) (stateFunc, error) {
-	p.builderParts = append(p.builderParts, WithDescription(p.remainingLine))
+	desc := p.remainingLine
+	// Interpret new lines
+	desc = strings.ReplaceAll(desc, "\\n", "\n")
+	desc = strings.ReplaceAll(desc, "\\r", "\r")
+	p.builderParts = append(p.builderParts, WithDescription(desc))
 	return nil, nil
 }
 

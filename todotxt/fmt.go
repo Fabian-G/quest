@@ -43,6 +43,10 @@ func (f *Formatter) Format(i *Item) string {
 	if builder.Len() == 0 && leadingSpaceNeeded.MatchString(i.Description()) {
 		builder.WriteString(" ")
 	}
-	builder.WriteString(i.Description())
+	desc := i.description
+	desc = strings.TrimSpace(desc)
+	desc = strings.ReplaceAll(desc, "\n", "\\n")
+	desc = strings.ReplaceAll(desc, "\r", "\\r")
+	builder.WriteString(desc)
 	return strings.TrimRightFunc(builder.String(), unicode.IsSpace)
 }

@@ -60,6 +60,22 @@ func Test_DefaultFormat(t *testing.T) {
 			item:           todotxt.MustBuildItem(todotxt.WithDescription("(A)test")),
 			expectedFormat: "(A)test",
 		},
+		"Description with newline": {
+			item:           todotxt.MustBuildItem(todotxt.WithDescription("A description\nSpanning\nMultiple Lines")),
+			expectedFormat: "A description\\nSpanning\\nMultiple Lines",
+		},
+		"Description with windows style new line": {
+			item:           todotxt.MustBuildItem(todotxt.WithDescription("A description\r\nSpanning\r\nMultiple Lines")),
+			expectedFormat: "A description\\r\\nSpanning\\r\\nMultiple Lines",
+		},
+		"A description with trailing whitespace": {
+			item:           todotxt.MustBuildItem(todotxt.WithDescription("A description with trailing space      \t   ")),
+			expectedFormat: "A description with trailing space",
+		},
+		"A description with leading whitespace": {
+			item:           todotxt.MustBuildItem(todotxt.WithDescription("   \t   A description with trailing space")),
+			expectedFormat: "A description with trailing space",
+		},
 	}
 
 	for name, tc := range testCases {
