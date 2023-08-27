@@ -54,7 +54,7 @@ func ParseItem(todoItem string) (*Item, error) {
 		}
 	}
 
-	item, err := Build(parser.builderParts...)
+	item, err := BuildItem(parser.builderParts...)
 	if err != nil {
 		return nil, fmt.Errorf("validation error: %w", err)
 	}

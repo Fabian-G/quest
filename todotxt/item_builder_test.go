@@ -46,7 +46,7 @@ func TestBuildErrors(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			_, err := todotxt.Build(tc.buildConfig...)
+			_, err := todotxt.BuildItem(tc.buildConfig...)
 			assert.ErrorIs(t, err, tc.expectedError)
 		})
 	}

@@ -21,31 +21,31 @@ func TestParse(t *testing.T) {
 	}{
 		"Empty Todo Item": {
 			line:         "",
-			expectedItem: todotxt.MustBuild(),
+			expectedItem: todotxt.MustBuildItem(),
 		},
 		"Item with only a description": {
 			line:         "This is a description",
-			expectedItem: todotxt.MustBuild(todotxt.WithDescription("This is a description")),
+			expectedItem: todotxt.MustBuildItem(todotxt.WithDescription("This is a description")),
 		},
 		"Item marked as done": {
 			line:         "x a done item",
-			expectedItem: todotxt.MustBuild(todotxt.WithDescription("a done item"), todotxt.WithDone(true)),
+			expectedItem: todotxt.MustBuildItem(todotxt.WithDescription("a done item"), todotxt.WithDone(true)),
 		},
 		"Item with empty description": {
 			line:         "x",
-			expectedItem: todotxt.MustBuild(todotxt.WithDone(true)),
+			expectedItem: todotxt.MustBuildItem(todotxt.WithDone(true)),
 		},
 		"Item with priority": {
 			line:         "(D) an item with prio",
-			expectedItem: todotxt.MustBuild(todotxt.WithPriority(todotxt.PrioD), todotxt.WithDescription("an item with prio")),
+			expectedItem: todotxt.MustBuildItem(todotxt.WithPriority(todotxt.PrioD), todotxt.WithDescription("an item with prio")),
 		},
 		"Item with priority and empty description": {
 			line:         "(D)",
-			expectedItem: todotxt.MustBuild(todotxt.WithPriority(todotxt.PrioD)),
+			expectedItem: todotxt.MustBuildItem(todotxt.WithPriority(todotxt.PrioD)),
 		},
 		"A done item without completion date": {
 			line: "x 2022-02-02 A done item",
-			expectedItem: todotxt.MustBuild(
+			expectedItem: todotxt.MustBuildItem(
 				todotxt.WithDone(true),
 				todotxt.WithCreationDate(datePtr(2022, 2, 2)),
 				todotxt.WithDescription("A done item"),
@@ -53,7 +53,7 @@ func TestParse(t *testing.T) {
 		},
 		"A full task item": {
 			line: "x 2022-02-02 2020-03-04 A +full @item",
-			expectedItem: todotxt.MustBuild(
+			expectedItem: todotxt.MustBuildItem(
 				todotxt.WithDone(true),
 				todotxt.WithCompletionDate(datePtr(2022, 2, 2)),
 				todotxt.WithCreationDate(datePtr(2020, 3, 4)),
@@ -66,15 +66,15 @@ func TestParse(t *testing.T) {
 		},
 		"A task with an invalid priority is treated as description": {
 			line:         "(?) A task",
-			expectedItem: todotxt.MustBuild(todotxt.WithDescription("(?) A task")),
+			expectedItem: todotxt.MustBuildItem(todotxt.WithDescription("(?) A task")),
 		},
 		"A task starting with x, but without space is treated as description": {
 			line:         "xTask",
-			expectedItem: todotxt.MustBuild(todotxt.WithDescription("xTask")),
+			expectedItem: todotxt.MustBuildItem(todotxt.WithDescription("xTask")),
 		},
 		"Too much whitespace is ignored": {
 			line: "x         2022-02-02     2020-03-04     A +full @item     ",
-			expectedItem: todotxt.MustBuild(
+			expectedItem: todotxt.MustBuildItem(
 				todotxt.WithDone(true),
 				todotxt.WithCompletionDate(datePtr(2022, 2, 2)),
 				todotxt.WithCreationDate(datePtr(2020, 3, 4)),
@@ -83,7 +83,7 @@ func TestParse(t *testing.T) {
 		},
 		"A task starting with whitespace is treated as description": {
 			line: " x (F) 2022-02-02 2020-03-04 A +full @item",
-			expectedItem: todotxt.MustBuild(
+			expectedItem: todotxt.MustBuildItem(
 				todotxt.WithDescription("x (F) 2022-02-02 2020-03-04 A +full @item"),
 			),
 		},

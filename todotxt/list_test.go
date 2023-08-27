@@ -17,8 +17,8 @@ func TestList_WritePlusReadIsTheIdentity(t *testing.T) {
 		},
 		"A list with items": {
 			itemList: List([]*Item{
-				MustBuild(WithDescription("Hello World")),
-				MustBuild(WithDescription("Hello World2")),
+				MustBuildItem(WithDescription("Hello World")),
+				MustBuildItem(WithDescription("Hello World2")),
 			}),
 		},
 	}

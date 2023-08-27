@@ -6,7 +6,7 @@ import (
 
 type BuildFunc func(*Item) *Item
 
-func Build(modifier ...BuildFunc) (*Item, error) {
+func BuildItem(modifier ...BuildFunc) (*Item, error) {
 	item := &Item{}
 	for _, m := range modifier {
 		item = m(item)
@@ -14,8 +14,8 @@ func Build(modifier ...BuildFunc) (*Item, error) {
 	return item, item.valid()
 }
 
-func MustBuild(m ...BuildFunc) *Item {
-	i, err := Build(m...)
+func MustBuildItem(m ...BuildFunc) *Item {
+	i, err := BuildItem(m...)
 	if err != nil {
 		panic(err)
 	}
