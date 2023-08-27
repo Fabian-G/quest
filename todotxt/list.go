@@ -9,6 +9,16 @@ import (
 
 type List []*Item
 
+type ReadError struct {
+	BaseError  error
+	Line       string
+	LineNumber int
+}
+
+func (r ReadError) Error() string {
+	return fmt.Sprintf("could not read line number %d: %v\n\tThe problematic line was: %s", r.LineNumber, r.BaseError, r.Line)
+}
+
 func (l List) Save(w io.Writer, formatter Formatter) error {
 	out := bufio.NewWriter(w)
 	for _, item := range l {
@@ -23,11 +33,19 @@ func (l List) Save(w io.Writer, formatter Formatter) error {
 func Read(r io.Reader) (List, error) {
 	list := List(make([]*Item, 0))
 	var errs []error
+	var lineNumber int
 	in := bufio.NewScanner(r)
 	for in.Scan() {
+		lineNumber++
 		text := in.Text()
 		item, err := ParseItem(text)
-		errs = append(errs, err)
+		if err != nil {
+			errs = append(errs, ReadError{
+				BaseError:  err,
+				Line:       text,
+				LineNumber: lineNumber,
+			})
+		}
 		list = append(list, item)
 	}
 	if err := in.Err(); err != nil {

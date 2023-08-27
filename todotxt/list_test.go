@@ -35,14 +35,28 @@ func TestList_WritePlusReadIsTheIdentity(t *testing.T) {
 }
 
 func Test_ReadReturnsErrorsForInvalidItems(t *testing.T) {
-	listString := `
-x (A) a done task with prio set
+	listString := `x (A) a done task with prio set
 x 2022-13-01 a task with a malformed creation date
-2022-10-01 2020-10-01 a task with completion date set although not done
-`
+2022-10-01 2020-10-01 a task with completion date set although not done`
 
 	_, err := Read(strings.NewReader(listString))
-	assert.ErrorIs(t, err, ErrCompletionDateWhileUndone)
-	assert.ErrorIs(t, err, ErrNoPrioWhenDone)
-	assert.ErrorAs(t, err, &ParseError{})
+
+	sErr := err.(interface{ Unwrap() []error }).Unwrap()
+	assert.Len(t, sErr, 3)
+	var first, second, third ReadError
+	assert.ErrorAs(t, sErr[0], &first)
+	assert.ErrorAs(t, sErr[1], &second)
+	assert.ErrorAs(t, sErr[2], &third)
+
+	assert.Equal(t, 1, first.LineNumber)
+	assert.Equal(t, "x (A) a done task with prio set", first.Line)
+	assert.ErrorIs(t, first.BaseError, ErrNoPrioWhenDone)
+
+	assert.Equal(t, 2, second.LineNumber)
+	assert.Equal(t, "x 2022-13-01 a task with a malformed creation date", second.Line)
+	assert.ErrorAs(t, second.BaseError, &ParseError{})
+
+	assert.Equal(t, 3, third.LineNumber)
+	assert.Equal(t, "2022-10-01 2020-10-01 a task with completion date set although not done", third.Line)
+	assert.ErrorIs(t, third.BaseError, ErrCompletionDateWhileUndone)
 }
