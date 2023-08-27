@@ -13,15 +13,8 @@ func TestBuildErrors(t *testing.T) {
 	dateAfterOne := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
 	testCases := map[string]struct {
 		expectedError error
-		expectedItem  todotxt.Item
 		buildConfig   []todotxt.BuildFunc
 	}{
-		"Task with item description": {
-			expectedError: todotxt.ErrEmptyDescription,
-			buildConfig: []todotxt.BuildFunc{
-				todotxt.WithDescription(""),
-			},
-		},
 		"Task with completion date set, but not creation date": {
 			expectedError: todotxt.ErrCreationDateUnset,
 			buildConfig: []todotxt.BuildFunc{

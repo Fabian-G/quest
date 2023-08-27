@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // Tests whether or not a description needs a leading space when formatted to avoid being ambiguous.
@@ -21,9 +22,6 @@ type Formatter struct {
 func (f *Formatter) Format(i *Item) string {
 	if err := i.valid(); err != nil {
 		panic(fmt.Errorf("can not format an invalid item: %w", err))
-	}
-	if i.Description() == "" {
-		return ""
 	}
 	builder := strings.Builder{}
 	if i.Done() {
@@ -46,5 +44,5 @@ func (f *Formatter) Format(i *Item) string {
 		builder.WriteString(" ")
 	}
 	builder.WriteString(i.Description())
-	return builder.String()
+	return strings.TrimRightFunc(builder.String(), unicode.IsSpace)
 }

@@ -24,7 +24,7 @@ func MustBuild(m ...BuildFunc) *Item {
 
 func WithDescription(desc string) BuildFunc {
 	return func(i *Item) *Item {
-		i.description = desc
+		i.EditDescription(desc)
 		return i
 	}
 }

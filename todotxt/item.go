@@ -13,7 +13,6 @@ import (
 var ErrCreationDateUnset = errors.New("completion date can not be set while creation date is not")
 var ErrCompleteBeforeCreation = errors.New("completion date can not be before creation date")
 var ErrCompletionDateWhileUndone = errors.New("completion date can not be set on undone task")
-var ErrEmptyDescription = errors.New("description must not be empty")
 var ErrNoPrioWhenDone = errors.New("done tasks must not have a priority")
 
 type Item struct {
@@ -115,12 +114,11 @@ func (i *Item) PrioritizeAs(prio Priority) {
 	i.prio = prio
 }
 
-func (i *Item) EditDescription(desc string) error {
-	if len(strings.TrimSpace(desc)) == 0 {
-		return ErrEmptyDescription
-	}
+func (i *Item) EditDescription(desc string) {
+	desc = strings.TrimSpace(desc)
+	desc = strings.ReplaceAll(desc, "\n", "\\n")
+	desc = strings.ReplaceAll(desc, "\r", "\\r")
 	i.description = desc
-	return nil
 }
 
 func (i *Item) String() string {
@@ -131,11 +129,8 @@ func (i *Item) String() string {
 }
 
 // This method is unexported, because the API is designed in a way that should make
-// it impossible for the user t create invalid tasks
+// it impossible for the user to create invalid tasks
 func (i *Item) valid() error {
-	if len(strings.TrimSpace(i.description)) == 0 {
-		return ErrEmptyDescription
-	}
 	if i.completionDate != nil && i.creationDate == nil {
 		return ErrCreationDateUnset
 	}

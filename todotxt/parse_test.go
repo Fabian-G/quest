@@ -20,8 +20,8 @@ func TestParse(t *testing.T) {
 		expectedItem  *todotxt.Item
 	}{
 		"Empty Todo Item": {
-			line:          "",
-			expectedError: todotxt.ErrEmptyDescription,
+			line:         "",
+			expectedItem: todotxt.MustBuild(),
 		},
 		"Item with only a description": {
 			line:         "This is a description",
@@ -32,16 +32,16 @@ func TestParse(t *testing.T) {
 			expectedItem: todotxt.MustBuild(todotxt.WithDescription("a done item"), todotxt.WithDone(true)),
 		},
 		"Item with empty description": {
-			line:          "x",
-			expectedError: todotxt.ErrEmptyDescription,
+			line:         "x",
+			expectedItem: todotxt.MustBuild(todotxt.WithDone(true)),
 		},
 		"Item with priority": {
 			line:         "(D) an item with prio",
 			expectedItem: todotxt.MustBuild(todotxt.WithPriority(todotxt.PrioD), todotxt.WithDescription("an item with prio")),
 		},
 		"Item with priority and empty description": {
-			line:          "(D)",
-			expectedError: todotxt.ErrEmptyDescription,
+			line:         "(D)",
+			expectedItem: todotxt.MustBuild(todotxt.WithPriority(todotxt.PrioD)),
 		},
 		"A done item without completion date": {
 			line: "x 2022-02-02 A done item",
@@ -105,9 +105,11 @@ func TestParse(t *testing.T) {
 
 func Test_WellFormattedItemsShouldNotChangeAfterParsingPlusSerializing(t *testing.T) {
 	testCases := map[string]struct {
-		line         string
-		expectedItem *todotxt.Item
+		line string
 	}{
+		"Item with empty description": {
+			line: "x",
+		},
 		"Item with only a description": {
 			line: "This is a description",
 		},
@@ -125,9 +127,6 @@ func Test_WellFormattedItemsShouldNotChangeAfterParsingPlusSerializing(t *testin
 		},
 		"A task starting with whitespace is treated as description": {
 			line: " x (F) 2022-02-02 2020-03-04 A +full @item",
-			expectedItem: todotxt.MustBuild(
-				todotxt.WithDescription("x (F) 2022-02-02 2020-03-04 A +full @item"),
-			),
 		},
 	}
 

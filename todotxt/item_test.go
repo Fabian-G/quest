@@ -205,3 +205,35 @@ func Test_TagsExtraction(t *testing.T) {
 		})
 	}
 }
+
+func Test_EditDescriptionSanitization(t *testing.T) {
+	testCases := map[string]struct {
+		setDescription      string
+		expectedDescription string
+	}{
+		"Description with newline": {
+			setDescription:      "A description\nSpanning\nMultiple Lines",
+			expectedDescription: "A description\\nSpanning\\nMultiple Lines",
+		},
+		"Description with windows style new line": {
+			setDescription:      "A description\r\nSpanning\r\nMultiple Lines",
+			expectedDescription: "A description\\r\\nSpanning\\r\\nMultiple Lines",
+		},
+		"A description with trailing whitespace": {
+			setDescription:      "A description with trailing space      \t   ",
+			expectedDescription: "A description with trailing space",
+		},
+		"A description with leading whitespace": {
+			setDescription:      "   \t   A description with trailing space",
+			expectedDescription: "A description with trailing space",
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			item := &todotxt.Item{}
+			item.EditDescription(tc.setDescription)
+			assert.Equal(t, tc.expectedDescription, item.Description())
+		})
+	}
+}
