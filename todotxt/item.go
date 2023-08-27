@@ -10,11 +10,6 @@ import (
 	"github.com/repeale/fp-go"
 )
 
-type List struct {
-	version   time.Time
-	todoItems []Item
-}
-
 var ErrCreationDateUnset = errors.New("completion date can not be set while creation date is not")
 var ErrCompleteBeforeCreation = errors.New("completion date can not be before creation date")
 var ErrCompletionDateWhileUndone = errors.New("completion date can not be set on undone task")
