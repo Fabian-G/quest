@@ -138,7 +138,9 @@ func Test_WellFormattedItemsShouldNotChangeAfterParsingPlusSerializing(t *testin
 		t.Run(name, func(t *testing.T) {
 			item, err := todotxt.ParseItem(tc.line)
 			assert.Nil(t, err)
-			assert.Equal(t, tc.line, todotxt.DefaultFormatter.Format(item))
+			out, err := todotxt.DefaultFormatter.Format(item)
+			assert.Nil(t, err)
+			assert.Equal(t, tc.line, out)
 		})
 	}
 }

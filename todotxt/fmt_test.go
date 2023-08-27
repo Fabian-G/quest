@@ -80,15 +80,16 @@ func Test_DefaultFormat(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedFormat, todotxt.DefaultFormatter.Format(tc.item))
+			out, err := todotxt.DefaultFormatter.Format(tc.item)
+			assert.Nil(t, err)
+			assert.Equal(t, tc.expectedFormat, out)
 		})
 	}
 }
 
-func Test_FormatPanicsOnInvalidTask(t *testing.T) {
+func Test_FormatReturnsErrorOnInvalidTask(t *testing.T) {
 	item, _ := todotxt.BuildItem(todotxt.WithCompletionDate(new(time.Time)), todotxt.WithCreationDate(nil))
 
-	assert.Panics(t, func() {
-		_ = todotxt.DefaultFormatter.Format(item)
-	})
+	_, err := todotxt.DefaultFormatter.Format(item)
+	assert.Error(t, err)
 }

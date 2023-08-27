@@ -13,15 +13,19 @@ import (
 // we add an additional space when serializing: " x test"
 var leadingSpaceNeeded = regexp.MustCompile("^x |^[0-9]{4}-[0-9]{2}-[0-9]{2} |^\\([A-Z]\\) ")
 
-var DefaultFormatter = Formatter{}
+var DefaultFormatter = TxtFormatter{}
 
-type Formatter struct {
+type Formatter interface {
+	Format(i *Item) (string, error)
+}
+
+type TxtFormatter struct {
 }
 
 // Format formats an item according to the todotxt spec
-func (f *Formatter) Format(i *Item) string {
+func (f TxtFormatter) Format(i *Item) (string, error) {
 	if err := i.valid(); err != nil {
-		panic(fmt.Errorf("can not format an invalid item: %w", err))
+		return "", fmt.Errorf("can not format an invalid item: %w", err)
 	}
 	builder := strings.Builder{}
 	if i.Done() {
@@ -48,5 +52,5 @@ func (f *Formatter) Format(i *Item) string {
 	desc = strings.ReplaceAll(desc, "\n", "\\n")
 	desc = strings.ReplaceAll(desc, "\r", "\\r")
 	builder.WriteString(desc)
-	return strings.TrimRightFunc(builder.String(), unicode.IsSpace)
+	return strings.TrimRightFunc(builder.String(), unicode.IsSpace), nil
 }

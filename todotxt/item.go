@@ -119,10 +119,10 @@ func (i *Item) EditDescription(desc string) {
 }
 
 func (i *Item) String() string {
-	if err := i.valid(); err != nil {
-		return fmt.Sprintf("%#v", i)
+	if out, err := DefaultFormatter.Format(i); err == nil {
+		return out
 	}
-	return DefaultFormatter.Format(i)
+	return fmt.Sprintf("%#v", i)
 }
 
 // This method is unexported, because the API is designed in a way that should make

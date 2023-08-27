@@ -22,7 +22,11 @@ func (r ReadError) Error() string {
 func (l List) Save(w io.Writer, formatter Formatter) error {
 	out := bufio.NewWriter(w)
 	for _, item := range l {
-		_, err := out.WriteString(formatter.Format(item) + "\n")
+		formattedItem, err := formatter.Format(item)
+		if err != nil {
+			return fmt.Errorf("could not marshal item: %w", err)
+		}
+		_, err = out.WriteString(formattedItem + "\n")
 		if err != nil {
 			return fmt.Errorf("could not write item %v: %w", item, err)
 		}
