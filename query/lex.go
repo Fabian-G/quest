@@ -31,6 +31,7 @@ const (
 	itemLeftParen
 	itemRightParen
 	itemComma
+	itemColon
 )
 
 const eof = -1
@@ -179,6 +180,8 @@ func lexQuery(l *lexer) stateFunc {
 			return l.errorf("unexpected right paren")
 		}
 		return l.emit(itemRightParen)
+	case r == ':':
+		return l.emit(itemColon)
 	case r == '+' || r == '-' || ('0' <= r && r <= '9'):
 		l.backup()
 		return lexInt
@@ -202,10 +205,10 @@ func lexIdentifier(l *lexer) stateFunc {
 			}
 
 			word := l.input[l.start:l.pos]
-			if word == "exists" && l.accept(":") {
+			if word == "exists" && l.accept(" ") {
 				return l.emit(itemExistQuant)
 			}
-			if word == "forall" && l.accept(":") {
+			if word == "forall" && l.accept(" ") {
 				return l.emit(itemAllQuant)
 			}
 			if word == "true" || word == "false" {

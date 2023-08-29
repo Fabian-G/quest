@@ -44,12 +44,12 @@ func Test_lexOnValidQueries(t *testing.T) {
 			expectedTokens: []itemType{itemIdent, itemLeftParen, itemBool, itemRightParen},
 		},
 		"Exist Quantor": {
-			query:          "exists: R(x)",
-			expectedTokens: []itemType{itemExistQuant, itemIdent, itemLeftParen, itemIdent, itemRightParen},
+			query:          "exists x: R(x)",
+			expectedTokens: []itemType{itemExistQuant, itemIdent, itemColon, itemIdent, itemLeftParen, itemIdent, itemRightParen},
 		},
 		"ForAll Quantor": {
-			query:          "forall: R(x)",
-			expectedTokens: []itemType{itemAllQuant, itemIdent, itemLeftParen, itemIdent, itemRightParen},
+			query:          "forall x: R(x)",
+			expectedTokens: []itemType{itemAllQuant, itemIdent, itemColon, itemIdent, itemLeftParen, itemIdent, itemRightParen},
 		},
 		"Multiple arguments": {
 			query:          "R(abc, def, xyz)",
