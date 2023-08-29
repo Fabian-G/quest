@@ -1,7 +1,9 @@
 package todotxt
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 	"time"
@@ -13,17 +15,34 @@ import (
 // we add an additional space when serializing: " x test"
 var leadingSpaceNeeded = regexp.MustCompile("^x |^[0-9]{4}-[0-9]{2}-[0-9]{2} |^\\([A-Z]\\) ")
 
-var DefaultFormatter = TxtFormatter{}
+var DefaultEncoder = TxtEncoder{}
 
-type Formatter interface {
-	Format(i *Item) (string, error)
-}
-
-type TxtFormatter struct {
+type TxtEncoder struct {
 }
 
 // Format formats an item according to the todotxt spec
-func (f TxtFormatter) Format(i *Item) (string, error) {
+func (f TxtEncoder) Encode(w io.Writer, list List) error {
+	out := bufio.NewWriter(w)
+	for i, item := range list {
+		formattedItem, err := f.encodeItem(item)
+		if err != nil {
+			return fmt.Errorf("could not marshal item: %w", err)
+		}
+		if _, err := out.WriteString(formattedItem + itemSeparator(i, len(list))); err != nil {
+			return fmt.Errorf("could not write item %v: %w", item, err)
+		}
+	}
+	return out.Flush()
+}
+
+func itemSeparator(current, length int) string {
+	if current < length-1 {
+		return "\n"
+	}
+	return ""
+}
+
+func (e TxtEncoder) encodeItem(i *Item) (string, error) {
 	if err := i.valid(); err != nil {
 		return "", fmt.Errorf("can not format an invalid item: %w", err)
 	}

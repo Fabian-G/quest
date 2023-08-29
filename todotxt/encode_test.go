@@ -1,6 +1,9 @@
 package todotxt_test
 
 import (
+	"bytes"
+	"io"
+	"strings"
 	"testing"
 	"time"
 
@@ -80,9 +83,10 @@ func Test_DefaultFormat(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			out, err := todotxt.DefaultFormatter.Format(tc.item)
+			out := strings.Builder{}
+			err := todotxt.DefaultEncoder.Encode(&out, todotxt.List{tc.item})
 			assert.Nil(t, err)
-			assert.Equal(t, tc.expectedFormat, out)
+			assert.Equal(t, tc.expectedFormat, out.String())
 		})
 	}
 }
@@ -90,6 +94,59 @@ func Test_DefaultFormat(t *testing.T) {
 func Test_FormatReturnsErrorOnInvalidTask(t *testing.T) {
 	item, _ := todotxt.BuildItem(todotxt.WithCompletionDate(new(time.Time)), todotxt.WithCreationDate(nil))
 
-	_, err := todotxt.DefaultFormatter.Format(item)
+	err := todotxt.DefaultEncoder.Encode(io.Discard, todotxt.List{item})
 	assert.Error(t, err)
+}
+
+func TestList_WritePlusReadIsTheIdentity(t *testing.T) {
+	testCases := map[string]struct {
+		itemList todotxt.List
+	}{
+		"An empty list": {
+			itemList: todotxt.List{},
+		},
+		"A list with items": {
+			itemList: todotxt.List([]*todotxt.Item{
+				todotxt.MustBuildItem(todotxt.WithDescription("Hello World")),
+				todotxt.MustBuildItem(todotxt.WithDescription("Hello World2")),
+			}),
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			out := bytes.Buffer{}
+			todotxt.DefaultEncoder.Encode(&out, tc.itemList)
+			listOut, err := todotxt.DefaultDecoder.Decode(bytes.NewReader(out.Bytes()))
+			assert.Nil(t, err)
+			assert.Equal(t, tc.itemList, listOut)
+		})
+	}
+}
+
+func Test_ReadReturnsErrorsForInvalidItems(t *testing.T) {
+	listString := `x (A) a done task with prio set
+x 2022-13-01 a task with a malformed creation date
+2022-10-01 2020-10-01 a task with completion date set although not done`
+
+	_, err := todotxt.DefaultDecoder.Decode(strings.NewReader(listString))
+
+	sErr := err.(interface{ Unwrap() []error }).Unwrap()
+	assert.Len(t, sErr, 3)
+	var first, second, third todotxt.ReadError
+	assert.ErrorAs(t, sErr[0], &first)
+	assert.ErrorAs(t, sErr[1], &second)
+	assert.ErrorAs(t, sErr[2], &third)
+
+	assert.Equal(t, 1, first.LineNumber)
+	assert.Equal(t, "x (A) a done task with prio set", first.Line)
+	assert.ErrorIs(t, first.BaseError, todotxt.ErrNoPrioWhenDone)
+
+	assert.Equal(t, 2, second.LineNumber)
+	assert.Equal(t, "x 2022-13-01 a task with a malformed creation date", second.Line)
+	assert.ErrorAs(t, second.BaseError, &todotxt.ParseError{})
+
+	assert.Equal(t, 3, third.LineNumber)
+	assert.Equal(t, "2022-10-01 2020-10-01 a task with completion date set although not done", third.Line)
+	assert.ErrorIs(t, third.BaseError, todotxt.ErrCompletionDateWhileUndone)
 }

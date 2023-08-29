@@ -10,6 +10,8 @@ import (
 	"github.com/repeale/fp-go"
 )
 
+type List []*Item
+
 var ErrCreationDateUnset = errors.New("completion date can not be set while creation date is not")
 var ErrCompleteBeforeCreation = errors.New("completion date can not be before creation date")
 var ErrCompletionDateWhileUndone = errors.New("completion date can not be set on undone task")
@@ -119,7 +121,7 @@ func (i *Item) EditDescription(desc string) {
 }
 
 func (i *Item) String() string {
-	if out, err := DefaultFormatter.Format(i); err == nil {
+	if out, err := DefaultEncoder.encodeItem(i); err == nil {
 		return out
 	}
 	return fmt.Sprintf("%#v", i)

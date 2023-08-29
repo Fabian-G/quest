@@ -1,6 +1,7 @@
 package todotxt_test
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -20,7 +21,7 @@ func TestParse(t *testing.T) {
 		expectedItem  *todotxt.Item
 	}{
 		"Empty Todo Item": {
-			line:         "",
+			line:         "\n", // Needs a trailing newline. Otherwise this would just result in an empty list
 			expectedItem: todotxt.MustBuildItem(),
 		},
 		"Item with only a description": {
@@ -95,13 +96,14 @@ func TestParse(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			item, err := todotxt.ParseItem(tc.line)
+			itemList, err := todotxt.DefaultDecoder.Decode(strings.NewReader(tc.line))
 			if e, ok := tc.expectedError.(*todotxt.ParseError); ok {
 				assert.ErrorAs(t, err, e)
 			} else if tc.expectedError != nil {
 				assert.ErrorIs(t, err, tc.expectedError)
 			} else {
-				assert.Equal(t, tc.expectedItem, item)
+				assert.Len(t, itemList, 1)
+				assert.Equal(t, tc.expectedItem, itemList[0])
 			}
 		})
 	}
@@ -136,11 +138,13 @@ func Test_WellFormattedItemsShouldNotChangeAfterParsingPlusSerializing(t *testin
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			item, err := todotxt.ParseItem(tc.line)
+			itemList, err := todotxt.DefaultDecoder.Decode(strings.NewReader(tc.line))
 			assert.Nil(t, err)
-			out, err := todotxt.DefaultFormatter.Format(item)
+			assert.Len(t, itemList, 1)
+			out := strings.Builder{}
+			err = todotxt.DefaultEncoder.Encode(&out, itemList)
 			assert.Nil(t, err)
-			assert.Equal(t, tc.line, out)
+			assert.Equal(t, tc.line, out.String())
 		})
 	}
 }

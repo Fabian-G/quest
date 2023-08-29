@@ -1,7 +1,10 @@
 package todotxt
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 	"time"
@@ -14,6 +17,49 @@ var doneRegex = regexp.MustCompile("^x([[:space:]]|$)")
 var prioRegex = regexp.MustCompile("^\\([A-Z]\\)([[:space:]]|$)")
 var dateRegex = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}([[:space:]]|$)")
 var twoDatesRegex = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+[0-9]{4}-[0-9]{2}-[0-9]{2}([[:space:]]|$)")
+
+var DefaultDecoder = Decoder{}
+
+type Decoder struct {
+}
+
+func (d *Decoder) Decode(r io.Reader) (List, error) {
+	list := List(make([]*Item, 0))
+	var errs []error
+	var lineNumber int
+	in := bufio.NewScanner(r)
+	for in.Scan() {
+		lineNumber++
+		text := in.Text()
+		item, err := parseItem(text)
+		if err != nil {
+			errs = append(errs, ReadError{
+				BaseError:  err,
+				Line:       text,
+				LineNumber: lineNumber,
+			})
+		}
+		list = append(list, item)
+	}
+	if err := in.Err(); err != nil {
+		return nil, fmt.Errorf("could not read input: %w", err)
+	}
+	return list, errors.Join(errs...)
+}
+
+type ReadError struct {
+	BaseError  error
+	Line       string
+	LineNumber int
+}
+
+func (r ReadError) Error() string {
+	return fmt.Sprintf("could not read line number %d: %v\n\tThe problematic line was: %s", r.LineNumber, r.BaseError, r.Line)
+}
+
+func (r ReadError) Unwrap() error {
+	return r.BaseError
+}
 
 type ParseError struct {
 	subStr  string
@@ -31,15 +77,15 @@ type parser struct {
 	builderParts  []BuildFunc
 }
 
-func (p *parser) Advance(bytes int) {
+func (p *parser) advance(bytes int) {
 	p.remainingLine = p.remainingLine[bytes:]
 }
 
-func (p *parser) SkipWhiteSpace() {
+func (p *parser) skipWhiteSpace() {
 	p.remainingLine = strings.TrimSpace(p.remainingLine)
 }
 
-func ParseItem(todoItem string) (*Item, error) {
+func parseItem(todoItem string) (*Item, error) {
 	parser := parser{
 		remainingLine: todoItem,
 		builderParts:  make([]BuildFunc, 0),
@@ -64,10 +110,10 @@ func ParseItem(todoItem string) (*Item, error) {
 func doneMarker(p *parser) (stateFunc, error) {
 	if doneRegex.MatchString(p.remainingLine) {
 		p.builderParts = append(p.builderParts, WithDone(true))
-		p.Advance(1)
-		p.SkipWhiteSpace()
+		p.advance(1)
+		p.skipWhiteSpace()
 	} else if startsWithSpace(p.remainingLine) {
-		p.SkipWhiteSpace()
+		p.skipWhiteSpace()
 		return description, nil
 	}
 	return prio, nil
@@ -80,8 +126,8 @@ func prio(p *parser) (stateFunc, error) {
 			return nil, ParseError{p.remainingLine[:3], err}
 		}
 		p.builderParts = append(p.builderParts, WithPriority(prio))
-		p.Advance(3)
-		p.SkipWhiteSpace()
+		p.advance(3)
+		p.skipWhiteSpace()
 	}
 	return dates, nil
 }
@@ -102,8 +148,8 @@ func completionDate(p *parser) (stateFunc, error) {
 		return nil, ParseError{dateString, err}
 	}
 	p.builderParts = append(p.builderParts, WithCompletionDate(&completionDate))
-	p.Advance(len(dateString))
-	p.SkipWhiteSpace()
+	p.advance(len(dateString))
+	p.skipWhiteSpace()
 	return creationDate, nil
 }
 
@@ -114,8 +160,8 @@ func creationDate(p *parser) (stateFunc, error) {
 		return nil, ParseError{dateString, err}
 	}
 	p.builderParts = append(p.builderParts, WithCreationDate(&creationDate))
-	p.Advance(len(dateString))
-	p.SkipWhiteSpace()
+	p.advance(len(dateString))
+	p.skipWhiteSpace()
 	return description, nil
 }
 
