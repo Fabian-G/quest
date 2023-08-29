@@ -13,7 +13,7 @@ import (
 // Tests whether or not a description needs a leading space when formatted to avoid being ambiguous.
 // For example when serializing the description "x test" it would be deserialized to {done: true, desc: test} unless
 // we add an additional space when serializing: " x test"
-var leadingSpaceNeeded = regexp.MustCompile("^x |^[0-9]{4}-[0-9]{2}-[0-9]{2} |^\\([A-Z]\\) ")
+var leadingSpaceNeeded = regexp.MustCompile(`^x |^[0-9]{4}-[0-9]{2}-[0-9]{2} |^\([A-Z]\) `)
 
 var DefaultEncoder = TxtEncoder{}
 

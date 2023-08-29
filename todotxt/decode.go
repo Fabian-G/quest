@@ -14,7 +14,7 @@ import (
 const dateLength = 10
 
 var doneRegex = regexp.MustCompile("^x([[:space:]]|$)")
-var prioRegex = regexp.MustCompile("^\\([A-Z]\\)([[:space:]]|$)")
+var prioRegex = regexp.MustCompile(`^\([A-Z]\)([[:space:]]|$)`)
 var dateRegex = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}([[:space:]]|$)")
 var twoDatesRegex = regexp.MustCompile("^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+[0-9]{4}-[0-9]{2}-[0-9]{2}([[:space:]]|$)")
 
