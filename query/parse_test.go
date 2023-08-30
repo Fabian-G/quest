@@ -46,8 +46,8 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			expectedParseResult: "((false -> true) && (true -> (false -> true)))",
 		},
 		"With function symbol": {
-			query:               "R(true)",
-			expectedParseResult: "R(true)",
+			query:               "done(it)",
+			expectedParseResult: "done(it)",
 		},
 	}
 

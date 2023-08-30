@@ -1,7 +1,6 @@
 package query
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 
@@ -16,19 +15,19 @@ var functions = map[string]queryFunc{
 	"contains": contains,
 }
 
-func typecheck(funcName string, argsTypes []string) (string, error) {
+func funcType(funcName string, argsTypes []dType) (dType, error) {
 	switch funcName {
 	case "done":
-		return "bool", assertTypes([]string{"item"}, argsTypes)
+		return qBool, assertTypes([]dType{qItem}, argsTypes)
 	case "projects":
-		return "[]string", assertTypes([]string{"item"}, argsTypes)
+		return qStringSlice, assertTypes([]dType{qItem}, argsTypes)
 	case "contains":
-		return "bool", assertTypes([]string{"[]string, string"}, argsTypes)
+		return qBool, assertTypes([]dType{qStringSlice, qString}, argsTypes)
 	}
-	return "", errors.New("Invalid function name")
+	return qError, fmt.Errorf("unknown function: %s", funcName)
 }
 
-func assertTypes(expectedTypes []string, argTypes []string) error {
+func assertTypes(expectedTypes []dType, argTypes []dType) error {
 	if len(expectedTypes) != len(argTypes) {
 		return fmt.Errorf("expecting parameters %#v, but got %#v", expectedTypes, argTypes)
 	}

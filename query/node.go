@@ -1,6 +1,7 @@
 package query
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,9 +9,21 @@ import (
 	"github.com/Fabian-G/todotxt/todotxt"
 )
 
+type dType int
+
+const (
+	qError dType = iota
+	qInt
+	qString
+	qStringSlice
+	qBool
+	qItem
+)
+
 type varMap map[string]*todotxt.Item
 
 type node interface {
+	validate() (dType, error)
 	eval(todotxt.List, varMap) any
 	fmt.Stringer
 }
@@ -36,6 +49,17 @@ func (a *allQuant) String() string {
 	return fmt.Sprintf("(forall %s: %s)", a.boundId, a.child.String())
 }
 
+func (a *allQuant) validate() (dType, error) {
+	childType, err := a.child.validate()
+	if err != nil {
+		return qError, err
+	}
+	if childType != qBool {
+		return qError, fmt.Errorf("can not apply all quantor on expression of type %d", childType)
+	}
+	return qBool, nil
+}
+
 type existQuant struct {
 	boundId string
 	child   node
@@ -57,6 +81,17 @@ func (e *existQuant) String() string {
 	return fmt.Sprintf("(exists %s: %s)", e.boundId, e.child.String())
 }
 
+func (e *existQuant) validate() (dType, error) {
+	childType, err := e.child.validate()
+	if err != nil {
+		return qError, err
+	}
+	if childType != qBool {
+		return qError, fmt.Errorf("can not apply exists quantor on expression of type %d", childType)
+	}
+	return qBool, nil
+}
+
 type impl struct {
 	leftChild  node
 	rightChild node
@@ -68,6 +103,21 @@ func (i *impl) eval(l todotxt.List, alpha varMap) any {
 
 func (i *impl) String() string {
 	return fmt.Sprintf("(%s -> %s)", i.leftChild.String(), i.rightChild.String())
+}
+
+func (i *impl) validate() (dType, error) {
+	c1, err := i.leftChild.validate()
+	if err != nil {
+		return qError, err
+	}
+	c2, err := i.rightChild.validate()
+	if err != nil {
+		return qError, err
+	}
+	if c1 != qBool || c2 != qBool {
+		return qError, fmt.Errorf("can not apply implication on (%d, %d)", c1, c2)
+	}
+	return qBool, nil
 }
 
 type and struct {
@@ -83,6 +133,21 @@ func (a *and) String() string {
 	return fmt.Sprintf("(%s && %s)", a.leftChild.String(), a.rightChild.String())
 }
 
+func (a *and) validate() (dType, error) {
+	c1, err := a.leftChild.validate()
+	if err != nil {
+		return qError, err
+	}
+	c2, err := a.rightChild.validate()
+	if err != nil {
+		return qError, err
+	}
+	if c1 != qBool || c2 != qBool {
+		return qError, fmt.Errorf("can not apply conjunction on (%d, %d)", c1, c2)
+	}
+	return qBool, nil
+}
+
 type or struct {
 	leftChild  node
 	rightChild node
@@ -94,6 +159,21 @@ func (o *or) eval(l todotxt.List, alpha varMap) any {
 
 func (o *or) String() string {
 	return fmt.Sprintf("(%s || %s)", o.leftChild.String(), o.rightChild.String())
+}
+
+func (o *or) validate() (dType, error) {
+	c1, err := o.leftChild.validate()
+	if err != nil {
+		return qError, err
+	}
+	c2, err := o.rightChild.validate()
+	if err != nil {
+		return qError, err
+	}
+	if c1 != qBool || c2 != qBool {
+		return qError, fmt.Errorf("can not apply disjunction on (%d, %d)", c1, c2)
+	}
+	return qBool, nil
 }
 
 type not struct {
@@ -108,6 +188,17 @@ func (n *not) String() string {
 	return fmt.Sprintf("!%s", n.child)
 }
 
+func (n *not) validate() (dType, error) {
+	c, err := n.child.validate()
+	if err != nil {
+		return qError, err
+	}
+	if c != qBool {
+		return qError, fmt.Errorf("can not apply not on %d", c)
+	}
+	return qBool, nil
+}
+
 type stringConst struct {
 	val string
 }
@@ -118,6 +209,10 @@ func (s *stringConst) eval(l todotxt.List, alpha varMap) any {
 
 func (s *stringConst) String() string {
 	return s.val
+
+}
+func (s *stringConst) validate() (dType, error) {
+	return qString, nil
 }
 
 type intConst struct {
@@ -133,6 +228,13 @@ func (i *intConst) String() string {
 	return i.val
 }
 
+func (i *intConst) validate() (dType, error) {
+	if _, err := strconv.Atoi(i.val); err != nil {
+		return qError, fmt.Errorf("could not parse integer constant: %s", i.val)
+	}
+	return qString, nil
+}
+
 type boolConst struct {
 	val string
 }
@@ -144,6 +246,13 @@ func (b *boolConst) eval(l todotxt.List, alpha varMap) any {
 
 func (b *boolConst) String() string {
 	return b.val
+}
+
+func (b *boolConst) validate() (dType, error) {
+	if _, err := strconv.ParseBool(b.val); err != nil {
+		return qError, fmt.Errorf("could not parse boolean constant: %s", b.val)
+	}
+	return qBool, nil
 }
 
 type identifier struct {
@@ -158,9 +267,13 @@ func (i *identifier) String() string {
 	return i.name
 }
 
+func (i *identifier) validate() (dType, error) {
+	return qItem, nil
+}
+
 type call struct {
 	name string
-	args node
+	args *args
 }
 
 func (c *call) eval(l todotxt.List, alpha varMap) any {
@@ -168,8 +281,16 @@ func (c *call) eval(l todotxt.List, alpha varMap) any {
 	return fn(c.args.eval(l, alpha).([]any))
 }
 
-func (i *call) String() string {
-	return fmt.Sprintf("%s%s", i.name, i.args.String())
+func (c *call) String() string {
+	return fmt.Sprintf("%s%s", c.name, c.args.String())
+}
+
+func (c *call) validate() (dType, error) {
+	argTypes, err := c.args.validateAll()
+	if err != nil {
+		return qError, err
+	}
+	return funcType(c.name, argTypes)
 }
 
 type args struct {
@@ -192,4 +313,20 @@ func (a *args) String() string {
 	}
 	argListString := argsList.String()
 	return fmt.Sprintf("(%s)", argListString[:max(0, len(argListString)-2)])
+}
+
+func (a *args) validate() (dType, error) {
+	return qError, errors.New("args must only occur in the context of a function call")
+}
+
+func (a *args) validateAll() ([]dType, error) {
+	types := make([]dType, 0, len(a.children))
+	for _, c := range a.children {
+		t, err := c.validate()
+		if err != nil {
+			return []dType{qError}, err
+		}
+		types = append(types, t)
+	}
+	return types, nil
 }

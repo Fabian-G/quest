@@ -31,6 +31,13 @@ func parseTree(query string) (node, error) {
 	if err != nil {
 		return nil, err
 	}
+	t, err := root.validate()
+	if err != nil {
+		return nil, fmt.Errorf("validation error: %w", err)
+	}
+	if t != qBool {
+		return nil, fmt.Errorf("query result must be bool, got: %d", t)
+	}
 	return root, nil
 }
 
@@ -209,7 +216,7 @@ func (p *parser) parsePrimary() (node, error) {
 	}
 }
 
-func (p *parser) parseArgs() (node, error) {
+func (p *parser) parseArgs() (*args, error) {
 	var arguments []node
 	lParen := p.next()
 	if lParen.typ != itemLeftParen {
