@@ -9,15 +9,15 @@ import (
 	"github.com/Fabian-G/todotxt/todotxt"
 )
 
-type dType int
+type dType string
 
 const (
-	qError dType = iota
-	qInt
-	qString
-	qStringSlice
-	qBool
-	qItem
+	qError       dType = "error"
+	qInt         dType = "int"
+	qString      dType = "string"
+	qStringSlice dType = "[]string"
+	qBool        dType = "bool"
+	qItem        dType = "item"
 )
 
 type varMap map[string]*todotxt.Item
@@ -55,7 +55,7 @@ func (a *allQuant) validate() (dType, error) {
 		return qError, err
 	}
 	if childType != qBool {
-		return qError, fmt.Errorf("can not apply all quantor on expression of type %d", childType)
+		return qError, fmt.Errorf("can not apply all quantor on expression of type %s", childType)
 	}
 	return qBool, nil
 }
@@ -87,7 +87,7 @@ func (e *existQuant) validate() (dType, error) {
 		return qError, err
 	}
 	if childType != qBool {
-		return qError, fmt.Errorf("can not apply exists quantor on expression of type %d", childType)
+		return qError, fmt.Errorf("can not apply exists quantor on expression of type %s", childType)
 	}
 	return qBool, nil
 }
@@ -115,7 +115,7 @@ func (i *impl) validate() (dType, error) {
 		return qError, err
 	}
 	if c1 != qBool || c2 != qBool {
-		return qError, fmt.Errorf("can not apply implication on (%d, %d)", c1, c2)
+		return qError, fmt.Errorf("can not apply implication on (%s, %s)", c1, c2)
 	}
 	return qBool, nil
 }
@@ -143,7 +143,7 @@ func (a *and) validate() (dType, error) {
 		return qError, err
 	}
 	if c1 != qBool || c2 != qBool {
-		return qError, fmt.Errorf("can not apply conjunction on (%d, %d)", c1, c2)
+		return qError, fmt.Errorf("can not apply conjunction on (%s, %s)", c1, c2)
 	}
 	return qBool, nil
 }
@@ -171,7 +171,7 @@ func (o *or) validate() (dType, error) {
 		return qError, err
 	}
 	if c1 != qBool || c2 != qBool {
-		return qError, fmt.Errorf("can not apply disjunction on (%d, %d)", c1, c2)
+		return qError, fmt.Errorf("can not apply disjunction on (%s, %s)", c1, c2)
 	}
 	return qBool, nil
 }
@@ -194,7 +194,7 @@ func (n *not) validate() (dType, error) {
 		return qError, err
 	}
 	if c != qBool {
-		return qError, fmt.Errorf("can not apply not on %d", c)
+		return qError, fmt.Errorf("can not apply not on %s", c)
 	}
 	return qBool, nil
 }

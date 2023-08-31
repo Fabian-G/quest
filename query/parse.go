@@ -36,7 +36,7 @@ func parseTree(query string) (node, error) {
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
 	if t != qBool {
-		return nil, fmt.Errorf("query result must be bool, got: %d", t)
+		return nil, fmt.Errorf("query result must be bool, got: %s", t)
 	}
 	return root, nil
 }
