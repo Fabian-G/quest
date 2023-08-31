@@ -21,9 +21,10 @@ const (
 )
 
 type varMap map[string]*todotxt.Item
+type idSet map[string]struct{}
 
 type node interface {
-	validate() (dType, error)
+	validate(idSet) (dType, error)
 	eval(todotxt.List, varMap) any
 	fmt.Stringer
 }
@@ -49,8 +50,12 @@ func (a *allQuant) String() string {
 	return fmt.Sprintf("(forall %s: %s)", a.boundId, a.child.String())
 }
 
-func (a *allQuant) validate() (dType, error) {
-	childType, err := a.child.validate()
+func (a *allQuant) validate(knownIds idSet) (dType, error) {
+	if _, ok := knownIds[a.boundId]; !ok {
+		knownIds[a.boundId] = struct{}{}
+		defer delete(knownIds, a.boundId)
+	}
+	childType, err := a.child.validate(knownIds)
 	if err != nil {
 		return qError, err
 	}
@@ -81,8 +86,12 @@ func (e *existQuant) String() string {
 	return fmt.Sprintf("(exists %s: %s)", e.boundId, e.child.String())
 }
 
-func (e *existQuant) validate() (dType, error) {
-	childType, err := e.child.validate()
+func (e *existQuant) validate(knownIds idSet) (dType, error) {
+	if _, ok := knownIds[e.boundId]; !ok {
+		knownIds[e.boundId] = struct{}{}
+		defer delete(knownIds, e.boundId)
+	}
+	childType, err := e.child.validate(knownIds)
 	if err != nil {
 		return qError, err
 	}
@@ -105,12 +114,12 @@ func (i *impl) String() string {
 	return fmt.Sprintf("(%s -> %s)", i.leftChild.String(), i.rightChild.String())
 }
 
-func (i *impl) validate() (dType, error) {
-	c1, err := i.leftChild.validate()
+func (i *impl) validate(knownIds idSet) (dType, error) {
+	c1, err := i.leftChild.validate(knownIds)
 	if err != nil {
 		return qError, err
 	}
-	c2, err := i.rightChild.validate()
+	c2, err := i.rightChild.validate(knownIds)
 	if err != nil {
 		return qError, err
 	}
@@ -133,12 +142,12 @@ func (a *and) String() string {
 	return fmt.Sprintf("(%s && %s)", a.leftChild.String(), a.rightChild.String())
 }
 
-func (a *and) validate() (dType, error) {
-	c1, err := a.leftChild.validate()
+func (a *and) validate(knownIds idSet) (dType, error) {
+	c1, err := a.leftChild.validate(knownIds)
 	if err != nil {
 		return qError, err
 	}
-	c2, err := a.rightChild.validate()
+	c2, err := a.rightChild.validate(knownIds)
 	if err != nil {
 		return qError, err
 	}
@@ -161,12 +170,12 @@ func (o *or) String() string {
 	return fmt.Sprintf("(%s || %s)", o.leftChild.String(), o.rightChild.String())
 }
 
-func (o *or) validate() (dType, error) {
-	c1, err := o.leftChild.validate()
+func (o *or) validate(knownIds idSet) (dType, error) {
+	c1, err := o.leftChild.validate(knownIds)
 	if err != nil {
 		return qError, err
 	}
-	c2, err := o.rightChild.validate()
+	c2, err := o.rightChild.validate(knownIds)
 	if err != nil {
 		return qError, err
 	}
@@ -188,8 +197,8 @@ func (n *not) String() string {
 	return fmt.Sprintf("!%s", n.child)
 }
 
-func (n *not) validate() (dType, error) {
-	c, err := n.child.validate()
+func (n *not) validate(knownIds idSet) (dType, error) {
+	c, err := n.child.validate(knownIds)
 	if err != nil {
 		return qError, err
 	}
@@ -211,7 +220,7 @@ func (s *stringConst) String() string {
 	return s.val
 
 }
-func (s *stringConst) validate() (dType, error) {
+func (s *stringConst) validate(knownIds idSet) (dType, error) {
 	return qString, nil
 }
 
@@ -228,7 +237,7 @@ func (i *intConst) String() string {
 	return i.val
 }
 
-func (i *intConst) validate() (dType, error) {
+func (i *intConst) validate(knownIds idSet) (dType, error) {
 	if _, err := strconv.Atoi(i.val); err != nil {
 		return qError, fmt.Errorf("could not parse integer constant: %s", i.val)
 	}
@@ -248,7 +257,7 @@ func (b *boolConst) String() string {
 	return b.val
 }
 
-func (b *boolConst) validate() (dType, error) {
+func (b *boolConst) validate(knownIds idSet) (dType, error) {
 	if _, err := strconv.ParseBool(b.val); err != nil {
 		return qError, fmt.Errorf("could not parse boolean constant: %s", b.val)
 	}
@@ -267,7 +276,10 @@ func (i *identifier) String() string {
 	return i.name
 }
 
-func (i *identifier) validate() (dType, error) {
+func (i *identifier) validate(knownIds idSet) (dType, error) {
+	if _, ok := knownIds[i.name]; !ok {
+		return qError, fmt.Errorf("unknown identifier: %s", i.name)
+	}
 	return qItem, nil
 }
 
@@ -285,8 +297,8 @@ func (c *call) String() string {
 	return fmt.Sprintf("%s%s", c.name, c.args.String())
 }
 
-func (c *call) validate() (dType, error) {
-	argTypes, err := c.args.validateAll()
+func (c *call) validate(knownIds idSet) (dType, error) {
+	argTypes, err := c.args.validateAll(knownIds)
 	if err != nil {
 		return qError, err
 	}
@@ -315,14 +327,14 @@ func (a *args) String() string {
 	return fmt.Sprintf("(%s)", argListString[:max(0, len(argListString)-2)])
 }
 
-func (a *args) validate() (dType, error) {
+func (a *args) validate(knownIds idSet) (dType, error) {
 	return qError, errors.New("args must only occur in the context of a function call")
 }
 
-func (a *args) validateAll() ([]dType, error) {
+func (a *args) validateAll(knownIds idSet) ([]dType, error) {
 	types := make([]dType, 0, len(a.children))
 	for _, c := range a.children {
-		t, err := c.validate()
+		t, err := c.validate(knownIds)
 		if err != nil {
 			return []dType{qError}, err
 		}

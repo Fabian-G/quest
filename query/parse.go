@@ -10,7 +10,7 @@ import (
 type Query func(todotxt.List, *todotxt.Item) bool
 
 func Compile(query string) (Query, error) {
-	root, err := parseTree(query)
+	root, err := parseTree(query, idSet{"it": struct{}{}})
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +22,7 @@ func Compile(query string) (Query, error) {
 	return evalFunc, nil
 }
 
-func parseTree(query string) (node, error) {
+func parseTree(query string, expectedFreeVars idSet) (node, error) {
 	parser := parser{
 		lex: lex(query),
 	}
@@ -31,7 +31,7 @@ func parseTree(query string) (node, error) {
 	if err != nil {
 		return nil, err
 	}
-	t, err := root.validate()
+	t, err := root.validate(expectedFreeVars)
 	if err != nil {
 		return nil, fmt.Errorf("validation error: %w", err)
 	}

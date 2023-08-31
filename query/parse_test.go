@@ -53,7 +53,7 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			root, err := parseTree(tc.query)
+			root, err := parseTree(tc.query, idSet{"it": struct{}{}})
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expectedParseResult, root.String())
 		})
@@ -164,6 +164,38 @@ func Test_eval(t *testing.T) {
 			queryFn, err := Compile(tc.query)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.result, queryFn(tc.list, tc.list[tc.itemNumber]))
+		})
+	}
+}
+
+func Test_InvalidQuerysResultInParseError(t *testing.T) {
+	testCases := map[string]struct {
+		query string
+	}{
+		"wrong type for and": {
+			query: `true && "true"`,
+		},
+		"wrong type or and": {
+			query: `true || "true"`,
+		},
+		"wrong type impl and": {
+			query: `true -> "true"`,
+		},
+		"wrong type not and": {
+			query: `!"true"`,
+		},
+		"wrong type for query": {
+			query: `"hello world"`,
+		},
+		"unknown identifier": {
+			query: `exists x: done(y)`,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			_, err := Compile(tc.query)
+			assert.Error(t, err)
 		})
 	}
 }
