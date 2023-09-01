@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"sync"
 
 	"github.com/Fabian-G/todotxt/todotxt"
@@ -17,7 +18,8 @@ type TxtRepo struct {
 	lastRead   int64
 	watcher    *fsnotify.Watcher
 	updateChan []chan ReadFunc
-	lock       sync.Mutex
+	fileLock   sync.Mutex
+	watchLock  sync.Mutex
 	Encoder    *todotxt.Encoder
 	Decoder    *todotxt.Decoder
 }
@@ -29,8 +31,8 @@ func NewTxtRepo(dest string) *TxtRepo {
 }
 
 func (t *TxtRepo) Save(l todotxt.List) error {
-	t.lock.Lock()
-	defer t.lock.Unlock()
+	t.fileLock.Lock()
+	defer t.fileLock.Unlock()
 	stats, err := os.Stat(t.file)
 	if err != nil {
 		return fmt.Errorf("could not stat txt file %s: %w", t.file, err)
@@ -61,8 +63,8 @@ func (t *TxtRepo) write(l todotxt.List) error {
 }
 
 func (t *TxtRepo) Read() (todotxt.List, error) {
-	t.lock.Lock()
-	defer t.lock.Unlock()
+	t.fileLock.Lock()
+	defer t.fileLock.Unlock()
 	stats, err := os.Stat(t.file)
 	if err != nil {
 		return nil, fmt.Errorf("could not stat txt file %s: %w", t.file, err)
@@ -89,49 +91,72 @@ func (t *TxtRepo) load() (todotxt.List, error) {
 	return l, nil
 }
 
-func (t *TxtRepo) Watch() (<-chan ReadFunc, error) {
-	t.lock.Lock()
-	defer t.lock.Unlock()
+// Watch watches watches for file changes.
+// The second return argument can be used to unregister the watcher.
+// However, that function must not be called from the same go routine that listens on the
+// returned channel. When in doubt you can close it asynchronosuly `go remove()`
+func (t *TxtRepo) Watch() (<-chan ReadFunc, func(), error) {
+	t.watchLock.Lock()
+	defer t.watchLock.Unlock()
 	if t.watcher == nil {
 		var err error
 		t.watcher, err = fsnotify.NewWatcher()
 		if err != nil {
-			return nil, fmt.Errorf("could not create watcher: %w", err)
+			return nil, nil, fmt.Errorf("could not create watcher: %w", err)
 		}
 		err = t.watcher.Add(t.file)
 		if err != nil {
-			return nil, fmt.Errorf("could not start watching %s: %w", t.file, err)
+			return nil, nil, fmt.Errorf("could not start watching %s: %w", t.file, err)
 		}
-		go func() {
-			for {
-				select {
-				case event, ok := <-t.watcher.Events:
-					if !ok {
-						return
-					}
-					if event.Has(fsnotify.Write) {
-						for _, c := range t.updateChan {
-							c <- t.Read
-						}
-					}
-				case err, ok := <-t.watcher.Errors:
-					if !ok {
-						return
-					}
-					log.Fatal(err)
-				}
-			}
-		}()
+		go t.fileWatcher()
 	}
 	newChan := make(chan ReadFunc)
 	t.updateChan = append(t.updateChan, newChan)
-	return newChan, nil
+	remove := func() {
+		t.watchLock.Lock()
+		defer t.watchLock.Unlock()
+		t.updateChan = slices.DeleteFunc(t.updateChan, func(i chan ReadFunc) bool { return i == newChan })
+		close(newChan)
+	}
+	return newChan, remove, nil
+}
+
+func (t *TxtRepo) fileWatcher() {
+	for {
+		select {
+		case event, ok := <-t.watcher.Events:
+			if !ok {
+				return
+			}
+			if event.Has(fsnotify.Write) {
+				t.notify()
+			}
+		case err, ok := <-t.watcher.Errors:
+			if !ok {
+				return
+			}
+			log.Fatal(err)
+		}
+	}
+}
+
+func (t *TxtRepo) notify() {
+	t.watchLock.Lock()
+	defer t.watchLock.Unlock()
+	for _, c := range t.updateChan {
+		c <- t.Read
+	}
 }
 
 func (t *TxtRepo) Close() {
-	t.lock.Lock()
-	defer t.lock.Unlock()
+	t.watchLock.Lock()
+	defer t.watchLock.Unlock()
 	t.watcher.Close()
+	t.updateChan = nil
+	for _, c := range t.updateChan {
+		close(c)
+	}
+	t.watcher = nil
 }
 
 func (t *TxtRepo) encoder() *todotxt.Encoder {
