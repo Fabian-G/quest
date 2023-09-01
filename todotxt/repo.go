@@ -140,6 +140,10 @@ func (t *Repo) Watch() (<-chan ReadFunc, func(), error) {
 }
 
 func (t *Repo) fileWatcher() {
+	defer func() {
+		t.watcher.Close()
+		t.watcher = nil
+	}()
 	for {
 		select {
 		case event, ok := <-t.watcher.Events:
@@ -174,7 +178,6 @@ func (t *Repo) Close() {
 	for _, c := range t.updateChan {
 		close(c)
 	}
-	t.watcher = nil
 }
 
 func (t *Repo) encoder() *Encoder {
