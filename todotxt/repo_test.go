@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Fabian-G/todotxt/todotxt"
 	"github.com/stretchr/testify/assert"
@@ -36,6 +37,9 @@ func Test_OptimisticLockingDoesNotReturnErrorIfFileWasNotChanged(t *testing.T) {
 }
 
 func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
 	file := createTestFile(t, `A todo item`)
 	repo := todotxt.NewRepo(file)
 
@@ -51,7 +55,13 @@ func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 		io.Copy(f, strings.NewReader("Hello World"))
 	}()
 
-	change := <-c
+	timeout := time.After(5 * time.Second)
+	var change todotxt.ReadFunc
+	select {
+	case change = <-c:
+	case <-timeout:
+		t.Fatal("file change was not detected in time")
+	}
 	newList, err := change()
 	assert.Nil(t, err)
 	assert.Len(t, newList, 1)
