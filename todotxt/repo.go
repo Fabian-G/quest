@@ -153,7 +153,7 @@ func (t *Repo) fileWatcher() {
 			if !ok {
 				return
 			}
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}
 }
