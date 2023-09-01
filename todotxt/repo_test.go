@@ -1,4 +1,4 @@
-package disk
+package todotxt_test
 
 import (
 	"io"
@@ -13,7 +13,7 @@ import (
 
 func Test_OptimisticLockingReturnsErrorOnSaveIfWrittenInTheMeantime(t *testing.T) {
 	file := createTestFile(t, `A todo item`)
-	repo := NewTxtRepo(file)
+	repo := todotxt.NewRepo(file)
 
 	list, err := repo.Read()
 	assert.Nil(t, err)
@@ -21,12 +21,12 @@ func Test_OptimisticLockingReturnsErrorOnSaveIfWrittenInTheMeantime(t *testing.T
 	assert.Nil(t, err)
 	err = repo.Save(list)
 
-	assert.ErrorIs(t, err, ErrOLocked)
+	assert.ErrorIs(t, err, todotxt.ErrOLocked)
 }
 
 func Test_OptimisticLockingDoesNotReturnErrorIfFileWasNotChanged(t *testing.T) {
 	file := createTestFile(t, `A todo item`)
-	repo := NewTxtRepo(file)
+	repo := todotxt.NewRepo(file)
 
 	list, err := repo.Read()
 	assert.Nil(t, err)
@@ -37,7 +37,7 @@ func Test_OptimisticLockingDoesNotReturnErrorIfFileWasNotChanged(t *testing.T) {
 
 func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 	file := createTestFile(t, `A todo item`)
-	repo := NewTxtRepo(file)
+	repo := todotxt.NewRepo(file)
 
 	c, rm, err := repo.Watch()
 	defer repo.Close()
@@ -60,7 +60,7 @@ func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 
 func Test_NonExistingTodoFileIsCreated(t *testing.T) {
 	tmpDir := createTmpDir(t)
-	repo := NewTxtRepo(path.Join(tmpDir, "mytodo.txt"))
+	repo := todotxt.NewRepo(path.Join(tmpDir, "mytodo.txt"))
 
 	err := repo.Save(todotxt.List{todotxt.MustBuildItem(todotxt.WithDescription("Hello World"))})
 	assert.Nil(t, err)

@@ -1,4 +1,4 @@
-package disk
+package todotxt
 
 import (
 	"bytes"
@@ -12,32 +12,31 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/Fabian-G/todotxt/todotxt"
 	"github.com/fsnotify/fsnotify"
 )
 
 var ErrOLocked = errors.New("the file was changed since the last time we read it")
 
-type ReadFunc func() (todotxt.List, error)
+type ReadFunc func() (List, error)
 
-type TxtRepo struct {
+type Repo struct {
 	file       string
 	checksum   [20]byte
 	watcher    *fsnotify.Watcher
 	updateChan []chan ReadFunc
 	fileLock   sync.Mutex
 	watchLock  sync.Mutex
-	Encoder    *todotxt.Encoder
-	Decoder    *todotxt.Decoder
+	Encoder    *Encoder
+	Decoder    *Decoder
 }
 
-func NewTxtRepo(dest string) *TxtRepo {
-	return &TxtRepo{
+func NewRepo(dest string) *Repo {
+	return &Repo{
 		file: dest,
 	}
 }
 
-func (t *TxtRepo) Save(l todotxt.List) error {
+func (t *Repo) Save(l List) error {
 	t.fileLock.Lock()
 	defer t.fileLock.Unlock()
 	err := t.handleOptimisticLocking()
@@ -51,7 +50,7 @@ func (t *TxtRepo) Save(l todotxt.List) error {
 	return nil
 }
 
-func (t *TxtRepo) handleOptimisticLocking() error {
+func (t *Repo) handleOptimisticLocking() error {
 	currentData, err := t.load()
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil
@@ -65,7 +64,7 @@ func (t *TxtRepo) handleOptimisticLocking() error {
 	return nil
 }
 
-func (t *TxtRepo) write(l todotxt.List) error {
+func (t *Repo) write(l List) error {
 	file, err := os.OpenFile(t.file, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return fmt.Errorf("could not open txt file %s for writing: %w", t.file, err)
@@ -81,7 +80,7 @@ func (t *TxtRepo) write(l todotxt.List) error {
 	return nil
 }
 
-func (t *TxtRepo) Read() (todotxt.List, error) {
+func (t *Repo) Read() (List, error) {
 	t.fileLock.Lock()
 	defer t.fileLock.Unlock()
 	rawData, err := t.load()
@@ -96,7 +95,7 @@ func (t *TxtRepo) Read() (todotxt.List, error) {
 	return list, nil
 }
 
-func (t *TxtRepo) load() ([]byte, error) {
+func (t *Repo) load() ([]byte, error) {
 	file, err := os.Open(t.file)
 	if err != nil {
 		return nil, fmt.Errorf("could not open txt file %s for reading: %w", t.file, err)
@@ -114,7 +113,7 @@ func (t *TxtRepo) load() ([]byte, error) {
 // The second return argument can be used to unregister the watcher.
 // However, that function must not be called from the same go routine that listens on the
 // returned channel. When in doubt you can close it asynchronosuly `go remove()`
-func (t *TxtRepo) Watch() (<-chan ReadFunc, func(), error) {
+func (t *Repo) Watch() (<-chan ReadFunc, func(), error) {
 	t.watchLock.Lock()
 	defer t.watchLock.Unlock()
 	if t.watcher == nil {
@@ -140,7 +139,7 @@ func (t *TxtRepo) Watch() (<-chan ReadFunc, func(), error) {
 	return newChan, remove, nil
 }
 
-func (t *TxtRepo) fileWatcher() {
+func (t *Repo) fileWatcher() {
 	for {
 		select {
 		case event, ok := <-t.watcher.Events:
@@ -159,7 +158,7 @@ func (t *TxtRepo) fileWatcher() {
 	}
 }
 
-func (t *TxtRepo) notify() {
+func (t *Repo) notify() {
 	t.watchLock.Lock()
 	defer t.watchLock.Unlock()
 	for _, c := range t.updateChan {
@@ -167,7 +166,7 @@ func (t *TxtRepo) notify() {
 	}
 }
 
-func (t *TxtRepo) Close() {
+func (t *Repo) Close() {
 	t.watchLock.Lock()
 	defer t.watchLock.Unlock()
 	t.watcher.Close()
@@ -178,16 +177,16 @@ func (t *TxtRepo) Close() {
 	t.watcher = nil
 }
 
-func (t *TxtRepo) encoder() *todotxt.Encoder {
+func (t *Repo) encoder() *Encoder {
 	if t.Encoder != nil {
 		return t.Encoder
 	}
-	return &todotxt.DefaultEncoder
+	return &DefaultEncoder
 }
 
-func (t *TxtRepo) decoder() *todotxt.Decoder {
+func (t *Repo) decoder() *Decoder {
 	if t.Decoder != nil {
 		return t.Decoder
 	}
-	return &todotxt.DefaultDecoder
+	return &DefaultDecoder
 }
