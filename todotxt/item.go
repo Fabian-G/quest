@@ -22,6 +22,7 @@ type Item struct {
 	completionDate *time.Time
 	creationDate   *time.Time
 	description    string
+	emitFunc       func(ModEvent)
 }
 
 // Create creates a new Item with the creationDate set
@@ -96,26 +97,34 @@ func (i *Item) Tags() Tags {
 }
 
 func (i *Item) Complete() {
-	i.done = true
-	i.prio = PrioNone
-	i.completionDate = truncateToDate(i.now())
-	if i.creationDate == nil || i.creationDate.After(*i.completionDate) {
-		i.creationDate = i.completionDate
-	}
+	i.modify(func() {
+		i.done = true
+		i.prio = PrioNone
+		i.completionDate = truncateToDate(i.now())
+		if i.creationDate == nil || i.creationDate.After(*i.completionDate) {
+			i.creationDate = i.completionDate
+		}
+	})
 }
 
 func (i *Item) MarkUndone() {
-	i.done = false
-	i.completionDate = nil
+	i.modify(func() {
+		i.done = false
+		i.completionDate = nil
+	})
 }
 
 func (i *Item) PrioritizeAs(prio Priority) {
-	i.done = false
-	i.prio = prio
+	i.modify(func() {
+		i.done = false
+		i.prio = prio
+	})
 }
 
 func (i *Item) EditDescription(desc string) {
-	i.description = desc
+	i.modify(func() {
+		i.description = desc
+	})
 }
 
 func (i *Item) String() string {
@@ -123,6 +132,21 @@ func (i *Item) String() string {
 		return out
 	}
 	return fmt.Sprintf("%#v", i)
+}
+
+func (i *Item) modify(modification func()) {
+	previous := *i
+	modification()
+	i.emit(previous)
+}
+
+func (i *Item) emit(previous Item) {
+	if i.emitFunc != nil {
+		i.emitFunc(ModEvent{
+			Previous: &previous,
+			Current:  i,
+		})
+	}
 }
 
 // This method is unexported, because the API is designed in a way that should make
