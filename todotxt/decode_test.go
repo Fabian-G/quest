@@ -9,9 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func datePtr(year int, month time.Month, day int) *time.Time {
-	date := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
-	return &date
+func date(year int, month time.Month, day int) time.Time {
+	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 }
 
 func TestParse(t *testing.T) {
@@ -48,7 +47,7 @@ func TestParse(t *testing.T) {
 			line: "x 2022-02-02 A done item",
 			expectedItem: todotxt.MustBuildItem(
 				todotxt.WithDone(true),
-				todotxt.WithCreationDate(datePtr(2022, 2, 2)),
+				todotxt.WithCreationDate(date(2022, 2, 2)),
 				todotxt.WithDescription("A done item"),
 			),
 		},
@@ -56,8 +55,8 @@ func TestParse(t *testing.T) {
 			line: "x 2022-02-02 2020-03-04 A +full @item",
 			expectedItem: todotxt.MustBuildItem(
 				todotxt.WithDone(true),
-				todotxt.WithCompletionDate(datePtr(2022, 2, 2)),
-				todotxt.WithCreationDate(datePtr(2020, 3, 4)),
+				todotxt.WithCompletionDate(date(2022, 2, 2)),
+				todotxt.WithCreationDate(date(2020, 3, 4)),
 				todotxt.WithDescription("A +full @item"),
 			),
 		},
@@ -81,8 +80,8 @@ func TestParse(t *testing.T) {
 			line: "x         2022-02-02     2020-03-04     A +full @item     ",
 			expectedItem: todotxt.MustBuildItem(
 				todotxt.WithDone(true),
-				todotxt.WithCompletionDate(datePtr(2022, 2, 2)),
-				todotxt.WithCreationDate(datePtr(2020, 3, 4)),
+				todotxt.WithCompletionDate(date(2022, 2, 2)),
+				todotxt.WithCreationDate(date(2020, 3, 4)),
 				todotxt.WithDescription("A +full @item"),
 			),
 		},
@@ -103,7 +102,7 @@ func TestParse(t *testing.T) {
 				assert.ErrorIs(t, err, tc.expectedError)
 			} else {
 				assert.Equal(t, 1, itemList.Len())
-				assert.Equal(t, tc.expectedItem, itemList.Get(0))
+				todotxt.AssertItemEqual(t, tc.expectedItem, itemList.Get(0))
 			}
 		})
 	}

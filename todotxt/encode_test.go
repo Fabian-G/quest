@@ -28,7 +28,7 @@ func Test_DefaultFormat(t *testing.T) {
 			expectedFormat: "x 2023-04-05 2020-04-05 This is a dummy task",
 		},
 		"An uncompleted task": {
-			item:           todotxt.MustBuildItem(todotxt.CopyOf(dummy), todotxt.WithDone(false), todotxt.WithCompletionDate(nil), todotxt.WithPriority(todotxt.PrioF)),
+			item:           todotxt.MustBuildItem(todotxt.CopyOf(dummy), todotxt.WithDone(false), todotxt.WithoutCompletionDate(), todotxt.WithPriority(todotxt.PrioF)),
 			expectedFormat: "(F) 2020-04-05 This is a dummy task",
 		},
 		"A task without priority": {
@@ -36,7 +36,7 @@ func Test_DefaultFormat(t *testing.T) {
 			expectedFormat: "x 2023-04-05 2020-04-05 This is a dummy task",
 		},
 		"A task without any dates": {
-			item:           todotxt.MustBuildItem(todotxt.CopyOf(dummy), todotxt.WithCompletionDate(nil), todotxt.WithCreationDate(nil)),
+			item:           todotxt.MustBuildItem(todotxt.CopyOf(dummy), todotxt.WithoutCompletionDate(), todotxt.WithoutCreationDate()),
 			expectedFormat: "x This is a dummy task",
 		},
 		"Description with x in the beginning should start with space": {
@@ -94,7 +94,7 @@ func Test_DefaultFormat(t *testing.T) {
 }
 
 func Test_FormatReturnsErrorOnInvalidTask(t *testing.T) {
-	item, _ := todotxt.BuildItem(todotxt.WithCompletionDate(new(time.Time)), todotxt.WithCreationDate(nil))
+	item, _ := todotxt.BuildItem(todotxt.WithCompletionDate(time.Now()), todotxt.WithoutCreationDate())
 
 	list := todotxt.List{}
 	list.Add(item)
@@ -123,7 +123,7 @@ func TestList_WritePlusReadIsTheIdentity(t *testing.T) {
 			todotxt.DefaultEncoder.Encode(&out, tc.itemList)
 			listOut, err := todotxt.DefaultDecoder.Decode(bytes.NewReader(out.Bytes()))
 			assert.Nil(t, err)
-			assert.Equal(t, tc.itemList, listOut)
+			todotxt.AssertListEqual(t, tc.itemList, listOut)
 		})
 	}
 }

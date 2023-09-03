@@ -46,24 +46,30 @@ func WithDone(done bool) BuildFunc {
 	}
 }
 
-func WithCreationDate(date *time.Time) BuildFunc {
+func WithCreationDate(date time.Time) BuildFunc {
 	return func(i *Item) *Item {
-		if date == nil {
-			i.creationDate = nil
-			return i
-		}
-		i.creationDate = truncateToDate(*date)
+		i.creationDate = truncateToDate(date)
 		return i
 	}
 }
 
-func WithCompletionDate(date *time.Time) BuildFunc {
+func WithCompletionDate(date time.Time) BuildFunc {
 	return func(i *Item) *Item {
-		if date == nil {
-			i.completionDate = nil
-			return i
-		}
-		i.completionDate = truncateToDate(*date)
+		i.completionDate = truncateToDate(date)
+		return i
+	}
+}
+
+func WithoutCreationDate() BuildFunc {
+	return func(i *Item) *Item {
+		i.creationDate = nil
+		return i
+	}
+}
+
+func WithoutCompletionDate() BuildFunc {
+	return func(i *Item) *Item {
+		i.completionDate = nil
 		return i
 	}
 }

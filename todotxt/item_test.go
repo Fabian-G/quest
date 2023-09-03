@@ -29,12 +29,12 @@ func Test_Complete(t *testing.T) {
 			expectedCompletionDate: time.Date(2023, 8, 22, 0, 0, 0, 0, time.UTC),
 		},
 		"CreationDate before CompletionDate should be left untouched": {
-			baseItem:               todotxt.Create(time.Date(2023, 8, 20, 12, 3, 4, 1, time.UTC)),
+			baseItem:               todotxt.MustBuildItem(todotxt.WithCreationDate(time.Date(2023, 8, 20, 12, 3, 4, 1, time.UTC))),
 			expectedCDate:          time.Date(2023, 8, 20, 0, 0, 0, 0, time.UTC),
 			expectedCompletionDate: time.Date(2023, 8, 22, 0, 0, 0, 0, time.UTC),
 		},
 		"CreationDate after CompletionDate should be updated to completionDate": {
-			baseItem:               todotxt.Create(time.Date(2023, 8, 23, 12, 3, 4, 1, time.UTC)),
+			baseItem:               todotxt.MustBuildItem(todotxt.WithCreationDate(time.Date(2023, 8, 23, 12, 3, 4, 1, time.UTC))),
 			expectedCDate:          time.Date(2023, 8, 22, 0, 0, 0, 0, time.UTC),
 			expectedCompletionDate: time.Date(2023, 8, 22, 0, 0, 0, 0, time.UTC),
 		},

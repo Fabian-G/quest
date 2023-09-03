@@ -25,15 +25,6 @@ type Item struct {
 	emitFunc       func(ModEvent)
 }
 
-// Create creates a new Item with the creationDate set
-// This function is only useful when you want to specify the creationDate
-// Otherwise the zero value can be used
-func Create(creationDate time.Time) *Item {
-	item := Item{}
-	item.creationDate = truncateToDate(creationDate)
-	return &item
-}
-
 func (i *Item) Done() bool {
 	return i.done
 }

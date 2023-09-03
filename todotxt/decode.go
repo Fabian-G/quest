@@ -38,6 +38,7 @@ func (d *Decoder) Decode(r io.Reader) (*List, error) {
 				Line:       text,
 				LineNumber: lineNumber,
 			})
+			continue
 		}
 		list.Add(item)
 	}
@@ -147,7 +148,7 @@ func completionDate(p *parser) (stateFunc, error) {
 	if err != nil {
 		return nil, ParseError{dateString, err}
 	}
-	p.builderParts = append(p.builderParts, WithCompletionDate(&completionDate))
+	p.builderParts = append(p.builderParts, WithCompletionDate(completionDate))
 	p.advance(len(dateString))
 	p.skipWhiteSpace()
 	return creationDate, nil
@@ -159,7 +160,7 @@ func creationDate(p *parser) (stateFunc, error) {
 	if err != nil {
 		return nil, ParseError{dateString, err}
 	}
-	p.builderParts = append(p.builderParts, WithCreationDate(&creationDate))
+	p.builderParts = append(p.builderParts, WithCreationDate(creationDate))
 	p.advance(len(dateString))
 	p.skipWhiteSpace()
 	return description, nil

@@ -13,3 +13,9 @@ type ModEvent struct {
 type Hook interface {
 	Handle(event ModEvent)
 }
+
+type HookFunc func(event ModEvent)
+
+func (h HookFunc) Handle(event ModEvent) {
+	h(event)
+}

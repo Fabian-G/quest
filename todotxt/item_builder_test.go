@@ -20,8 +20,8 @@ func TestBuildErrors(t *testing.T) {
 			buildConfig: []todotxt.BuildFunc{
 				todotxt.WithDone(true),
 				todotxt.WithDescription("Test"),
-				todotxt.WithCreationDate(nil),
-				todotxt.WithCompletionDate(&dateOne),
+				todotxt.WithoutCreationDate(),
+				todotxt.WithCompletionDate(dateOne),
 			},
 		},
 		"Task with completion date before creation date": {
@@ -29,8 +29,8 @@ func TestBuildErrors(t *testing.T) {
 			buildConfig: []todotxt.BuildFunc{
 				todotxt.WithDone(true),
 				todotxt.WithDescription("Test"),
-				todotxt.WithCreationDate(&dateAfterOne),
-				todotxt.WithCompletionDate(&dateOne),
+				todotxt.WithCreationDate(dateAfterOne),
+				todotxt.WithCompletionDate(dateOne),
 			},
 		},
 		"Undone task with completion date": {
@@ -38,8 +38,8 @@ func TestBuildErrors(t *testing.T) {
 			buildConfig: []todotxt.BuildFunc{
 				todotxt.WithDone(false),
 				todotxt.WithDescription("Test"),
-				todotxt.WithCreationDate(&dateOne),
-				todotxt.WithCompletionDate(&dateAfterOne),
+				todotxt.WithCreationDate(dateOne),
+				todotxt.WithCompletionDate(dateAfterOne),
 			},
 		},
 	}
