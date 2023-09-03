@@ -87,6 +87,16 @@ func (i *Item) Tags() Tags {
 	return fp.Pipe2(split, toMap)(matches)
 }
 
+func (i *Item) SetTag(key, value string) {
+	matcher := MatcherForTag(key)
+	if matcher.MatchString(i.Description()) {
+		newDescription := matcher.ReplaceAllString(i.description, fmt.Sprintf(" %s:%s ", key, value))
+		i.EditDescription(strings.TrimSpace(newDescription))
+	} else {
+		i.EditDescription(fmt.Sprintf("%s %s:%s", i.Description(), key, value))
+	}
+}
+
 func (i *Item) Complete() {
 	i.modify(func() {
 		i.done = true

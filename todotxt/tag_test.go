@@ -43,3 +43,12 @@ func TestTag_MatcherForTag(t *testing.T) {
 		})
 	}
 }
+
+func Test_MatcherCanBeUsedToSetTagValue(t *testing.T) {
+	description := "This is a test rec:+5y description rec:+6y with a tag"
+
+	matcher := todotxt.MatcherForTag("rec")
+	newDescription := matcher.ReplaceAllString(description, " rec:+1d ")
+
+	assert.Equal(t, "This is a test rec:+1d description rec:+1d with a tag", newDescription)
+}

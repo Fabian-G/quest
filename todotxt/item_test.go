@@ -205,3 +205,19 @@ func Test_TagsExtraction(t *testing.T) {
 		})
 	}
 }
+
+func Test_SetTag(t *testing.T) {
+	item := todotxt.MustBuildItem(todotxt.WithDescription("This is rec:+5y a description with tags rec:5y"))
+
+	item.SetTag("rec", "+1d")
+
+	assert.Equal(t, "This is rec:+1d a description with tags rec:+1d", item.Description())
+}
+
+func Test_SetTagForNewTag(t *testing.T) {
+	item := todotxt.MustBuildItem(todotxt.WithDescription("This is rec:+5y a description with tags rec:5y"))
+
+	item.SetTag("new", "+1d")
+
+	assert.Equal(t, "This is rec:+5y a description with tags rec:5y new:+1d", item.Description())
+}
