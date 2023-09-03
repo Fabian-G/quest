@@ -83,8 +83,10 @@ func Test_DefaultFormat(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
+			list := todotxt.List{}
+			list.Add(tc.item)
 			out := strings.Builder{}
-			err := todotxt.DefaultEncoder.Encode(&out, todotxt.List{tc.item})
+			err := todotxt.DefaultEncoder.Encode(&out, &list)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expectedFormat, out.String())
 		})
@@ -94,22 +96,24 @@ func Test_DefaultFormat(t *testing.T) {
 func Test_FormatReturnsErrorOnInvalidTask(t *testing.T) {
 	item, _ := todotxt.BuildItem(todotxt.WithCompletionDate(new(time.Time)), todotxt.WithCreationDate(nil))
 
-	err := todotxt.DefaultEncoder.Encode(io.Discard, todotxt.List{item})
+	list := todotxt.List{}
+	list.Add(item)
+	err := todotxt.DefaultEncoder.Encode(io.Discard, &list)
 	assert.Error(t, err)
 }
 
 func TestList_WritePlusReadIsTheIdentity(t *testing.T) {
 	testCases := map[string]struct {
-		itemList todotxt.List
+		itemList *todotxt.List
 	}{
 		"An empty list": {
-			itemList: todotxt.List{},
+			itemList: &todotxt.List{},
 		},
 		"A list with items": {
-			itemList: todotxt.List([]*todotxt.Item{
+			itemList: todotxt.ListOf(
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World")),
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World2")),
-			}),
+			),
 		},
 	}
 

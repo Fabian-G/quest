@@ -21,14 +21,15 @@ type Encoder struct {
 }
 
 // Format formats an item according to the todotxt spec
-func (f Encoder) Encode(w io.Writer, list List) error {
+func (f Encoder) Encode(w io.Writer, list *List) error {
+	tasks := list.Tasks()
 	out := bufio.NewWriter(w)
-	for i, item := range list {
+	for i, item := range tasks {
 		formattedItem, err := f.encodeItem(item)
 		if err != nil {
 			return fmt.Errorf("could not marshal item: %w", err)
 		}
-		if _, err := out.WriteString(formattedItem + itemSeparator(i, len(list))); err != nil {
+		if _, err := out.WriteString(formattedItem + itemSeparator(i, len(tasks))); err != nil {
 			return fmt.Errorf("could not write item %v: %w", item, err)
 		}
 	}

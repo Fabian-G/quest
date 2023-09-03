@@ -17,7 +17,7 @@ import (
 
 var ErrOLocked = errors.New("the file was changed since the last time we read it")
 
-type ReadFunc func() (List, error)
+type ReadFunc func() (*List, error)
 
 type Repo struct {
 	file       string
@@ -36,7 +36,7 @@ func NewRepo(dest string) *Repo {
 	}
 }
 
-func (t *Repo) Save(l List) error {
+func (t *Repo) Save(l *List) error {
 	t.fileLock.Lock()
 	defer t.fileLock.Unlock()
 	err := t.handleOptimisticLocking()
@@ -64,7 +64,7 @@ func (t *Repo) handleOptimisticLocking() error {
 	return nil
 }
 
-func (t *Repo) write(l List) error {
+func (t *Repo) write(l *List) error {
 	file, err := os.OpenFile(t.file, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return fmt.Errorf("could not open txt file %s for writing: %w", t.file, err)
@@ -80,7 +80,7 @@ func (t *Repo) write(l List) error {
 	return nil
 }
 
-func (t *Repo) Read() (List, error) {
+func (t *Repo) Read() (*List, error) {
 	t.fileLock.Lock()
 	defer t.fileLock.Unlock()
 	rawData, err := t.load()

@@ -64,21 +64,21 @@ func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 	}
 	newList, err := change()
 	assert.Nil(t, err)
-	assert.Len(t, newList, 1)
-	assert.Equal(t, "Hello World", newList[0].Description())
+	assert.Equal(t, 1, newList.Len())
+	assert.Equal(t, "Hello World", newList.Get(0).Description())
 }
 
 func Test_NonExistingTodoFileIsCreated(t *testing.T) {
 	tmpDir := createTmpDir(t)
 	repo := todotxt.NewRepo(path.Join(tmpDir, "mytodo.txt"))
 
-	err := repo.Save(todotxt.List{todotxt.MustBuildItem(todotxt.WithDescription("Hello World"))})
+	err := repo.Save(todotxt.ListOf(todotxt.MustBuildItem(todotxt.WithDescription("Hello World"))))
 	assert.Nil(t, err)
 	list, err := repo.Read()
 
 	assert.Nil(t, err)
-	assert.Len(t, list, 1)
-	assert.Equal(t, "Hello World", list[0].Description())
+	assert.Equal(t, 1, list.Len())
+	assert.Equal(t, "Hello World", list.Get(0).Description())
 }
 
 func createTestFile(t *testing.T, content string) string {

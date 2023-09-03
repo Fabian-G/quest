@@ -102,8 +102,8 @@ func TestParse(t *testing.T) {
 			} else if tc.expectedError != nil {
 				assert.ErrorIs(t, err, tc.expectedError)
 			} else {
-				assert.Len(t, itemList, 1)
-				assert.Equal(t, tc.expectedItem, itemList[0])
+				assert.Equal(t, 1, itemList.Len())
+				assert.Equal(t, tc.expectedItem, itemList.Get(0))
 			}
 		})
 	}
@@ -140,7 +140,7 @@ func Test_WellFormattedItemsShouldNotChangeAfterParsingPlusSerializing(t *testin
 		t.Run(name, func(t *testing.T) {
 			itemList, err := todotxt.DefaultDecoder.Decode(strings.NewReader(tc.line))
 			assert.Nil(t, err)
-			assert.Len(t, itemList, 1)
+			assert.Equal(t, 1, itemList.Len())
 			out := strings.Builder{}
 			err = todotxt.DefaultEncoder.Encode(&out, itemList)
 			assert.Nil(t, err)

@@ -7,14 +7,14 @@ import (
 	"github.com/Fabian-G/todotxt/todotxt"
 )
 
-type Query func(todotxt.List, *todotxt.Item) bool
+type Query func(*todotxt.List, *todotxt.Item) bool
 
 func Compile(query string) (Query, error) {
 	root, err := parseTree(query, idSet{"it": struct{}{}})
 	if err != nil {
 		return nil, err
 	}
-	evalFunc := func(universe todotxt.List, it *todotxt.Item) bool {
+	evalFunc := func(universe *todotxt.List, it *todotxt.Item) bool {
 		alpha := make(map[string]*todotxt.Item)
 		alpha["it"] = it
 		return root.eval(universe, alpha).(bool)

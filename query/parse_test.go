@@ -62,7 +62,7 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 
 func Test_eval(t *testing.T) {
 	testCases := map[string]struct {
-		list       todotxt.List
+		list       *todotxt.List
 		itemNumber int
 		query      string
 		result     bool
@@ -163,7 +163,7 @@ func Test_eval(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			queryFn, err := Compile(tc.query)
 			assert.Nil(t, err)
-			assert.Equal(t, tc.result, queryFn(tc.list, tc.list[tc.itemNumber]))
+			assert.Equal(t, tc.result, queryFn(tc.list, tc.list.Get(tc.itemNumber)))
 		})
 	}
 }
@@ -200,7 +200,7 @@ func Test_InvalidQuerysResultInParseError(t *testing.T) {
 	}
 }
 
-func listFromString(t *testing.T, list string) todotxt.List {
+func listFromString(t *testing.T, list string) *todotxt.List {
 	tabsRemoved := strings.ReplaceAll(list, "\t", "")
 	l, err := todotxt.DefaultDecoder.Decode(strings.NewReader(strings.TrimSpace(tabsRemoved)))
 	assert.Nil(t, err)

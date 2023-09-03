@@ -23,8 +23,8 @@ var DefaultDecoder = Decoder{}
 type Decoder struct {
 }
 
-func (d *Decoder) Decode(r io.Reader) (List, error) {
-	list := List(make([]*Item, 0))
+func (d *Decoder) Decode(r io.Reader) (*List, error) {
+	list := &List{}
 	var errs []error
 	var lineNumber int
 	in := bufio.NewScanner(r)
@@ -39,7 +39,7 @@ func (d *Decoder) Decode(r io.Reader) (List, error) {
 				LineNumber: lineNumber,
 			})
 		}
-		list = append(list, item)
+		list.Add(item)
 	}
 	if err := in.Err(); err != nil {
 		return nil, fmt.Errorf("could not read input: %w", err)

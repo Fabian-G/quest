@@ -25,7 +25,7 @@ type idSet map[string]struct{}
 
 type node interface {
 	validate(idSet) (dType, error)
-	eval(todotxt.List, varMap) any
+	eval(*todotxt.List, varMap) any
 	fmt.Stringer
 }
 
@@ -34,9 +34,9 @@ type allQuant struct {
 	child   node
 }
 
-func (a *allQuant) eval(l todotxt.List, alpha varMap) any {
+func (a *allQuant) eval(l *todotxt.List, alpha varMap) any {
 	prevValue := alpha[a.boundId]
-	for _, item := range l {
+	for _, item := range l.Tasks() {
 		alpha[a.boundId] = item
 		if !a.child.eval(l, alpha).(bool) {
 			return false
@@ -70,9 +70,9 @@ type existQuant struct {
 	child   node
 }
 
-func (e *existQuant) eval(l todotxt.List, alpha varMap) any {
+func (e *existQuant) eval(l *todotxt.List, alpha varMap) any {
 	prevValue := alpha[e.boundId]
-	for _, item := range l {
+	for _, item := range l.Tasks() {
 		alpha[e.boundId] = item
 		if e.child.eval(l, alpha).(bool) {
 			return true
@@ -106,7 +106,7 @@ type impl struct {
 	rightChild node
 }
 
-func (i *impl) eval(l todotxt.List, alpha varMap) any {
+func (i *impl) eval(l *todotxt.List, alpha varMap) any {
 	return !i.leftChild.eval(l, alpha).(bool) || i.rightChild.eval(l, alpha).(bool)
 }
 
@@ -134,7 +134,7 @@ type and struct {
 	rightChild node
 }
 
-func (a *and) eval(l todotxt.List, alpha varMap) any {
+func (a *and) eval(l *todotxt.List, alpha varMap) any {
 	return a.leftChild.eval(l, alpha).(bool) && a.rightChild.eval(l, alpha).(bool)
 }
 
@@ -162,7 +162,7 @@ type or struct {
 	rightChild node
 }
 
-func (o *or) eval(l todotxt.List, alpha varMap) any {
+func (o *or) eval(l *todotxt.List, alpha varMap) any {
 	return o.leftChild.eval(l, alpha).(bool) || o.rightChild.eval(l, alpha).(bool)
 }
 
@@ -189,7 +189,7 @@ type not struct {
 	child node
 }
 
-func (n *not) eval(l todotxt.List, alpha varMap) any {
+func (n *not) eval(l *todotxt.List, alpha varMap) any {
 	return !n.child.eval(l, alpha).(bool)
 }
 
@@ -212,7 +212,7 @@ type stringConst struct {
 	val string
 }
 
-func (s *stringConst) eval(l todotxt.List, alpha varMap) any {
+func (s *stringConst) eval(l *todotxt.List, alpha varMap) any {
 	return s.val[1 : len(s.val)-1]
 }
 
@@ -228,7 +228,7 @@ type intConst struct {
 	val string
 }
 
-func (i *intConst) eval(l todotxt.List, alpha varMap) any {
+func (i *intConst) eval(l *todotxt.List, alpha varMap) any {
 	n, _ := strconv.Atoi(i.val)
 	return n
 }
@@ -248,7 +248,7 @@ type boolConst struct {
 	val string
 }
 
-func (b *boolConst) eval(l todotxt.List, alpha varMap) any {
+func (b *boolConst) eval(l *todotxt.List, alpha varMap) any {
 	bo, _ := strconv.ParseBool(b.val)
 	return bo
 }
@@ -268,7 +268,7 @@ type identifier struct {
 	name string
 }
 
-func (i *identifier) eval(l todotxt.List, alpha varMap) any {
+func (i *identifier) eval(l *todotxt.List, alpha varMap) any {
 	return alpha[i.name]
 }
 
@@ -288,7 +288,7 @@ type call struct {
 	args *args
 }
 
-func (c *call) eval(l todotxt.List, alpha varMap) any {
+func (c *call) eval(l *todotxt.List, alpha varMap) any {
 	fn := functions[c.name]
 	return fn(c.args.eval(l, alpha).([]any))
 }
@@ -309,7 +309,7 @@ type args struct {
 	children []node
 }
 
-func (a *args) eval(l todotxt.List, alpha varMap) any {
+func (a *args) eval(l *todotxt.List, alpha varMap) any {
 	result := make([]any, 0, len(a.children))
 	for _, c := range a.children {
 		result = append(result, c.eval(l, alpha))
