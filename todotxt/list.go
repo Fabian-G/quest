@@ -1,5 +1,7 @@
 package todotxt
 
+import "slices"
+
 type List struct {
 	tasks         []*Item
 	hooksDisabled bool
@@ -22,6 +24,13 @@ func (l *List) Add(item *Item) {
 	item.emitFunc = l.emit
 	l.tasks = append(l.tasks, item)
 	l.emit(ModEvent{Previous: nil, Current: item})
+}
+
+func (l *List) Remove(idx int) {
+	itemToRemove := l.Get(idx)
+	itemToRemove.emitFunc = nil
+	l.tasks = slices.Delete(l.tasks, idx, idx+1)
+	l.emit(ModEvent{Previous: itemToRemove, Current: nil})
 }
 
 func (l *List) Get(idx int) *Item {

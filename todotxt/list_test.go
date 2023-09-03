@@ -26,6 +26,20 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 				assert.Equal(t, "Hello World", current.Description())
 			},
 		},
+		"Hook gets called on delete": {
+			initial: todotxt.ListOf(
+				todotxt.MustBuildItem(todotxt.WithDescription("Hello World")),
+			),
+			op: func(l *todotxt.List) {
+				l.Remove(0)
+			},
+			previousMatcher: func(t *testing.T, previous *todotxt.Item) {
+				assert.Equal(t, "Hello World", previous.Description())
+			},
+			currentMatcher: func(t *testing.T, current *todotxt.Item) {
+				assert.Nil(t, current)
+			},
+		},
 		"Hook gets called on complete": {
 			initial: todotxt.ListOf(
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World")),
@@ -117,4 +131,12 @@ func Test_ModificationsMadeInTheHookGetThroughToTheList(t *testing.T) {
 
 	assert.Equal(t, "Hello World That change sucked That change sucked That change sucked", list.Get(0).Description())
 	assert.False(t, list.Get(0).Done())
+}
+
+func TestList_Remove(t *testing.T) {
+	list := todotxt.ListOf(todotxt.MustBuildItem(todotxt.WithDescription("Hello World")))
+
+	list.Remove(0)
+
+	assert.Equal(t, 0, list.Len())
 }
