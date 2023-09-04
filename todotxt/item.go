@@ -3,6 +3,7 @@ package todotxt
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -22,7 +23,7 @@ type Item struct {
 	completionDate *time.Time
 	creationDate   *time.Time
 	description    string
-	emitFunc       func(ModEvent)
+	emitFunc       func(ModEvent) error
 }
 
 func (i *Item) Done() bool {
@@ -46,7 +47,7 @@ func (i *Item) Description() string {
 }
 
 func (i *Item) Projects() []Project {
-	matches := projectRegex.FindAllString(i.description, -1)
+	matches := i.findDescMatches(projectRegex)
 	toProject := fp.Map(func(s string) Project { return Project(strings.TrimSpace(s)[1:]) })
 	sort := func(in []Project) []Project {
 		slices.Sort(in)
@@ -57,7 +58,7 @@ func (i *Item) Projects() []Project {
 }
 
 func (i *Item) Contexts() []Context {
-	matches := contextRegex.FindAllString(i.description, -1)
+	matches := i.findDescMatches(contextRegex)
 	toContext := fp.Map(func(s string) Context { return Context(strings.TrimSpace(s)[1:]) })
 	sort := func(in []Context) []Context {
 		slices.Sort(in)
@@ -72,7 +73,7 @@ func (i *Item) Tags() Tags {
 		key   string
 		value string
 	}
-	matches := tagRegex.FindAllString(i.description, -1)
+	matches := i.findDescMatches(tagRegex)
 	split := fp.Map(func(match string) tag {
 		tagSepIndex := strings.Index(match, ":")
 		return tag{
@@ -87,18 +88,48 @@ func (i *Item) Tags() Tags {
 	return fp.Pipe2(split, toMap)(matches)
 }
 
-func (i *Item) SetTag(key, value string) {
+func (i *Item) findDescMatches(regex *regexp.Regexp) []string {
+	matches := make([]string, 0)
+	desc := i.description
+	for len(desc) > 0 {
+		nextMatch := regex.FindStringIndex(desc)
+		if nextMatch == nil {
+			break
+		}
+		matches = append(matches, desc[nextMatch[0]:nextMatch[1]])
+		desc = desc[nextMatch[1]:]
+	}
+	return matches
+}
+
+func (i *Item) replaceDescMatches(regex *regexp.Regexp, replacement string) string {
+	newDescription := strings.TrimSpace(i.description)
+	remainingDesc := strings.TrimSpace(i.description)
+	for len(remainingDesc) > 0 {
+		nextMatch := regex.FindStringIndex(remainingDesc)
+		if nextMatch == nil {
+			break
+		}
+		offset := len(newDescription) - len(remainingDesc)
+		newDescription = newDescription[:nextMatch[0]+offset] + replacement + newDescription[nextMatch[1]+offset:]
+		newDescription = strings.TrimSpace(newDescription)
+		remainingDesc = remainingDesc[nextMatch[1]-1:]
+	}
+	return newDescription
+}
+
+func (i *Item) SetTag(key, value string) error {
 	matcher := MatcherForTag(key)
 	if matcher.MatchString(i.Description()) {
-		newDescription := matcher.ReplaceAllString(i.description, fmt.Sprintf(" %s:%s ", key, value))
-		i.EditDescription(strings.TrimSpace(newDescription))
+		newDescription := i.replaceDescMatches(matcher, fmt.Sprintf(" %s:%s ", key, value))
+		return i.EditDescription(strings.TrimSpace(newDescription))
 	} else {
-		i.EditDescription(fmt.Sprintf("%s %s:%s", i.Description(), key, value))
+		return i.EditDescription(fmt.Sprintf("%s %s:%s", i.Description(), key, value))
 	}
 }
 
-func (i *Item) Complete() {
-	i.modify(func() {
+func (i *Item) Complete() error {
+	return i.modify(func() {
 		i.done = true
 		i.prio = PrioNone
 		i.completionDate = truncateToDate(i.now())
@@ -108,22 +139,22 @@ func (i *Item) Complete() {
 	})
 }
 
-func (i *Item) MarkUndone() {
-	i.modify(func() {
+func (i *Item) MarkUndone() error {
+	return i.modify(func() {
 		i.done = false
 		i.completionDate = nil
 	})
 }
 
-func (i *Item) PrioritizeAs(prio Priority) {
-	i.modify(func() {
+func (i *Item) PrioritizeAs(prio Priority) error {
+	return i.modify(func() {
 		i.done = false
 		i.prio = prio
 	})
 }
 
-func (i *Item) EditDescription(desc string) {
-	i.modify(func() {
+func (i *Item) EditDescription(desc string) error {
+	return i.modify(func() {
 		i.description = desc
 	})
 }
@@ -135,19 +166,24 @@ func (i *Item) String() string {
 	return fmt.Sprintf("%#v", i)
 }
 
-func (i *Item) modify(modification func()) {
+func (i *Item) modify(modification func()) error {
 	previous := *i
 	modification()
-	i.emit(previous)
+	err := i.emit(previous)
+	if err != nil {
+		*i = previous
+	}
+	return err
 }
 
-func (i *Item) emit(previous Item) {
+func (i *Item) emit(previous Item) error {
 	if i.emitFunc != nil {
-		i.emitFunc(ModEvent{
+		return i.emitFunc(ModEvent{
 			Previous: &previous,
 			Current:  i,
 		})
 	}
+	return nil
 }
 
 // This method is unexported, because the API is designed in a way that should make

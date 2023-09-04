@@ -89,6 +89,10 @@ func Test_ProjectExtraction(t *testing.T) {
 			item:             todotxt.MustBuildItem(todotxt.WithDescription("A description +foo with duplicate +foo projects")),
 			expectedProjects: []todotxt.Project{"foo"},
 		},
+		"Multiple contexts in a row can occur": {
+			item:             todotxt.MustBuildItem(todotxt.WithDescription("A description with +foo +project")),
+			expectedProjects: []todotxt.Project{"foo", "project"},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -134,6 +138,10 @@ func Test_ContextExtraction(t *testing.T) {
 		"Duplicate Contexts only occur once": {
 			item:             todotxt.MustBuildItem(todotxt.WithDescription("A description with @foo duplicate @foo contexts")),
 			expectedContexts: []todotxt.Context{"foo"},
+		},
+		"Multiple contexts in a row can occur": {
+			item:             todotxt.MustBuildItem(todotxt.WithDescription("A description with @foo @context")),
+			expectedContexts: []todotxt.Context{"foo", "context"},
 		},
 	}
 
@@ -193,6 +201,14 @@ func Test_TagsExtraction(t *testing.T) {
 			item:         todotxt.MustBuildItem(todotxt.WithDescription("This is a foo:baz@bar:fo+o description")),
 			expectedTags: todotxt.Tags{"foo": {"baz@bar:fo+o"}},
 		},
+		"Tag value can contain a date string": {
+			item:         todotxt.MustBuildItem(todotxt.WithDescription("This is a description with due:2022-02-02")),
+			expectedTags: todotxt.Tags{"due": {"2022-02-02"}},
+		},
+		"Description can contain more tags in a row": {
+			item:         todotxt.MustBuildItem(todotxt.WithDescription("This is a description with rec:+5d due:2022-02-02")),
+			expectedTags: todotxt.Tags{"due": {"2022-02-02"}, "rec": {"+5d"}},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -207,11 +223,11 @@ func Test_TagsExtraction(t *testing.T) {
 }
 
 func Test_SetTag(t *testing.T) {
-	item := todotxt.MustBuildItem(todotxt.WithDescription("This is rec:+5y a description with tags rec:5y"))
+	item := todotxt.MustBuildItem(todotxt.WithDescription("This is rec:+5y a description with tags rec:5y rec:+6y"))
 
 	item.SetTag("rec", "+1d")
 
-	assert.Equal(t, "This is rec:+1d a description with tags rec:+1d", item.Description())
+	assert.Equal(t, "This is rec:+1d a description with tags rec:+1d rec:+1d", item.Description())
 }
 
 func Test_SetTagForNewTag(t *testing.T) {

@@ -1,5 +1,9 @@
 package todotxt
 
+import "errors"
+
+var ErrAbort = errors.New("operation aborted by hook")
+
 // ModEvent is an event that is issued whenever a modification to the list happens.
 // In case a task was added previous will be nil and current non-nil
 // In case an existing task was modified both will be non-nil
@@ -11,11 +15,11 @@ type ModEvent struct {
 }
 
 type Hook interface {
-	Handle(event ModEvent)
+	Handle(event ModEvent) error
 }
 
-type HookFunc func(event ModEvent)
+type HookFunc func(event ModEvent) error
 
-func (h HookFunc) Handle(event ModEvent) {
-	h(event)
+func (h HookFunc) Handle(event ModEvent) error {
+	return h(event)
 }
