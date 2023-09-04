@@ -171,10 +171,10 @@ func lexQuery(l *lexer) stateFunc {
 		return l.emit(itemImpl)
 	case r == ',':
 		return l.emit(itemComma)
-	case r == '(':
+	case r == '(' || r == '{':
 		l.parenDepth++
 		return l.emit(itemLeftParen)
-	case r == ')':
+	case r == ')' || r == '}':
 		l.parenDepth--
 		if l.parenDepth < 0 {
 			return l.errorf("unexpected right paren")
@@ -213,6 +213,15 @@ func lexIdentifier(l *lexer) stateFunc {
 			}
 			if word == "true" || word == "false" {
 				return l.emit(itemBool)
+			}
+			if word == "and" {
+				return l.emit(itemAnd)
+			}
+			if word == "or" {
+				return l.emit(itemOr)
+			}
+			if word == "impl" {
+				return l.emit(itemImpl)
 			}
 			return l.emit(itemIdent)
 		}
@@ -257,7 +266,7 @@ func (l *lexer) isAtTerminator() bool {
 		return true
 	}
 	switch r {
-	case eof, ',', ')', '(', ':':
+	case eof, ',', ')', '(', ':', '{', '}':
 		return true
 	}
 	return false

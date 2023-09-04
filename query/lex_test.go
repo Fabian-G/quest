@@ -59,6 +59,22 @@ func Test_lexOnValidQueries(t *testing.T) {
 			query:          "        R   (  x      )      ",
 			expectedTokens: []itemType{itemIdent, itemLeftParen, itemIdent, itemRightParen},
 		},
+		"curly braces can be used as parens": {
+			query:          "R{x}",
+			expectedTokens: []itemType{itemIdent, itemLeftParen, itemIdent, itemRightParen},
+		},
+		"and can be used for &&": {
+			query:          "true and false",
+			expectedTokens: []itemType{itemBool, itemAnd, itemBool},
+		},
+		"or can be used for ||": {
+			query:          "true or false",
+			expectedTokens: []itemType{itemBool, itemOr, itemBool},
+		},
+		"impl can be used for ->": {
+			query:          "true impl false",
+			expectedTokens: []itemType{itemBool, itemImpl, itemBool},
+		},
 	}
 
 	for name, tc := range testCases {
