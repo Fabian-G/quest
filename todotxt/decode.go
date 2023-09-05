@@ -24,7 +24,7 @@ type Decoder struct {
 }
 
 func (d *Decoder) Decode(r io.Reader) (*List, error) {
-	list := &List{}
+	items := make([]*Item, 0)
 	var errs []error
 	var lineNumber int
 	in := bufio.NewScanner(r)
@@ -40,12 +40,12 @@ func (d *Decoder) Decode(r io.Reader) (*List, error) {
 			})
 			continue
 		}
-		list.Add(item)
+		items = append(items, item)
 	}
 	if err := in.Err(); err != nil {
 		return nil, fmt.Errorf("could not read input: %w", err)
 	}
-	return list, errors.Join(errs...)
+	return ListOf(items...), errors.Join(errs...)
 }
 
 type ReadError struct {

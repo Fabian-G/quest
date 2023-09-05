@@ -20,14 +20,15 @@ var ErrOLocked = errors.New("the file was changed since the last time we read it
 type ReadFunc func() (*List, error)
 
 type Repo struct {
-	file       string
-	checksum   [20]byte
-	watcher    *fsnotify.Watcher
-	updateChan []chan ReadFunc
-	fileLock   sync.Mutex
-	watchLock  sync.Mutex
-	Encoder    *Encoder
-	Decoder    *Decoder
+	file         string
+	checksum     [20]byte
+	watcher      *fsnotify.Watcher
+	updateChan   []chan ReadFunc
+	fileLock     sync.Mutex
+	watchLock    sync.Mutex
+	Encoder      *Encoder
+	Decoder      *Decoder
+	DefaultHooks []Hook
 }
 
 func NewRepo(dest string) *Repo {
@@ -92,6 +93,7 @@ func (t *Repo) Read() (*List, error) {
 		return nil, fmt.Errorf("could not parse txt file %s: %w", t.file, err)
 	}
 	t.checksum = sha1.Sum(rawData)
+	list.hooks = t.DefaultHooks
 	return list, nil
 }
 
