@@ -7,9 +7,7 @@ import (
 	"github.com/Fabian-G/todotxt/todotxt"
 )
 
-type Query func(*todotxt.List, *todotxt.Item) bool
-
-func Compile(query string) (Query, error) {
+func compileFOL(query string) (Query, error) {
 	root, err := parseTree(query, idSet{"it": struct{}{}})
 	if err != nil {
 		return nil, err
