@@ -23,7 +23,7 @@ var DefaultDecoder = Decoder{}
 type Decoder struct {
 }
 
-func (d *Decoder) Decode(r io.Reader) (*List, error) {
+func (d *Decoder) Decode(r io.Reader) ([]*Item, error) {
 	items := make([]*Item, 0)
 	var errs []error
 	var lineNumber int
@@ -45,7 +45,7 @@ func (d *Decoder) Decode(r io.Reader) (*List, error) {
 	if err := in.Err(); err != nil {
 		return nil, fmt.Errorf("could not read input: %w", err)
 	}
-	return ListOf(items...), errors.Join(errs...)
+	return items, errors.Join(errs...)
 }
 
 type ReadError struct {

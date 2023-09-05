@@ -29,6 +29,7 @@ type Repo struct {
 	Encoder      *Encoder
 	Decoder      *Decoder
 	DefaultHooks []Hook
+	DefaultOrder func(*Item, *Item) int
 }
 
 func NewRepo(dest string) *Repo {
@@ -72,8 +73,13 @@ func (t *Repo) write(l *List) error {
 	}
 	defer file.Close()
 
+	tasksToWrite := l.Tasks()
+	if t.DefaultOrder != nil {
+		slices.SortStableFunc(tasksToWrite, t.DefaultOrder)
+	}
+
 	buffer := bytes.Buffer{}
-	err = t.encoder().Encode(io.MultiWriter(file, &buffer), l)
+	err = t.encoder().Encode(io.MultiWriter(file, &buffer), tasksToWrite)
 	if err != nil {
 		return fmt.Errorf("could not write txt file %s: %w", t.file, err)
 	}
@@ -88,10 +94,14 @@ func (t *Repo) Read() (*List, error) {
 	if err != nil {
 		return nil, err
 	}
-	list, err := t.decoder().Decode(bytes.NewReader(rawData))
+	tasks, err := t.decoder().Decode(bytes.NewReader(rawData))
 	if err != nil {
 		return nil, fmt.Errorf("could not parse txt file %s: %w", t.file, err)
 	}
+	if t.DefaultOrder != nil {
+		slices.SortStableFunc(tasks, t.DefaultOrder)
+	}
+	list := ListOf(tasks...)
 	t.checksum = sha1.Sum(rawData)
 	list.hooks = t.DefaultHooks
 	return list, nil

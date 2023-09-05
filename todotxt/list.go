@@ -1,13 +1,15 @@
 package todotxt
 
 import (
+	"cmp"
 	"slices"
 )
 
 type List struct {
-	tasks         []*Item
+	tasks         map[int]*Item // This is a map to make sure indices remain stable between cli invocations
 	hooksDisabled bool
 	hooks         []Hook
+	currentIdx    int
 }
 
 func ListOf(items ...*Item) *List {
@@ -18,17 +20,32 @@ func ListOf(items ...*Item) *List {
 	return newList
 }
 
+// Tasks returns the list as a slice of Items ordered by their respective index.
 func (l *List) Tasks() []*Item {
-	return l.tasks
+	type pair struct {
+		key   int
+		value *Item
+	}
+	pairs := make([]pair, 0, len(l.taskMap()))
+	for key, value := range l.taskMap() {
+		pairs = append(pairs, pair{key, value})
+	}
+	slices.SortFunc(pairs, func(a, b pair) int { return cmp.Compare(a.key, b.key) })
+	items := make([]*Item, 0, len(pairs))
+	for _, pair := range pairs {
+		items = append(items, pair.value)
+	}
+	return items
 }
 
 func (l *List) Add(item *Item) error {
 	item.emitFunc = l.emit
-	l.tasks = append(l.tasks, item)
+	l.taskMap()[l.currentIdx] = item
 	err := l.emit(ModEvent{Previous: nil, Current: item})
 	if err != nil {
-		l.tasks = l.tasks[:len(l.tasks)-1]
+		delete(l.taskMap(), l.currentIdx)
 	}
+	l.currentIdx++
 	return err
 }
 func (l *List) AddHook(hook Hook) {
@@ -38,24 +55,29 @@ func (l *List) AddHook(hook Hook) {
 func (l *List) Remove(idx int) error {
 	itemToRemove := l.Get(idx)
 	itemToRemove.emitFunc = nil
-	l.tasks = slices.Delete(l.tasks, idx, idx+1)
+	delete(l.taskMap(), idx)
 	err := l.emit(ModEvent{Previous: itemToRemove, Current: nil})
 	if err != nil {
-		l.tasks = slices.Insert(l.tasks, idx, itemToRemove)
+		l.taskMap()[idx] = itemToRemove
 	}
 	return err
 }
 
 func (l *List) Get(idx int) *Item {
-	return l.tasks[idx]
+	return l.taskMap()[idx]
 }
 
 func (l *List) IndexOf(i *Item) int {
-	return slices.Index(l.tasks, i)
+	for key, value := range l.taskMap() {
+		if i == value {
+			return key
+		}
+	}
+	return -1
 }
 
 func (l *List) Len() int {
-	return len(l.tasks)
+	return len(l.taskMap())
 }
 
 func (l *List) emit(me ModEvent) error {
@@ -73,4 +95,11 @@ func (l *List) emit(me ModEvent) error {
 		}
 	}
 	return nil
+}
+
+func (l *List) taskMap() map[int]*Item {
+	if l.tasks == nil {
+		l.tasks = make(map[int]*Item)
+	}
+	return l.tasks
 }

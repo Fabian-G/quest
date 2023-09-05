@@ -204,5 +204,5 @@ func listFromString(t *testing.T, list string) *todotxt.List {
 	tabsRemoved := strings.ReplaceAll(list, "\t", "")
 	l, err := todotxt.DefaultDecoder.Decode(strings.NewReader(strings.TrimSpace(tabsRemoved)))
 	assert.Nil(t, err)
-	return l
+	return todotxt.ListOf(l...)
 }

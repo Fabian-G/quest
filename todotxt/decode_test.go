@@ -95,14 +95,14 @@ func TestParse(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			itemList, err := todotxt.DefaultDecoder.Decode(strings.NewReader(tc.line))
+			items, err := todotxt.DefaultDecoder.Decode(strings.NewReader(tc.line))
 			if e, ok := tc.expectedError.(*todotxt.ParseError); ok {
 				assert.ErrorAs(t, err, e)
 			} else if tc.expectedError != nil {
 				assert.ErrorIs(t, err, tc.expectedError)
 			} else {
-				assert.Equal(t, 1, itemList.Len())
-				todotxt.AssertItemEqual(t, tc.expectedItem, itemList.Get(0))
+				assert.Equal(t, 1, len(items))
+				todotxt.AssertItemEqual(t, tc.expectedItem, items[0])
 			}
 		})
 	}
@@ -137,11 +137,11 @@ func Test_WellFormattedItemsShouldNotChangeAfterParsingPlusSerializing(t *testin
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			itemList, err := todotxt.DefaultDecoder.Decode(strings.NewReader(tc.line))
+			items, err := todotxt.DefaultDecoder.Decode(strings.NewReader(tc.line))
 			assert.Nil(t, err)
-			assert.Equal(t, 1, itemList.Len())
+			assert.Equal(t, 1, len(items))
 			out := strings.Builder{}
-			err = todotxt.DefaultEncoder.Encode(&out, itemList)
+			err = todotxt.DefaultEncoder.Encode(&out, items)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.line, out.String())
 		})

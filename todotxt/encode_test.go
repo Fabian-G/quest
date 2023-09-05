@@ -86,7 +86,7 @@ func Test_DefaultFormat(t *testing.T) {
 			list := todotxt.List{}
 			list.Add(tc.item)
 			out := strings.Builder{}
-			err := todotxt.DefaultEncoder.Encode(&out, &list)
+			err := todotxt.DefaultEncoder.Encode(&out, list.Tasks())
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expectedFormat, out.String())
 		})
@@ -98,7 +98,7 @@ func Test_FormatReturnsErrorOnInvalidTask(t *testing.T) {
 
 	list := todotxt.List{}
 	list.Add(item)
-	err := todotxt.DefaultEncoder.Encode(io.Discard, &list)
+	err := todotxt.DefaultEncoder.Encode(io.Discard, list.Tasks())
 	assert.Error(t, err)
 }
 
@@ -120,10 +120,10 @@ func TestList_WritePlusReadIsTheIdentity(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			out := bytes.Buffer{}
-			todotxt.DefaultEncoder.Encode(&out, tc.itemList)
+			todotxt.DefaultEncoder.Encode(&out, tc.itemList.Tasks())
 			listOut, err := todotxt.DefaultDecoder.Decode(bytes.NewReader(out.Bytes()))
 			assert.Nil(t, err)
-			todotxt.AssertListEqual(t, tc.itemList, listOut)
+			todotxt.AssertListEqual(t, tc.itemList, todotxt.ListOf(listOut...))
 		})
 	}
 }

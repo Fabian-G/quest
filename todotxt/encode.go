@@ -21,8 +21,7 @@ type Encoder struct {
 }
 
 // Format formats an item according to the todotxt spec
-func (f Encoder) Encode(w io.Writer, list *List) error {
-	tasks := list.Tasks()
+func (f Encoder) Encode(w io.Writer, tasks []*Item) error {
 	out := bufio.NewWriter(w)
 	for i, item := range tasks {
 		formattedItem, err := f.encodeItem(item)

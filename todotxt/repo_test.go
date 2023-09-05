@@ -8,9 +8,28 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Fabian-G/todotxt/query"
 	"github.com/Fabian-G/todotxt/todotxt"
 	"github.com/stretchr/testify/assert"
 )
+
+func Test_ItemsAreOrderedCorrectly(t *testing.T) {
+	file := createTestFile(t, `x item 1
+	item 3
+	item 2`)
+	repo := todotxt.NewRepo(file)
+	s, err := query.SortFunc("+done,-description")
+	assert.Nil(t, err)
+	repo.DefaultOrder = s
+
+	list, err := repo.Read()
+
+	assert.Nil(t, err)
+	assert.Equal(t, 3, list.Len())
+	assert.Equal(t, "item 3", list.Get(0).Description())
+	assert.Equal(t, "item 2", list.Get(1).Description())
+	assert.Equal(t, "item 1", list.Get(2).Description())
+}
 
 func Test_OptimisticLockingReturnsErrorOnSaveIfWrittenInTheMeantime(t *testing.T) {
 	file := createTestFile(t, `A todo item`)
