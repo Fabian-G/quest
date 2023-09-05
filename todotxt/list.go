@@ -50,6 +50,10 @@ func (l *List) Get(idx int) *Item {
 	return l.tasks[idx]
 }
 
+func (l *List) IndexOf(i *Item) int {
+	return slices.Index(l.tasks, i)
+}
+
 func (l *List) Len() int {
 	return len(l.tasks)
 }
