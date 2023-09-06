@@ -25,7 +25,7 @@ type Item struct {
 	completionDate *time.Time
 	creationDate   *time.Time
 	description    string
-	emitFunc       func(ModEvent) error
+	emitFunc       func(Event) error
 }
 
 func (i *Item) Done() bool {
@@ -163,26 +163,27 @@ func (i *Item) String() string {
 func (i *Item) modify(modification func()) error {
 	previous := *i
 	modification()
-	err := i.emit(previous)
+	err := i.emit(ModEvent{
+		Previous: &previous,
+		Current:  i,
+	})
 	if err != nil {
 		*i = previous
 	}
 	return err
 }
 
-func (i *Item) emit(previous Item) error {
+func (i *Item) emit(event Event) error {
 	if i.emitFunc != nil {
-		return i.emitFunc(ModEvent{
-			Previous: &previous,
-			Current:  i,
-		})
+		return i.emitFunc(event)
 	}
 	return nil
 }
 
-// This method is unexported, because the API is designed in a way that should make
-// it impossible for the user to create invalid tasks
-func (i *Item) valid() error {
+func (i *Item) validate() error {
+	if err := i.emit(ValidationEvent{i}); err != nil {
+		return err
+	}
 	if i.completionDate != nil && i.creationDate == nil {
 		return ErrCreationDateUnset
 	}

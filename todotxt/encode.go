@@ -43,7 +43,7 @@ func itemSeparator(current, length int) string {
 }
 
 func (e Encoder) encodeItem(i *Item) (string, error) {
-	if err := i.valid(); err != nil {
+	if err := i.validate(); err != nil {
 		return "", fmt.Errorf("can not format an invalid item: %w", err)
 	}
 	builder := strings.Builder{}

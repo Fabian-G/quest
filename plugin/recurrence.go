@@ -16,7 +16,6 @@ var defaultDueTag = "due"
 var defaultThresholdTag = "t"
 
 var ErrNoRecurrenceBase = errors.New("when the recurrence tag is set, either the due tag or the threshold tag (or both) must be set")
-var errRecurrenceNotRelevant = errors.New("event nut relevant for recurrence")
 
 type recurrenceParams struct {
 	base      *todotxt.Item
@@ -44,11 +43,11 @@ func NewRecurrenceWithNowFunc(list *todotxt.List, now func() time.Time) *Recurre
 	}
 }
 
-func (r Recurrence) Handle(event todotxt.ModEvent) error {
-	param, err := r.parseEvent(event)
-	if errors.Is(err, errRecurrenceNotRelevant) {
+func (r Recurrence) OnMod(event todotxt.ModEvent) error {
+	if !event.IsCompleteEvent() || len(event.Current.Tags()[r.recTag()]) == 0 {
 		return nil
 	}
+	param, err := r.parseRecurrenceParams(event.Current)
 	if err != nil {
 		return err
 	}
@@ -57,6 +56,17 @@ func (r Recurrence) Handle(event todotxt.ModEvent) error {
 		return r.spawnRelative(param)
 	}
 	return r.spawnAbsolute(param)
+}
+
+func (r Recurrence) OnValidate(event todotxt.ValidationEvent) error {
+	if len(event.Item.Tags()[r.recTag()]) == 0 {
+		return nil
+	}
+	_, err := r.parseRecurrenceParams(event.Item)
+	if err != nil {
+		return fmt.Errorf("recurrent task contains error: %w", err)
+	}
+	return nil
 }
 
 func (r Recurrence) spawnRelative(params recurrenceParams) error {
@@ -146,26 +156,17 @@ func (r Recurrence) thresholdTag() string {
 	return defaultThresholdTag
 }
 
-func (r Recurrence) parseEvent(event todotxt.ModEvent) (recurrenceParams, error) {
+func (r Recurrence) parseRecurrenceParams(current *todotxt.Item) (recurrenceParams, error) {
 	params := recurrenceParams{
-		base: event.Current,
+		base: current,
 	}
-	tags := event.Current.Tags()
+	tags := current.Tags()
 	recTag := r.recTag()
-	rec := tags[recTag]
-	if len(rec) == 0 {
-		return params, errRecurrenceNotRelevant
-	}
+	rec := tags[recTag][0] // Cannot be 0 length, because it was checked before
 	due := tags[r.dueTag()]
 	t := tags[r.thresholdTag()]
 	if len(due) == 0 && len(t) == 0 {
 		return params, ErrNoRecurrenceBase
-	}
-	if event.Previous == nil || event.Current == nil {
-		return params, errRecurrenceNotRelevant
-	}
-	if event.Previous.Done() || !event.Current.Done() {
-		return params, errRecurrenceNotRelevant
 	}
 
 	if len(due) > 0 {
@@ -183,14 +184,13 @@ func (r Recurrence) parseEvent(event todotxt.ModEvent) (recurrenceParams, error)
 		params.threshold = thresholdDate
 	}
 
-	recTagValue := rec[0]
-	if strings.HasPrefix(recTagValue, "+") {
+	if strings.HasPrefix(rec, "+") {
 		params.relative = true
-		recTagValue = recTagValue[1:]
+		rec = rec[1:]
 	}
-	duration, err := parseDuration(recTagValue)
+	duration, err := parseDuration(rec)
 	if err != nil {
-		return params, fmt.Errorf("could not parse duration %s: %w", recTagValue, err)
+		return params, fmt.Errorf("could not parse duration %s: %w", rec, err)
 	}
 	params.duration = duration.Abs().Round(24 * time.Hour)
 	return params, nil

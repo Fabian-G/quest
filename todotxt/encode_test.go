@@ -96,9 +96,7 @@ func Test_DefaultFormat(t *testing.T) {
 func Test_FormatReturnsErrorOnInvalidTask(t *testing.T) {
 	item, _ := todotxt.BuildItem(todotxt.WithCompletionDate(time.Now()), todotxt.WithoutCreationDate())
 
-	list := todotxt.List{}
-	list.Add(item)
-	err := todotxt.DefaultEncoder.Encode(io.Discard, list.Tasks())
+	err := todotxt.DefaultEncoder.Encode(io.Discard, []*todotxt.Item{item})
 	assert.Error(t, err)
 }
 

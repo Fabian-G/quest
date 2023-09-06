@@ -244,3 +244,14 @@ func Test_CreationDateGetsUpdatedToToday(t *testing.T) {
 	assert.Equal(t, &expectedDate, list.Get(1).CreationDate())
 	assert.Nil(t, list.Get(1).CompletionDate())
 }
+
+func Test_RecurrenceValidationOnMissing(t *testing.T) {
+	list := todotxt.ListOf()
+	list.AddHook(plugin.NewRecurrence(list))
+
+	err := list.Add(
+		todotxt.MustBuildItem(todotxt.WithDescription("Hello world rec:+1y")),
+	)
+
+	assert.Error(t, err)
+}

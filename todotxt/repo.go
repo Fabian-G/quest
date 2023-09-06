@@ -104,7 +104,7 @@ func (t *Repo) Read() (*List, error) {
 	list := ListOf(tasks...)
 	t.checksum = sha1.Sum(rawData)
 	list.hooks = t.DefaultHooks
-	return list, nil
+	return list, list.validate()
 }
 
 func (t *Repo) load() ([]byte, error) {

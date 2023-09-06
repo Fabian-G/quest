@@ -11,7 +11,7 @@ func BuildItem(modifier ...BuildFunc) (*Item, error) {
 	for _, m := range modifier {
 		item = m(item)
 	}
-	return item, item.valid()
+	return item, item.validate()
 }
 
 func MustBuildItem(m ...BuildFunc) *Item {

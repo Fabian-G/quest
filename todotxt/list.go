@@ -2,8 +2,24 @@ package todotxt
 
 import (
 	"cmp"
+	"errors"
+	"fmt"
 	"slices"
 )
+
+type ValidationError struct {
+	Base          error
+	OffendingItem *Item
+	ItemIndex     int
+}
+
+func (v ValidationError) Unwrap() error {
+	return v.Base
+}
+
+func (v ValidationError) Error() string {
+	return fmt.Sprintf("the item with index %d is invalid: %v\n\tthe offending item was %v", v.ItemIndex, v.Base, v.OffendingItem)
+}
 
 type List struct {
 	tasks         map[int]*Item // This is a map to make sure indices remain stable between cli invocations
@@ -38,16 +54,27 @@ func (l *List) Tasks() []*Item {
 	return items
 }
 
-func (l *List) Add(item *Item) error {
+func (l *List) Add(item *Item) (err error) {
 	item.emitFunc = l.emit
 	l.taskMap()[l.currentIdx] = item
-	err := l.emit(ModEvent{Previous: nil, Current: item})
-	if err != nil {
-		delete(l.taskMap(), l.currentIdx)
-	}
 	l.currentIdx++
-	return err
+	defer func() {
+		if err != nil {
+			delete(l.taskMap(), l.currentIdx-1)
+			l.currentIdx--
+		}
+	}()
+	err = item.validate()
+	if err != nil {
+		return
+	}
+	err = l.emit(ModEvent{Previous: nil, Current: item})
+	if err != nil {
+		return
+	}
+	return
 }
+
 func (l *List) AddHook(hook Hook) {
 	l.hooks = append(l.hooks, hook)
 }
@@ -80,7 +107,22 @@ func (l *List) Len() int {
 	return len(l.taskMap())
 }
 
-func (l *List) emit(me ModEvent) error {
+func (l *List) validate() error {
+	errs := make([]error, 0)
+	for key, value := range l.taskMap() {
+		baseErr := value.validate()
+		if baseErr != nil {
+			errs = append(errs, ValidationError{
+				Base:          baseErr,
+				OffendingItem: value,
+				ItemIndex:     key,
+			})
+		}
+	}
+	return errors.Join(errs...)
+}
+
+func (l *List) emit(me Event) error {
 	if l.hooksDisabled {
 		return nil
 	}
@@ -90,7 +132,7 @@ func (l *List) emit(me ModEvent) error {
 		l.hooksDisabled = false
 	}()
 	for _, h := range l.hooks {
-		if err := h.Handle(me); err != nil {
+		if err := me.Dispatch(h); err != nil {
 			return err
 		}
 	}
