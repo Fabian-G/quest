@@ -1,4 +1,4 @@
-package plugin
+package hook
 
 import (
 	"errors"
@@ -30,13 +30,13 @@ type Recurrence struct {
 	nowFunc func() time.Time
 }
 
-func NewRecurrence(list *todotxt.List) *Recurrence {
+func NewRecurrence(list *todotxt.List) todotxt.Hook {
 	return &Recurrence{
 		list: list,
 	}
 }
 
-func NewRecurrenceWithNowFunc(list *todotxt.List, now func() time.Time) *Recurrence {
+func NewRecurrenceWithNowFunc(list *todotxt.List, now func() time.Time) todotxt.Hook {
 	return &Recurrence{
 		list:    list,
 		nowFunc: now,

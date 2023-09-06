@@ -34,6 +34,8 @@ func (v ValidationEvent) Dispatch(h Hook) error {
 	return h.OnValidate(v)
 }
 
+type HookBuilder func(*List) Hook
+
 type Hook interface {
 	OnMod(event ModEvent) error
 	OnValidate(event ValidationEvent) error

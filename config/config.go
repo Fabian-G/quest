@@ -1,12 +1,43 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"fmt"
+	"log"
+	"os"
+	"path"
+
+	"github.com/spf13/viper"
+)
+
+const (
+	TodoFile         = "todo-file"
+	DefaultSortOrder = "default.sortOrder"
+)
 
 func init() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(fmt.Errorf("could not determine users home directory: %w", err))
+	}
+
+	configHome := os.Getenv("XDG_CONFIG_HOME")
+	if len(configHome) == 0 {
+		configHome = path.Join(homeDir, ".config")
+	}
+
+	dataHome := os.Getenv("XDG_DATA_HOME")
+	if len(dataHome) == 0 {
+		dataHome = path.Join(homeDir, ".local")
+	}
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
-	viper.AddConfigPath("$XDG_CONFIG_HOME/quest/")
-	viper.AddConfigPath("$HOME/.config/quest/")
+	viper.AddConfigPath(path.Join(configHome, "quest"))
 	viper.AddConfigPath("$HOME/.quest/")
-	viper.SetDefault("default.sortOrder", "+done,+creation,+description")
+	viper.SetDefault(DefaultSortOrder, "+done,+creation,+description")
+	viper.SetDefault(TodoFile, path.Join(dataHome, "quest/todo.txt"))
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatal(err)
+	}
 }
