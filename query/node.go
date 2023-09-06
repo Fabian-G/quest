@@ -3,6 +3,7 @@ package query
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -290,7 +291,7 @@ type call struct {
 
 func (c *call) eval(l *todotxt.List, alpha varMap) any {
 	fn := functions[c.name]
-	return fn(c.args.eval(l, alpha).([]any))
+	return fn.call(c.args.eval(l, alpha).([]any))
 }
 
 func (c *call) String() string {
@@ -302,7 +303,19 @@ func (c *call) validate(knownIds idSet) (dType, error) {
 	if err != nil {
 		return qError, err
 	}
-	return funcType(c.name, argTypes)
+	var fn queryFunc
+	var ok bool
+	if fn, ok = functions[c.name]; !ok {
+		return qError, fmt.Errorf("unknown function with name %s", c.name)
+	}
+	dType, err := fn.validate(argTypes)
+	var missingItemError missingItemError
+	if errors.As(err, &missingItemError) {
+		it := identifier{name: "it"}
+		c.args.children = slices.Insert[[]node, node](c.args.children, missingItemError.position, &it)
+		return c.validate(knownIds)
+	}
+	return dType, err
 }
 
 type args struct {

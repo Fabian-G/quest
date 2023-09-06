@@ -208,6 +208,11 @@ func (p *parser) parsePrimary() (node, error) {
 				name: next.val,
 				args: args,
 			}, nil
+		} else if _, ok := functions[next.val]; ok { // This is really a function call without args
+			return &call{
+				name: next.val,
+				args: &args{},
+			}, nil
 		}
 		return &identifier{
 			name: next.val,

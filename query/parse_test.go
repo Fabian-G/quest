@@ -57,6 +57,18 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			query:               "!done(it) && exists x: done(x)",
 			expectedParseResult: "(!done(it) && (exists x: done(x)))",
 		},
+		"it is optional for functions that require one item": {
+			query:               "done()",
+			expectedParseResult: "done(it)",
+		},
+		"empty parens can be omitted": {
+			query:               "done",
+			expectedParseResult: "done(it)",
+		},
+		"space is optional": {
+			query:               "done||!done",
+			expectedParseResult: "(done(it) || !done(it))",
+		},
 	}
 
 	for name, tc := range testCases {
@@ -164,6 +176,15 @@ func Test_eval(t *testing.T) {
 			`),
 			query:  `forall i: done(i) -> contains(projects(i), "+foo")`,
 			result: false,
+		},
+		"can bind function name as identifier": {
+			list: listFromString(t, `
+			x a +foo item
+			x an item from +bar
+			another +foo item
+			`),
+			query:  `exists done: done(done)`,
+			result: true,
 		},
 	}
 

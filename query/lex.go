@@ -266,7 +266,7 @@ func (l *lexer) isAtTerminator() bool {
 		return true
 	}
 	switch r {
-	case eof, ',', ')', '(', ':', '{', '}':
+	case eof, ',', ')', '(', ':', '{', '}', '|', '&', '-':
 		return true
 	}
 	return false

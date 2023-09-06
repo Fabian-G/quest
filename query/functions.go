@@ -7,36 +7,79 @@ import (
 	"github.com/Fabian-G/quest/todotxt"
 )
 
-type queryFunc func([]any) any
-
-var functions = map[string]queryFunc{
-	"done":     done,
-	"projects": projects,
-	"contains": contains,
+type missingItemError struct {
+	position int
 }
 
-func funcType(funcName string, argsTypes []dType) (dType, error) {
-	switch funcName {
-	case "done":
-		return qBool, assertTypes([]dType{qItem}, argsTypes)
-	case "projects":
-		return qStringSlice, assertTypes([]dType{qItem}, argsTypes)
-	case "contains":
-		return qBool, assertTypes([]dType{qStringSlice, qString}, argsTypes)
-	}
-	return qError, fmt.Errorf("unknown function: %s", funcName)
+func (m missingItemError) Error() string {
+	return fmt.Sprintf("item missing in argslist at position %d", m.position)
 }
 
-func assertTypes(expectedTypes []dType, argTypes []dType) error {
-	if len(expectedTypes) != len(argTypes) {
-		return fmt.Errorf("expecting parameters %#v, but got %#v", expectedTypes, argTypes)
-	}
-	for i, typ := range expectedTypes {
-		if argTypes[i] != typ {
-			return fmt.Errorf("expecting parameters %#v, but got %#v", expectedTypes, argTypes)
+type queryFunc struct {
+	fn               func([]any) any
+	argTypes         []dType
+	resultType       dType
+	trailingOptional bool
+	injectIt         bool
+}
+
+func (q queryFunc) call(args []any) any {
+	return q.fn(args)
+}
+
+func (q queryFunc) validate(actual []dType) (dType, error) {
+	offset := 0
+	injectItPosition := -1
+	for i, t := range q.argTypes {
+		i := i - offset
+		switch {
+		case i >= len(actual) && !q.trailingOptional && q.injectIt && t == qItem && injectItPosition == -1:
+			offset = 1
+			injectItPosition = i
+			continue
+		case i >= len(actual):
+			if i == len(q.argTypes)-1 && q.trailingOptional {
+				return q.resultType, nil
+			}
+			return qError, fmt.Errorf("expecting parameters %#v, but got %#v", q.argTypes, actual)
+		case actual[i] == t:
+			continue
+		case actual[i] != t && q.injectIt && t == qItem && injectItPosition == -1:
+			offset = 1
+			injectItPosition = i
+			continue
+		case actual[i] != t:
+			return qError, fmt.Errorf("expecting parameters %#v, but got %#v", q.argTypes, actual)
 		}
 	}
-	return nil
+	if injectItPosition != -1 {
+		return qError, missingItemError{injectItPosition}
+	}
+	return q.resultType, nil
+}
+
+var functions = map[string]queryFunc{
+	"done": {
+		fn:               done,
+		argTypes:         []dType{qItem},
+		resultType:       qBool,
+		trailingOptional: false,
+		injectIt:         true,
+	},
+	"projects": {
+		fn:               projects,
+		resultType:       qStringSlice,
+		argTypes:         []dType{qItem},
+		trailingOptional: false,
+		injectIt:         true,
+	},
+	"contains": {
+		fn:               contains,
+		resultType:       qBool,
+		argTypes:         []dType{qStringSlice, qString},
+		trailingOptional: false,
+		injectIt:         false,
+	},
 }
 
 func done(args []any) any {
