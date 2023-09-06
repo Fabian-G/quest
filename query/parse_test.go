@@ -49,6 +49,10 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			query:               "done(it)",
 			expectedParseResult: "done(it)",
 		},
+		"high precedence followed by low precedence": {
+			query:               "true && false || true",
+			expectedParseResult: "((true && false) || true)",
+		},
 		"Quantor in the middle": {
 			query:               "!done(it) && exists x: done(x)",
 			expectedParseResult: "(!done(it) && (exists x: done(x)))",

@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	query string
+	query       string
+	interactive bool
 )
 var listCmd = &cobra.Command{
 	Use:     "list",
@@ -23,6 +24,7 @@ With the -s option you can specify a filter, which can either be a FOL formula, 
 
 func init() {
 	listCmd.Flags().StringVarP(&query, "select", "s", "", "can be a FOL query, range expression or a string search")
+	listCmd.Flags().BoolVarP(&interactive, "interactive", "i", true, "whether or not quest should be interactive")
 }
 
 func list(cmd *cobra.Command, args []string) error {
@@ -32,7 +34,7 @@ func list(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	listView, err := view.NewList(list, query)
+	listView, err := view.NewList(list, query, interactive)
 	if err != nil {
 		return err
 	}

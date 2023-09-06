@@ -2,6 +2,7 @@ package view
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -20,8 +21,8 @@ type List struct {
 	rowIndexToItem map[int]*todotxt.Item
 }
 
-func NewList(list *todotxt.List, queryString string) (List, error) {
-	qFunc, err := query.Compile(queryString, query.FOL)
+func NewList(list *todotxt.List, queryString string, interactive bool) (List, error) {
+	qFunc, err := query.Compile(queryString, query.Guess)
 	if err != nil {
 		return List{}, err
 	}
@@ -56,7 +57,7 @@ func NewList(list *todotxt.List, queryString string) (List, error) {
 	l := List{
 		list:        list,
 		query:       qFunc,
-		interactive: true,
+		interactive: interactive,
 	}
 	l.rowIndexToItem = make(map[int]*todotxt.Item)
 	items := qFunc.Filter(list)
@@ -66,18 +67,35 @@ func NewList(list *todotxt.List, queryString string) (List, error) {
 		l.rowIndexToItem[i] = item
 	}
 
+	var height int
+	var styles = table.DefaultStyles()
+	var cursor int
+	if l.interactive {
+		height = 10
+		cursor = 0
+	} else {
+		height = len(rows)
+		styles.Selected = styles.Cell
+		cursor = math.MaxInt
+	}
+
 	l.table = table.New(
 		table.WithColumns(columns),
 		table.WithRows(rows),
-		table.WithHeight(10),
-		table.WithFocused(true),
+		table.WithHeight(height),
+		table.WithFocused(l.interactive),
+		table.WithStyles(styles),
 	)
+	l.table.SetCursor(cursor)
 
 	return l, nil
 }
 
 func (l List) Init() tea.Cmd {
-	return nil
+	if l.interactive {
+		return nil
+	}
+	return tea.Quit
 }
 
 func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -96,9 +114,10 @@ func (l List) View() string {
 	builder := strings.Builder{}
 	builder.WriteString(l.table.View())
 	selectedItem, ok := l.rowIndexToItem[l.table.Cursor()]
-	if !ok {
+	if !ok || !l.interactive {
 		return builder.String()
 	}
+	builder.WriteString("\n")
 	builder.WriteString("\n")
 	builder.WriteString(fmt.Sprintf("Index:\t\t%d\n", l.list.IndexOf(selectedItem)))
 	if selectedItem.Done() {
@@ -110,12 +129,14 @@ func (l List) View() string {
 	for _, p := range selectedItem.Projects() {
 		projects = append(projects, p.String())
 	}
+	builder.WriteString("Projects:\t")
 	builder.WriteString(strings.Join(projects, ", "))
 	builder.WriteString("\n")
 	contexts := make([]string, 0)
 	for _, c := range selectedItem.Contexts() {
 		contexts = append(contexts, c.String())
 	}
+	builder.WriteString("Contexts:\t")
 	builder.WriteString(strings.Join(contexts, ", "))
 	builder.WriteString("\n")
 	builder.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, "Description:\t", selectedItem.Description()))

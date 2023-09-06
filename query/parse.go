@@ -192,6 +192,10 @@ func (p *parser) parsePrimary() (node, error) {
 			return nil, errors.New("missing closing parenthesis")
 		}
 		return child, err
+	case itemAllQuant:
+		return p.parseExp()
+	case itemExistQuant:
+		return p.parseExp()
 	case itemIdent:
 		p.next()
 		fCallTest := p.lookAhead()
