@@ -5,8 +5,6 @@ import (
 	"regexp"
 )
 
-var projectRegex = regexp.MustCompile(`(?:^| )\+[^[:space:]]+(?: |$)`)
-
 type Project string
 
 // Matcher returns a regular expression matching this specific project.

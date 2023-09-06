@@ -7,9 +7,11 @@ import (
 	"slices"
 	"strings"
 	"time"
-
-	"github.com/repeale/fp-go"
 )
+
+var tagRegex = regexp.MustCompile("(?:^| )[^[:space:]:@+]*:[^[:space:]]+(?: |$)")
+var projectRegex = regexp.MustCompile(`(?:^| )\+[^[:space:]]+(?: |$)`)
+var contextRegex = regexp.MustCompile("(?:^| )@[^[:space:]]+(?: |$)")
 
 var ErrCreationDateUnset = errors.New("completion date can not be set while creation date is not")
 var ErrCompleteBeforeCreation = errors.New("completion date can not be before creation date")
@@ -48,44 +50,36 @@ func (i *Item) Description() string {
 
 func (i *Item) Projects() []Project {
 	matches := i.findDescMatches(projectRegex)
-	toProject := fp.Map(func(s string) Project { return Project(strings.TrimSpace(s)[1:]) })
-	sort := func(in []Project) []Project {
-		slices.Sort(in)
-		return in
+	projects := make([]Project, 0, len(matches))
+	for _, match := range matches {
+		projects = append(projects, Project(strings.TrimSpace(match)[1:]))
 	}
-	uniq := slices.Compact[[]Project]
-	return fp.Pipe3(toProject, sort, uniq)(matches)
+	slices.Sort(projects)
+	projects = slices.Compact(projects)
+	return projects
 }
 
 func (i *Item) Contexts() []Context {
 	matches := i.findDescMatches(contextRegex)
-	toContext := fp.Map(func(s string) Context { return Context(strings.TrimSpace(s)[1:]) })
-	sort := func(in []Context) []Context {
-		slices.Sort(in)
-		return in
+	contexts := make([]Context, 0, len(matches))
+	for _, match := range matches {
+		contexts = append(contexts, Context(strings.TrimSpace(match)[1:]))
 	}
-	uniq := slices.Compact[[]Context]
-	return fp.Pipe3(toContext, sort, uniq)(matches)
+	slices.Sort(contexts)
+	contexts = slices.Compact(contexts)
+	return contexts
 }
 
 func (i *Item) Tags() Tags {
-	type tag struct {
-		key   string
-		value string
-	}
 	matches := i.findDescMatches(tagRegex)
-	split := fp.Map(func(match string) tag {
+	tags := make(Tags)
+	for _, match := range matches {
 		tagSepIndex := strings.Index(match, ":")
-		return tag{
-			key:   strings.TrimSpace(match[:tagSepIndex]),
-			value: strings.TrimSpace(match[tagSepIndex+1:]),
-		}
-	})
-	toMap := fp.Reduce(func(tags Tags, t tag) Tags {
-		tags[t.key] = append(tags[t.key], t.value)
-		return tags
-	}, Tags(make(map[string][]string)))
-	return fp.Pipe2(split, toMap)(matches)
+		key := strings.TrimSpace(match[:tagSepIndex])
+		value := strings.TrimSpace(match[tagSepIndex+1:])
+		tags[key] = append(tags[key], value)
+	}
+	return tags
 }
 
 func (i *Item) findDescMatches(regex *regexp.Regexp) []string {

@@ -7,8 +7,6 @@ import (
 	"unicode"
 )
 
-var tagRegex = regexp.MustCompile("(?:^| )[^[:space:]:@+]*:[^[:space:]]+(?: |$)")
-
 type Tags map[string][]string
 
 // MatcherForTag returns a regular expression that matches a tag with the supplied key.

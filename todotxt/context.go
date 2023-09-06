@@ -5,8 +5,6 @@ import (
 	"regexp"
 )
 
-var contextRegex = regexp.MustCompile("(?:^| )@[^[:space:]]+(?: |$)")
-
 type Context string
 
 // Matcher returns a regular expression matching this specific context.
