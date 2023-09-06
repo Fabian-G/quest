@@ -11,7 +11,7 @@ import (
 	"github.com/Fabian-G/quest/todotxt"
 )
 
-func compileRange(query string) (Query, error) {
+func compileRange(query string) (Func, error) {
 	ranges := strings.Split(query, ",")
 	if len(ranges) == 0 {
 		return nil, errors.New("empty range is not a valid query")

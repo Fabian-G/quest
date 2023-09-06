@@ -8,7 +8,7 @@ type Di struct {
 
 func (d *Di) TodoTxtRepo() *todotxt.Repo {
 	if d.repo == nil {
-		d.repo = BuildTodoTxtRepo()
+		d.repo = buildTodoTxtRepo()
 	}
 	return d.repo
 }

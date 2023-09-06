@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func BuildTodoTxtRepo() *todotxt.Repo {
+func buildTodoTxtRepo() *todotxt.Repo {
 	repo := todotxt.NewRepo(viper.GetString(TodoFile))
 	repo.DefaultHooks = []todotxt.HookBuilder{
 		hook.NewRecurrence,

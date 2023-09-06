@@ -218,13 +218,13 @@ var unitMap = map[string]time.Duration{
 
 func parseDuration(duration string) (time.Duration, error) {
 	switch duration {
-	case "daily":
+	case "daily", "d":
 		return 24 * time.Hour, nil
-	case "weekly":
+	case "weekly", "w":
 		return 7 * 24 * time.Hour, nil
-	case "monthly":
+	case "monthly", "m":
 		return 30 * 24 * time.Hour, nil
-	case "yearly":
+	case "yearly", "y":
 		return 365 * 24 * time.Hour, nil
 	default:
 		valueIdx := numRegex.FindStringIndex(duration)

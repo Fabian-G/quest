@@ -7,7 +7,7 @@ import (
 	"github.com/Fabian-G/quest/todotxt"
 )
 
-func compileFOL(query string) (Query, error) {
+func compileFOL(query string) (Func, error) {
 	root, err := parseTree(query, idSet{"it": struct{}{}})
 	if err != nil {
 		return nil, err

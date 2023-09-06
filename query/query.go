@@ -15,9 +15,9 @@ const (
 	StringSearch
 )
 
-type Query func(*todotxt.List, *todotxt.Item) bool
+type Func func(*todotxt.List, *todotxt.Item) bool
 
-func (q Query) Filter(l *todotxt.List) []*todotxt.Item {
+func (q Func) Filter(l *todotxt.List) []*todotxt.Item {
 	allTasks := l.Tasks()
 	matches := make([]*todotxt.Item, 0)
 	for _, t := range allTasks {
@@ -28,7 +28,7 @@ func (q Query) Filter(l *todotxt.List) []*todotxt.Item {
 	return matches
 }
 
-func Compile(query string, typ Type) (Query, error) {
+func Compile(query string, typ Type) (Func, error) {
 	switch typ {
 	case FOL:
 		return compileFOL(query)

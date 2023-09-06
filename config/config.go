@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -27,7 +28,7 @@ func init() {
 
 	dataHome := os.Getenv("XDG_DATA_HOME")
 	if len(dataHome) == 0 {
-		dataHome = path.Join(homeDir, ".local")
+		dataHome = path.Join(homeDir, ".local/share")
 	}
 
 	viper.SetConfigName("config")
@@ -38,6 +39,10 @@ func init() {
 	viper.SetDefault(TodoFile, path.Join(dataHome, "quest/todo.txt"))
 
 	if err := viper.ReadInConfig(); err != nil {
+		var notFound viper.ConfigFileNotFoundError
+		if errors.As(err, &notFound) {
+			return
+		}
 		log.Fatal(err)
 	}
 }
