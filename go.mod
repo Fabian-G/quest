@@ -1,4 +1,4 @@
-module github.com/Fabian-G/todotxt
+module github.com/Fabian-G/quest
 
 go 1.21.0
 

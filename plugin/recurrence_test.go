@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Fabian-G/todotxt/plugin"
-	"github.com/Fabian-G/todotxt/todotxt"
+	"github.com/Fabian-G/quest/plugin"
+	"github.com/Fabian-G/quest/todotxt"
 	"github.com/stretchr/testify/assert"
 )
 

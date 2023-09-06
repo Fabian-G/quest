@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Fabian-G/todotxt/todotxt"
+	"github.com/Fabian-G/quest/todotxt"
 )
 
 func compileFOL(query string) (Query, error) {

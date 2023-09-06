@@ -3,7 +3,7 @@ package query
 import (
 	"strings"
 
-	"github.com/Fabian-G/todotxt/todotxt"
+	"github.com/Fabian-G/quest/todotxt"
 )
 
 func compileStringSearch(query string) Query {

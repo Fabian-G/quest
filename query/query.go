@@ -3,7 +3,7 @@ package query
 import (
 	"fmt"
 
-	"github.com/Fabian-G/todotxt/todotxt"
+	"github.com/Fabian-G/quest/todotxt"
 )
 
 type Type int

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Fabian-G/todotxt/todotxt"
+	"github.com/Fabian-G/quest/todotxt"
 )
 
 type dType string

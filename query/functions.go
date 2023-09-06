@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/Fabian-G/todotxt/todotxt"
+	"github.com/Fabian-G/quest/todotxt"
 )
 
 type queryFunc func([]any) any

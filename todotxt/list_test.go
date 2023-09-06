@@ -3,7 +3,7 @@ package todotxt_test
 import (
 	"testing"
 
-	"github.com/Fabian-G/todotxt/todotxt"
+	"github.com/Fabian-G/quest/todotxt"
 	"github.com/stretchr/testify/assert"
 )
 
