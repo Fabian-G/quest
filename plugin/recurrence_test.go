@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Fabian-G/todotxt/config"
 	"github.com/Fabian-G/todotxt/plugin"
 	"github.com/Fabian-G/todotxt/todotxt"
 	"github.com/stretchr/testify/assert"
@@ -80,7 +79,7 @@ func Test_dueDateRecurrence(t *testing.T) {
 				todotxt.WithNowFunc(nowFunc),
 			)
 			list := todotxt.ListOf(recurrentItem)
-			list.AddHook(plugin.NewRecurrenceWithNowFunc(list, config.Data{}, nowFunc))
+			list.AddHook(plugin.NewRecurrenceWithNowFunc(list, nowFunc))
 
 			err := recurrentItem.Complete()
 
@@ -163,7 +162,7 @@ func Test_thresholdDateRecurrence(t *testing.T) {
 				todotxt.WithNowFunc(nowFunc),
 			)
 			list := todotxt.ListOf(recurrentItem)
-			list.AddHook(plugin.NewRecurrenceWithNowFunc(list, config.Data{}, nowFunc))
+			list.AddHook(plugin.NewRecurrenceWithNowFunc(list, nowFunc))
 
 			err := recurrentItem.Complete()
 
@@ -217,7 +216,7 @@ func Test_bothDateRecurrence(t *testing.T) {
 				todotxt.WithNowFunc(nowFunc),
 			)
 			list := todotxt.ListOf(recurrentItem)
-			list.AddHook(plugin.NewRecurrenceWithNowFunc(list, config.Data{}, nowFunc))
+			list.AddHook(plugin.NewRecurrenceWithNowFunc(list, nowFunc))
 
 			err := recurrentItem.Complete()
 
@@ -236,7 +235,7 @@ func Test_CreationDateGetsUpdatedToToday(t *testing.T) {
 		todotxt.WithDescription("A recurrent item rec:5d due:2023-01-01"),
 	)
 	list := todotxt.ListOf(recurrentItem)
-	list.AddHook(plugin.NewRecurrenceWithNowFunc(list, config.Data{}, func() time.Time { return time.Date(1990, 05, 05, 10, 2, 3, 4, time.UTC) }))
+	list.AddHook(plugin.NewRecurrenceWithNowFunc(list, func() time.Time { return time.Date(1990, 05, 05, 10, 2, 3, 4, time.UTC) }))
 
 	err := recurrentItem.Complete()
 

@@ -12,6 +12,7 @@ import (
 const (
 	firstSmaller  = -1
 	secondSmaller = 1
+	same          = 0
 )
 
 func Test_Sort(t *testing.T) {
@@ -110,6 +111,12 @@ func Test_Sort(t *testing.T) {
 			first:         todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("A hello:world foo:abc")),
 			second:        todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("B hello:world foo:abc")),
 			expectedOrder: secondSmaller,
+		},
+		"empty sort is always equal": {
+			sortString:    "",
+			first:         todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("A hello:world foo:abc")),
+			second:        todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("B hello:world foo:abc")),
+			expectedOrder: same,
 		},
 	}
 

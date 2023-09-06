@@ -24,6 +24,8 @@ func SortFunc(sort string) (func(*todotxt.Item, *todotxt.Item) int, error) {
 		key = strings.TrimLeft(key, "+-")
 
 		switch key {
+		case "":
+			continue
 		case "done":
 			compareFuncs = append(compareFuncs, order.compareDone)
 		case "creation":

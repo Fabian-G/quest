@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Fabian-G/todotxt/config"
 	"github.com/Fabian-G/todotxt/todotxt"
 )
 
@@ -29,21 +28,18 @@ type recurrenceParams struct {
 
 type Recurrence struct {
 	list    *todotxt.List
-	config  config.Data
 	nowFunc func() time.Time
 }
 
-func NewRecurrence(list *todotxt.List, cfg config.Data) *Recurrence {
+func NewRecurrence(list *todotxt.List) *Recurrence {
 	return &Recurrence{
-		list:   list,
-		config: cfg,
+		list: list,
 	}
 }
 
-func NewRecurrenceWithNowFunc(list *todotxt.List, cfg config.Data, now func() time.Time) *Recurrence {
+func NewRecurrenceWithNowFunc(list *todotxt.List, now func() time.Time) *Recurrence {
 	return &Recurrence{
 		list:    list,
-		config:  cfg,
 		nowFunc: now,
 	}
 }
