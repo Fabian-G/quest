@@ -285,20 +285,32 @@ func (i *identifier) validate(knownIds idSet) (dType, error) {
 }
 
 type call struct {
-	name string
-	args *args
+	name        string
+	args        *args
+	ifBound     node
+	passThrough bool // if true, all calls will get passed to ifBound. This field is set by validate()
 }
 
 func (c *call) eval(l *todotxt.List, alpha varMap) any {
+	if c.passThrough {
+		return c.ifBound.eval(l, alpha)
+	}
 	fn := functions[c.name]
 	return fn.call(c.args.eval(l, alpha).([]any))
 }
 
 func (c *call) String() string {
+	if c.passThrough {
+		return c.ifBound.String()
+	}
 	return fmt.Sprintf("%s%s", c.name, c.args.String())
 }
 
 func (c *call) validate(knownIds idSet) (dType, error) {
+	if _, ok := knownIds[c.name]; ok && c.ifBound != nil {
+		c.passThrough = true
+		return c.ifBound.validate(knownIds)
+	}
 	argTypes, err := c.args.validateAll(knownIds)
 	if err != nil {
 		return qError, err
@@ -308,14 +320,14 @@ func (c *call) validate(knownIds idSet) (dType, error) {
 	if fn, ok = functions[c.name]; !ok {
 		return qError, fmt.Errorf("unknown function with name %s", c.name)
 	}
-	dType, err := fn.validate(argTypes)
+	err = fn.validate(argTypes)
 	var missingItemError missingItemError
 	if errors.As(err, &missingItemError) {
 		it := identifier{name: "it"}
 		c.args.children = slices.Insert[[]node, node](c.args.children, missingItemError.position, &it)
 		return c.validate(knownIds)
 	}
-	return dType, err
+	return fn.resultType, err
 }
 
 type args struct {

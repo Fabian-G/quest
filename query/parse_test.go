@@ -69,6 +69,10 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			query:               "done||!done",
 			expectedParseResult: "(done(it) || !done(it))",
 		},
+		"bound id with name of a function gets parsed as identifier": {
+			query:               "exists done: done(done)",
+			expectedParseResult: "(exists done: done(done))",
+		},
 	}
 
 	for name, tc := range testCases {
@@ -183,8 +187,8 @@ func Test_eval(t *testing.T) {
 			x an item from +bar
 			another +foo item
 			`),
-			query:  `exists done: done(done)`,
-			result: true,
+			query:  `forall done: done(done)`,
+			result: false,
 		},
 	}
 

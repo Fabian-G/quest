@@ -27,35 +27,24 @@ func (q queryFunc) call(args []any) any {
 	return q.fn(args)
 }
 
-func (q queryFunc) validate(actual []dType) (dType, error) {
-	offset := 0
-	injectItPosition := -1
+func (q queryFunc) validate(actual []dType) error {
 	for i, t := range q.argTypes {
-		i := i - offset
 		switch {
-		case i >= len(actual) && !q.trailingOptional && q.injectIt && t == qItem && injectItPosition == -1:
-			offset = 1
-			injectItPosition = i
-			continue
+		case len(actual) > len(q.argTypes):
+			return fmt.Errorf("expecting parameters %#v, but got %#v", q.argTypes, actual)
+		case i >= len(actual) && i == len(q.argTypes)-1 && q.trailingOptional:
+			return nil
+		case i >= len(actual) && t == qItem && q.injectIt:
+			return missingItemError{i}
 		case i >= len(actual):
-			if i == len(q.argTypes)-1 && q.trailingOptional {
-				return q.resultType, nil
-			}
-			return qError, fmt.Errorf("expecting parameters %#v, but got %#v", q.argTypes, actual)
-		case actual[i] == t:
-			continue
-		case actual[i] != t && q.injectIt && t == qItem && injectItPosition == -1:
-			offset = 1
-			injectItPosition = i
-			continue
+			return fmt.Errorf("expecting parameters %#v, but got %#v", q.argTypes, actual)
+		case actual[i] != t && t == qItem && q.injectIt:
+			return missingItemError{i}
 		case actual[i] != t:
-			return qError, fmt.Errorf("expecting parameters %#v, but got %#v", q.argTypes, actual)
+			return fmt.Errorf("expecting parameters %#v, but got %#v", q.argTypes, actual)
 		}
 	}
-	if injectItPosition != -1 {
-		return qError, missingItemError{injectItPosition}
-	}
-	return q.resultType, nil
+	return nil
 }
 
 var functions = map[string]queryFunc{

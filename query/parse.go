@@ -212,6 +212,9 @@ func (p *parser) parsePrimary() (node, error) {
 			return &call{
 				name: next.val,
 				args: &args{},
+				ifBound: &identifier{ // Except if this id is bound by a quantifier. In that cas treat it as an identifier
+					name: next.val,
+				},
 			}, nil
 		}
 		return &identifier{
