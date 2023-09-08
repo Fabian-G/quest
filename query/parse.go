@@ -153,17 +153,16 @@ func (p *parser) parseAnd() (node, error) {
 		}
 	}
 	return child, nil
-
 }
 
 func (p *parser) parseNot() (node, error) {
 	next := p.lookAhead()
 	if next.typ != itemNot {
-		return p.parsePrimary()
+		return p.parseEqual()
 	}
 
 	p.next()
-	child, err := p.parsePrimary()
+	child, err := p.parseEqual()
 	if err != nil {
 		return nil, err
 	}
@@ -171,6 +170,26 @@ func (p *parser) parseNot() (node, error) {
 	return &not{
 		child: child,
 	}, nil
+}
+
+func (p *parser) parseEqual() (node, error) {
+	child, err := p.parsePrimary()
+	if err != nil {
+		return nil, err
+	}
+	for next := p.lookAhead(); next.typ == itemEq; {
+		p.next()
+		next = p.lookAhead()
+		rightChild, err := p.parsePrimary()
+		if err != nil {
+			return nil, err
+		}
+		child = &eq{
+			leftChild:  child,
+			rightChild: rightChild,
+		}
+	}
+	return child, nil
 }
 
 func (p *parser) parsePrimary() (node, error) {

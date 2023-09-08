@@ -195,6 +195,36 @@ func (a *and) validate(knownIds idSet) (dType, error) {
 	return qBool, nil
 }
 
+type eq struct {
+	leftChild  node
+	rightChild node
+}
+
+func (e *eq) eval(alpha varMap) any {
+	v1 := e.leftChild.eval(alpha)
+	v2 := e.rightChild.eval(alpha)
+	return v1 == v2
+}
+
+func (e *eq) String() string {
+	return fmt.Sprintf("(%s == %s)", e.leftChild.String(), e.rightChild.String())
+}
+
+func (e *eq) validate(knownIds idSet) (dType, error) {
+	leftType, err := e.leftChild.validate(knownIds)
+	if err != nil {
+		return qError, err
+	}
+	rightChild, err := e.rightChild.validate(knownIds)
+	if err != nil {
+		return qError, err
+	}
+	if leftType.isSliceType() || rightChild.isSliceType() {
+		return qError, errors.New("comparing slice types is not allowed")
+	}
+	return qBool, nil
+}
+
 type or struct {
 	leftChild  node
 	rightChild node

@@ -38,8 +38,8 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			expectedParseResult: "!true",
 		},
 		"Operator precedence": {
-			query:               "!true && true || true -> true || true && !true",
-			expectedParseResult: "(((!true && true) || true) -> (true || (true && !true)))",
+			query:               "!true == false && true || true -> true || true && !true == false",
+			expectedParseResult: "(((!(true == false) && true) || true) -> (true || (true && !(true == false))))",
 		},
 		"Using parans": {
 			query:               "(false -> true) && (true -> (false -> true))",
@@ -119,7 +119,7 @@ func Test_eval(t *testing.T) {
 			an item without the newKitchen Project
 			`),
 			itemNumber: 0,
-			query:      `exists p in projects(it): stringEq(p, "+newKitchen")`,
+			query:      `exists p in projects(it): p == "+newKitchen"`,
 			result:     true,
 		},
 		"item has project +newKitchen (false)": {
@@ -128,7 +128,7 @@ func Test_eval(t *testing.T) {
 			an item without the newKitchen Project
 			`),
 			itemNumber: 1,
-			query:      `exists p in projects(it): stringEq(p, "+newKitchen")`,
+			query:      `exists p in projects(it): p == "+newKitchen"`,
 			result:     false,
 		},
 		"if all items of project +foo are done then it exists an item in project +bar that is not done (true)": {
@@ -137,7 +137,7 @@ func Test_eval(t *testing.T) {
 			an item from +bar
 			x another +foo item
 			`),
-			query:  `(forall f in items: (exists p in projects(f): stringEq(p, "+foo")) -> done(f)) -> (exists f in items: (exists p in projects(f): stringEq(p, "+bar")) && !done(f))`,
+			query:  `(forall f in items: (exists p in projects(f): p == "+foo") -> done(f)) -> (exists f in items: (exists p in projects(f): p == "+bar") && !done(f))`,
 			result: true,
 		},
 		"if all items of project +foo are done then it exists an item in project +bar that is not done (false)": {
@@ -146,7 +146,7 @@ func Test_eval(t *testing.T) {
 			x an item from +bar
 			x another +foo item
 			`),
-			query:  `(forall f in items: (exists p in projects(f): stringEq(p, "+foo")) -> done(f)) -> (exists f in items: (exists p in projects(f): stringEq(p, "+bar")) && !done(f))`,
+			query:  `(forall f in items: (exists p in projects(f): p == "+foo") -> done(f)) -> (exists f in items: (exists p in projects(f): p == "+bar") && !done(f))`,
 			result: false,
 		},
 		"all items are done (true)": {
@@ -173,7 +173,7 @@ func Test_eval(t *testing.T) {
 			an item from +bar
 			x another +foo item that is also in +bar
 			`),
-			query:  `forall i in items: done(i) -> (exists p in projects(i): stringEq(p, "+foo"))`,
+			query:  `forall i in items: done(i) -> (exists p in projects(i): p == "+foo")`,
 			result: true,
 		},
 		"every item that is done is in project +foo (false)": {
@@ -182,7 +182,7 @@ func Test_eval(t *testing.T) {
 			x an item from +bar
 			another +foo item
 			`),
-			query:  `forall i in items: done(i) -> (exists p in projects(i): stringEq(p, "+foo"))`,
+			query:  `forall i in items: done(i) -> (exists p in projects(i): p == "+foo")`,
 			result: false,
 		},
 		"can bind function name as identifier": {
@@ -200,7 +200,7 @@ func Test_eval(t *testing.T) {
 			x an item from +bar
 			another +foo item
 			`),
-			query:  `forall i in items: forall proj in projects(i): exists other in items: !itemEq(i,other) && (exists p in projects(other): stringEq(p, proj))`,
+			query:  `forall i in items: forall proj in projects(i): exists other in items: !i == other && (exists p in projects(other): p == proj)`,
 			result: true,
 		},
 	}

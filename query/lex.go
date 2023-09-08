@@ -20,6 +20,7 @@ const (
 	itemErr itemType = iota
 	itemIdent
 	itemAnd
+	itemEq
 	itemOr
 	itemImpl
 	itemNot
@@ -160,6 +161,11 @@ func lexQuery(l *lexer) stateFunc {
 			return l.errorf("expected &&")
 		}
 		return l.emit(itemAnd)
+	case r == '=':
+		if l.next() != '=' {
+			return l.errorf("expected ==")
+		}
+		return l.emit(itemEq)
 	case r == '|':
 		if l.next() != '|' {
 			return l.errorf("expected ||")

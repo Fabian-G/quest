@@ -62,20 +62,6 @@ var functions = map[string]queryFunc{
 		trailingOptional: false,
 		injectIt:         true,
 	},
-	"itemEq": {
-		fn:               itemEq,
-		resultType:       qBool,
-		argTypes:         []dType{qItem, qItem},
-		trailingOptional: false,
-		injectIt:         true,
-	},
-	"stringEq": {
-		fn:               stringEq,
-		resultType:       qBool,
-		argTypes:         []dType{qString, qString},
-		trailingOptional: false,
-		injectIt:         false,
-	},
 	"dotPrefix": {
 		fn:               dotPrefix,
 		resultType:       qBool,
@@ -98,18 +84,6 @@ func projects(args []any) any {
 		projStrings = append(projStrings, p.String())
 	}
 	return projStrings
-}
-
-func itemEq(args []any) any {
-	i1 := args[0].(*todotxt.Item)
-	i2 := args[1].(*todotxt.Item)
-	return i1 == i2
-}
-
-func stringEq(args []any) any {
-	s1 := args[0].(string)
-	s2 := args[1].(string)
-	return s1 == s2
 }
 
 func dotPrefix(args []any) any {
