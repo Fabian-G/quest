@@ -232,6 +232,9 @@ func Test_InvalidQuerysResultInParseError(t *testing.T) {
 		"unknown identifier": {
 			query: `exists x in items: done(y)`,
 		},
+		"wrong collection type": {
+			query: `exists x in done: done(x)`,
+		},
 	}
 
 	for name, tc := range testCases {
