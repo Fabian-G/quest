@@ -8,14 +8,15 @@ import (
 )
 
 func compileFOL(query string) (Func, error) {
-	root, err := parseTree(query, idSet{"it": struct{}{}})
+	root, err := parseTree(query, idSet{"it": qItem, "items": qItemSlice})
 	if err != nil {
 		return nil, err
 	}
 	evalFunc := func(universe *todotxt.List, it *todotxt.Item) bool {
-		alpha := make(map[string]*todotxt.Item)
+		alpha := make(map[string]any)
 		alpha["it"] = it
-		return root.eval(universe, alpha).(bool)
+		alpha["items"] = toAnySlice(universe.Tasks())
+		return root.eval(alpha).(bool)
 	}
 	return evalFunc, nil
 }
@@ -69,9 +70,15 @@ func (p *parser) parseQuant() (node, error) {
 	if id.typ != itemIdent {
 		return nil, fmt.Errorf("expected identifier, got: \"%s\" at position %d", id.val, id.pos)
 	}
-	c := p.next()
-	if c.typ != itemColon {
-		return nil, fmt.Errorf("expected colon, got: \"%s\" at position %d", id.val, id.pos)
+	if in := p.next(); in.typ != itemIn {
+		return nil, fmt.Errorf("expected \"in\", got: \"%s\" at position %d", in.val, id.pos)
+	}
+	collection, err := p.parseExp()
+	if err != nil {
+		return nil, err
+	}
+	if c := p.next(); c.typ != itemColon {
+		return nil, fmt.Errorf("expected colon, got: \"%s\" at position %d", c.val, c.pos)
 	}
 	child, err := p.parseExp()
 	if err != nil {
@@ -80,9 +87,9 @@ func (p *parser) parseQuant() (node, error) {
 
 	switch next.typ {
 	case itemAllQuant:
-		return &allQuant{boundId: id.val, child: child}, nil
+		return &allQuant{boundId: id.val, collection: collection, child: child}, nil
 	case itemExistQuant:
-		return &existQuant{boundId: id.val, child: child}, nil
+		return &existQuant{boundId: id.val, collection: collection, child: child}, nil
 
 	}
 	panic("This statement can not be reached")
@@ -187,6 +194,9 @@ func (p *parser) parsePrimary() (node, error) {
 	case itemLeftParen:
 		p.next()
 		child, err := p.parseExp()
+		if err != nil {
+			return nil, err
+		}
 		next := p.next()
 		if next.typ != itemRightParen {
 			return nil, errors.New("missing closing parenthesis")

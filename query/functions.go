@@ -69,6 +69,13 @@ var functions = map[string]queryFunc{
 		trailingOptional: false,
 		injectIt:         false,
 	},
+	"itemEq": {
+		fn:               itemEq,
+		resultType:       qBool,
+		argTypes:         []dType{qItem, qItem},
+		trailingOptional: false,
+		injectIt:         true,
+	},
 }
 
 func done(args []any) any {
@@ -79,7 +86,7 @@ func done(args []any) any {
 func projects(args []any) any {
 	item := args[0].(*todotxt.Item)
 	projects := item.Projects()
-	projStrings := make([]string, 0, len(projects))
+	projStrings := make([]any, 0, len(projects))
 	for _, p := range projects {
 		projStrings = append(projStrings, p.String())
 	}
@@ -87,7 +94,16 @@ func projects(args []any) any {
 }
 
 func contains(args []any) any {
-	slice := args[0].([]string)
+	slice := make([]string, 0, len(args[0].([]any)))
+	for _, e := range args[0].([]any) {
+		slice = append(slice, e.(string))
+	}
 	elem := args[1].(string)
 	return slices.Contains(slice, elem)
+}
+
+func itemEq(args []any) any {
+	i1 := args[0].(*todotxt.Item)
+	i2 := args[1].(*todotxt.Item)
+	return i1 == i2
 }

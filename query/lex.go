@@ -27,6 +27,7 @@ const (
 	itemInt
 	itemBool
 	itemAllQuant
+	itemIn
 	itemExistQuant
 	itemLeftParen
 	itemRightParen
@@ -222,6 +223,9 @@ func lexIdentifier(l *lexer) stateFunc {
 			}
 			if word == "impl" {
 				return l.emit(itemImpl)
+			}
+			if word == "in" {
+				return l.emit(itemIn)
 			}
 			return l.emit(itemIdent)
 		}

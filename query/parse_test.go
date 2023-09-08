@@ -18,12 +18,12 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			expectedParseResult: "(true -> true)",
 		},
 		"Single implication with quantor": {
-			query:               "exists x: true -> true",
-			expectedParseResult: "(exists x: (true -> true))",
+			query:               "exists x in items: true -> true",
+			expectedParseResult: "(exists x in (items): (true -> true))",
 		},
 		"Deeply nested alternating quantors": {
-			query:               "exists x: forall y: exists z: forall w: true -> true",
-			expectedParseResult: "(exists x: (forall y: (exists z: (forall w: (true -> true)))))",
+			query:               "exists x in items: forall y in items: exists z in items: forall w in items: true -> true",
+			expectedParseResult: "(exists x in (items): (forall y in (items): (exists z in (items): (forall w in (items): (true -> true)))))",
 		},
 		"And operation": {
 			query:               "true && false",
@@ -54,8 +54,8 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			expectedParseResult: "((true && false) || true)",
 		},
 		"Quantor in the middle": {
-			query:               "!done(it) && exists x: done(x)",
-			expectedParseResult: "(!done(it) && (exists x: done(x)))",
+			query:               "!done(it) && exists x in items: done(x)",
+			expectedParseResult: "(!done(it) && (exists x in (items): done(x)))",
 		},
 		"it is optional for functions that require one item": {
 			query:               "done()",
@@ -70,14 +70,14 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			expectedParseResult: "(done(it) || !done(it))",
 		},
 		"bound id with name of a function gets parsed as identifier": {
-			query:               "exists done: done(done)",
-			expectedParseResult: "(exists done: done(done))",
+			query:               "exists done in items: done(done)",
+			expectedParseResult: "(exists done in (items): done(done))",
 		},
 	}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			root, err := parseTree(tc.query, idSet{"it": struct{}{}})
+			root, err := parseTree(tc.query, idSet{"it": qItem, "items": qItemSlice})
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expectedParseResult, root.String())
 		})
@@ -133,7 +133,7 @@ func Test_eval(t *testing.T) {
 			an item from +bar
 			x another +foo item
 			`),
-			query:  `(forall f: contains(projects(f), "+foo") -> done(f)) -> (exists f: contains(projects(f), "+bar") && !done(f))`,
+			query:  `(forall f in items: contains(projects(f), "+foo") -> done(f)) -> (exists f in items: contains(projects(f), "+bar") && !done(f))`,
 			result: true,
 		},
 		"if all items of project +foo are done then it exists an item in project +bar that is not done (false)": {
@@ -142,7 +142,7 @@ func Test_eval(t *testing.T) {
 			x an item from +bar
 			x another +foo item
 			`),
-			query:  `(forall f: contains(projects(f), "+foo") -> done(f)) -> (exists f: contains(projects(f), "+bar") && !done(f))`,
+			query:  `(forall f in items: contains(projects(f), "+foo") -> done(f)) -> (exists f in items: contains(projects(f), "+bar") && !done(f))`,
 			result: false,
 		},
 		"all items are done (true)": {
@@ -151,7 +151,7 @@ func Test_eval(t *testing.T) {
 			x an item from +bar
 			x another +foo item
 			`),
-			query:  `forall t: done(t)`,
+			query:  `forall t in items: done(t)`,
 			result: true,
 		},
 		"all items are done (false)": {
@@ -160,7 +160,7 @@ func Test_eval(t *testing.T) {
 			an item from +bar
 			x another +foo item
 			`),
-			query:  `forall t: done(t)`,
+			query:  `forall t in items: done(t)`,
 			result: false,
 		},
 		"every item that is done is in project +foo (true)": {
@@ -169,7 +169,7 @@ func Test_eval(t *testing.T) {
 			an item from +bar
 			x another +foo item that is also in +bar
 			`),
-			query:  `forall i: done(i) -> contains(projects(i), "+foo")`,
+			query:  `forall i in items: done(i) -> contains(projects(i), "+foo")`,
 			result: true,
 		},
 		"every item that is done is in project +foo (false)": {
@@ -178,7 +178,7 @@ func Test_eval(t *testing.T) {
 			x an item from +bar
 			another +foo item
 			`),
-			query:  `forall i: done(i) -> contains(projects(i), "+foo")`,
+			query:  `forall i in items: done(i) -> contains(projects(i), "+foo")`,
 			result: false,
 		},
 		"can bind function name as identifier": {
@@ -187,8 +187,17 @@ func Test_eval(t *testing.T) {
 			x an item from +bar
 			another +foo item
 			`),
-			query:  `forall done: done(done)`,
+			query:  `forall done in items: done(done)`,
 			result: false,
+		},
+		"quantifier can bind to to arbitrary slice typed expressions": {
+			list: listFromString(t, `
+			x a +foo item +bar
+			x an item from +bar
+			another +foo item
+			`),
+			query:  `forall i in items: forall proj in projects(i): exists other in items: !itemEq(i,other) && contains(projects(other), proj)`,
+			result: true,
 		},
 	}
 
@@ -208,20 +217,20 @@ func Test_InvalidQuerysResultInParseError(t *testing.T) {
 		"wrong type for and": {
 			query: `true && "true"`,
 		},
-		"wrong type or and": {
+		"wrong type for or": {
 			query: `true || "true"`,
 		},
-		"wrong type impl and": {
+		"wrong type for impl": {
 			query: `true -> "true"`,
 		},
-		"wrong type not and": {
+		"wrong type for not": {
 			query: `!"true"`,
 		},
 		"wrong type for query": {
 			query: `"hello world"`,
 		},
 		"unknown identifier": {
-			query: `exists x: done(y)`,
+			query: `exists x in items: done(y)`,
 		},
 	}
 

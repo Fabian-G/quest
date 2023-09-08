@@ -6,8 +6,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-
-	"github.com/Fabian-G/quest/todotxt"
 )
 
 type dType string
@@ -19,41 +17,72 @@ const (
 	qStringSlice dType = "[]string"
 	qBool        dType = "bool"
 	qItem        dType = "item"
+	qItemSlice   dType = "[]item"
 )
 
-type varMap map[string]*todotxt.Item
-type idSet map[string]struct{}
+func (d dType) isSliceType() bool {
+	return slices.Contains([]dType{qStringSlice, qItemSlice}, d)
+}
+
+func (d dType) sliceTypeToItemType() dType {
+	switch d {
+	case qItemSlice:
+		return qItem
+	case qStringSlice:
+		return qString
+	}
+	return qError
+}
+
+func toAnySlice[S ~[]E, E any](s S) []any {
+	r := make([]any, len(s))
+	for i, e := range s {
+		r[i] = e
+	}
+	return r
+}
+
+type varMap map[string]any
+type idSet map[string]dType
 
 type node interface {
 	validate(idSet) (dType, error)
-	eval(*todotxt.List, varMap) any
+	eval(varMap) any
 	fmt.Stringer
 }
 
 type allQuant struct {
-	boundId string
-	child   node
+	boundId    string
+	child      node
+	collection node
 }
 
-func (a *allQuant) eval(l *todotxt.List, alpha varMap) any {
+func (a *allQuant) eval(alpha varMap) any {
 	prevValue := alpha[a.boundId]
-	for _, item := range l.Tasks() {
+	defer func() { alpha[a.boundId] = prevValue }()
+	for _, item := range a.collection.eval(alpha).([]any) {
 		alpha[a.boundId] = item
-		if !a.child.eval(l, alpha).(bool) {
+		if !a.child.eval(alpha).(bool) {
 			return false
 		}
 	}
-	alpha[a.boundId] = prevValue
 	return true
 }
 
 func (a *allQuant) String() string {
-	return fmt.Sprintf("(forall %s: %s)", a.boundId, a.child.String())
+	return fmt.Sprintf("(forall %s in (%s): %s)", a.boundId, a.collection.String(), a.child.String())
 }
 
 func (a *allQuant) validate(knownIds idSet) (dType, error) {
+	collectionType, err := a.collection.validate(knownIds)
+	if err != nil {
+		return qError, err
+	}
+	if !collectionType.isSliceType() {
+		return qError, fmt.Errorf("can not use non slice type %s as collection in quantifier", collectionType)
+	}
 	if _, ok := knownIds[a.boundId]; !ok {
-		knownIds[a.boundId] = struct{}{}
+		knownIds[a.boundId] = collectionType.sliceTypeToItemType()
 		defer delete(knownIds, a.boundId)
 	}
 	childType, err := a.child.validate(knownIds)
@@ -67,29 +96,37 @@ func (a *allQuant) validate(knownIds idSet) (dType, error) {
 }
 
 type existQuant struct {
-	boundId string
-	child   node
+	boundId    string
+	child      node
+	collection node
 }
 
-func (e *existQuant) eval(l *todotxt.List, alpha varMap) any {
+func (e *existQuant) eval(alpha varMap) any {
 	prevValue := alpha[e.boundId]
-	for _, item := range l.Tasks() {
+	defer func() { alpha[e.boundId] = prevValue }()
+	for _, item := range e.collection.eval(alpha).([]any) {
 		alpha[e.boundId] = item
-		if e.child.eval(l, alpha).(bool) {
+		if e.child.eval(alpha).(bool) {
 			return true
 		}
 	}
-	alpha[e.boundId] = prevValue
 	return false
 }
 
 func (e *existQuant) String() string {
-	return fmt.Sprintf("(exists %s: %s)", e.boundId, e.child.String())
+	return fmt.Sprintf("(exists %s in (%s): %s)", e.boundId, e.collection.String(), e.child.String())
 }
 
 func (e *existQuant) validate(knownIds idSet) (dType, error) {
+	collectionType, err := e.collection.validate(knownIds)
+	if err != nil {
+		return qError, err
+	}
+	if !collectionType.isSliceType() {
+		return qError, fmt.Errorf("can not use non slice type %s as collection in quantifier", collectionType)
+	}
 	if _, ok := knownIds[e.boundId]; !ok {
-		knownIds[e.boundId] = struct{}{}
+		knownIds[e.boundId] = collectionType.sliceTypeToItemType()
 		defer delete(knownIds, e.boundId)
 	}
 	childType, err := e.child.validate(knownIds)
@@ -107,8 +144,8 @@ type impl struct {
 	rightChild node
 }
 
-func (i *impl) eval(l *todotxt.List, alpha varMap) any {
-	return !i.leftChild.eval(l, alpha).(bool) || i.rightChild.eval(l, alpha).(bool)
+func (i *impl) eval(alpha varMap) any {
+	return !i.leftChild.eval(alpha).(bool) || i.rightChild.eval(alpha).(bool)
 }
 
 func (i *impl) String() string {
@@ -135,8 +172,8 @@ type and struct {
 	rightChild node
 }
 
-func (a *and) eval(l *todotxt.List, alpha varMap) any {
-	return a.leftChild.eval(l, alpha).(bool) && a.rightChild.eval(l, alpha).(bool)
+func (a *and) eval(alpha varMap) any {
+	return a.leftChild.eval(alpha).(bool) && a.rightChild.eval(alpha).(bool)
 }
 
 func (a *and) String() string {
@@ -163,8 +200,8 @@ type or struct {
 	rightChild node
 }
 
-func (o *or) eval(l *todotxt.List, alpha varMap) any {
-	return o.leftChild.eval(l, alpha).(bool) || o.rightChild.eval(l, alpha).(bool)
+func (o *or) eval(alpha varMap) any {
+	return o.leftChild.eval(alpha).(bool) || o.rightChild.eval(alpha).(bool)
 }
 
 func (o *or) String() string {
@@ -190,8 +227,8 @@ type not struct {
 	child node
 }
 
-func (n *not) eval(l *todotxt.List, alpha varMap) any {
-	return !n.child.eval(l, alpha).(bool)
+func (n *not) eval(alpha varMap) any {
+	return !n.child.eval(alpha).(bool)
 }
 
 func (n *not) String() string {
@@ -213,7 +250,7 @@ type stringConst struct {
 	val string
 }
 
-func (s *stringConst) eval(l *todotxt.List, alpha varMap) any {
+func (s *stringConst) eval(alpha varMap) any {
 	return s.val[1 : len(s.val)-1]
 }
 
@@ -229,7 +266,7 @@ type intConst struct {
 	val string
 }
 
-func (i *intConst) eval(l *todotxt.List, alpha varMap) any {
+func (i *intConst) eval(alpha varMap) any {
 	n, _ := strconv.Atoi(i.val)
 	return n
 }
@@ -249,7 +286,7 @@ type boolConst struct {
 	val string
 }
 
-func (b *boolConst) eval(l *todotxt.List, alpha varMap) any {
+func (b *boolConst) eval(alpha varMap) any {
 	bo, _ := strconv.ParseBool(b.val)
 	return bo
 }
@@ -269,7 +306,7 @@ type identifier struct {
 	name string
 }
 
-func (i *identifier) eval(l *todotxt.List, alpha varMap) any {
+func (i *identifier) eval(alpha varMap) any {
 	return alpha[i.name]
 }
 
@@ -281,7 +318,7 @@ func (i *identifier) validate(knownIds idSet) (dType, error) {
 	if _, ok := knownIds[i.name]; !ok {
 		return qError, fmt.Errorf("unknown identifier: %s", i.name)
 	}
-	return qItem, nil
+	return knownIds[i.name], nil
 }
 
 type call struct {
@@ -291,12 +328,12 @@ type call struct {
 	passThrough bool // if true, all calls will get passed to ifBound. This field is set by validate()
 }
 
-func (c *call) eval(l *todotxt.List, alpha varMap) any {
+func (c *call) eval(alpha varMap) any {
 	if c.passThrough {
-		return c.ifBound.eval(l, alpha)
+		return c.ifBound.eval(alpha)
 	}
 	fn := functions[c.name]
-	return fn.call(c.args.eval(l, alpha).([]any))
+	return fn.call(c.args.eval(alpha).([]any))
 }
 
 func (c *call) String() string {
@@ -334,10 +371,10 @@ type args struct {
 	children []node
 }
 
-func (a *args) eval(l *todotxt.List, alpha varMap) any {
+func (a *args) eval(alpha varMap) any {
 	result := make([]any, 0, len(a.children))
 	for _, c := range a.children {
-		result = append(result, c.eval(l, alpha))
+		result = append(result, c.eval(alpha))
 	}
 	return result
 }
