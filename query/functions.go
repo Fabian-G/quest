@@ -2,7 +2,7 @@ package query
 
 import (
 	"fmt"
-	"slices"
+	"strings"
 
 	"github.com/Fabian-G/quest/todotxt"
 )
@@ -62,19 +62,26 @@ var functions = map[string]queryFunc{
 		trailingOptional: false,
 		injectIt:         true,
 	},
-	"contains": {
-		fn:               contains,
-		resultType:       qBool,
-		argTypes:         []dType{qStringSlice, qString},
-		trailingOptional: false,
-		injectIt:         false,
-	},
 	"itemEq": {
 		fn:               itemEq,
 		resultType:       qBool,
 		argTypes:         []dType{qItem, qItem},
 		trailingOptional: false,
 		injectIt:         true,
+	},
+	"stringEq": {
+		fn:               stringEq,
+		resultType:       qBool,
+		argTypes:         []dType{qString, qString},
+		trailingOptional: false,
+		injectIt:         false,
+	},
+	"dotPrefix": {
+		fn:               dotPrefix,
+		resultType:       qBool,
+		argTypes:         []dType{qString, qString},
+		trailingOptional: false,
+		injectIt:         false,
 	},
 }
 
@@ -93,17 +100,27 @@ func projects(args []any) any {
 	return projStrings
 }
 
-func contains(args []any) any {
-	slice := make([]string, 0, len(args[0].([]any)))
-	for _, e := range args[0].([]any) {
-		slice = append(slice, e.(string))
-	}
-	elem := args[1].(string)
-	return slices.Contains(slice, elem)
-}
-
 func itemEq(args []any) any {
 	i1 := args[0].(*todotxt.Item)
 	i2 := args[1].(*todotxt.Item)
 	return i1 == i2
+}
+
+func stringEq(args []any) any {
+	s1 := args[0].(string)
+	s2 := args[1].(string)
+	return s1 == s2
+}
+
+func dotPrefix(args []any) any {
+	s1 := args[0].(string)
+	s2 := args[1].(string)
+
+	if !strings.HasPrefix(s1, s2) {
+		return false
+	}
+	if len(s1) == len(s2) {
+		return true
+	}
+	return s1[len(s2)] == '.'
 }

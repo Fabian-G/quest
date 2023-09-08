@@ -73,6 +73,10 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			query:               "exists done in items: done(done)",
 			expectedParseResult: "(exists done in (items): done(done))",
 		},
+		//"project match shorthand gets compiled correctly": {
+		//query: "+foo",
+		//expectedParseResult: "exists p in (projects(it)): dotPrefix(p, \"foo\")",
+		//},
 	}
 
 	for name, tc := range testCases {
@@ -115,7 +119,7 @@ func Test_eval(t *testing.T) {
 			an item without the newKitchen Project
 			`),
 			itemNumber: 0,
-			query:      `contains(projects(it), "+newKitchen")`,
+			query:      `exists p in projects(it): stringEq(p, "+newKitchen")`,
 			result:     true,
 		},
 		"item has project +newKitchen (false)": {
@@ -124,7 +128,7 @@ func Test_eval(t *testing.T) {
 			an item without the newKitchen Project
 			`),
 			itemNumber: 1,
-			query:      `contains(projects(it), "+newKitchen")`,
+			query:      `exists p in projects(it): stringEq(p, "+newKitchen")`,
 			result:     false,
 		},
 		"if all items of project +foo are done then it exists an item in project +bar that is not done (true)": {
@@ -133,7 +137,7 @@ func Test_eval(t *testing.T) {
 			an item from +bar
 			x another +foo item
 			`),
-			query:  `(forall f in items: contains(projects(f), "+foo") -> done(f)) -> (exists f in items: contains(projects(f), "+bar") && !done(f))`,
+			query:  `(forall f in items: (exists p in projects(f): stringEq(p, "+foo")) -> done(f)) -> (exists f in items: (exists p in projects(f): stringEq(p, "+bar")) && !done(f))`,
 			result: true,
 		},
 		"if all items of project +foo are done then it exists an item in project +bar that is not done (false)": {
@@ -142,7 +146,7 @@ func Test_eval(t *testing.T) {
 			x an item from +bar
 			x another +foo item
 			`),
-			query:  `(forall f in items: contains(projects(f), "+foo") -> done(f)) -> (exists f in items: contains(projects(f), "+bar") && !done(f))`,
+			query:  `(forall f in items: (exists p in projects(f): stringEq(p, "+foo")) -> done(f)) -> (exists f in items: (exists p in projects(f): stringEq(p, "+bar")) && !done(f))`,
 			result: false,
 		},
 		"all items are done (true)": {
@@ -169,7 +173,7 @@ func Test_eval(t *testing.T) {
 			an item from +bar
 			x another +foo item that is also in +bar
 			`),
-			query:  `forall i in items: done(i) -> contains(projects(i), "+foo")`,
+			query:  `forall i in items: done(i) -> (exists p in projects(i): stringEq(p, "+foo"))`,
 			result: true,
 		},
 		"every item that is done is in project +foo (false)": {
@@ -178,7 +182,7 @@ func Test_eval(t *testing.T) {
 			x an item from +bar
 			another +foo item
 			`),
-			query:  `forall i in items: done(i) -> contains(projects(i), "+foo")`,
+			query:  `forall i in items: done(i) -> (exists p in projects(i): stringEq(p, "+foo"))`,
 			result: false,
 		},
 		"can bind function name as identifier": {
@@ -196,7 +200,7 @@ func Test_eval(t *testing.T) {
 			x an item from +bar
 			another +foo item
 			`),
-			query:  `forall i in items: forall proj in projects(i): exists other in items: !itemEq(i,other) && contains(projects(other), proj)`,
+			query:  `forall i in items: forall proj in projects(i): exists other in items: !itemEq(i,other) && (exists p in projects(other): stringEq(p, proj))`,
 			result: true,
 		},
 	}
