@@ -81,6 +81,18 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			query:               "@foo",
 			expectedParseResult: "(exists p in (contexts(it)): dotPrefix(p, \"@foo\"))",
 		},
+		"stuff after project matcher": {
+			query:               "+foo && !done",
+			expectedParseResult: "((exists p in (projects(it)): dotPrefix(p, \"+foo\")) && !done(it))",
+		},
+		"chained and": {
+			query:               "done && done && done",
+			expectedParseResult: "((done(it) && done(it)) && done(it))",
+		},
+		"project matcher in between": {
+			query:               "done && +foo && !done",
+			expectedParseResult: "((done(it) && (exists p in (projects(it)): dotPrefix(p, \"+foo\"))) && !done(it))",
+		},
 	}
 
 	for name, tc := range testCases {

@@ -22,7 +22,7 @@ type List struct {
 }
 
 func NewList(list *todotxt.List, queryString string, interactive bool) (List, error) {
-	qFunc, err := query.Compile(queryString, query.Guess)
+	qFunc, err := query.Compile(queryString, query.FOL)
 	if err != nil {
 		return List{}, err
 	}
@@ -74,7 +74,7 @@ func NewList(list *todotxt.List, queryString string, interactive bool) (List, er
 		height = 10
 		cursor = 0
 	} else {
-		height = len(rows)
+		height = len(rows) + 1
 		styles.Selected = styles.Cell
 		cursor = math.MaxInt
 	}

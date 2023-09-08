@@ -30,6 +30,9 @@ func parseTree(query string, expectedFreeVars idSet) (node, error) {
 	if err != nil {
 		return nil, err
 	}
+	if parser.lookAhead().typ != eof {
+		return nil, fmt.Errorf("garbage at the end of expression: %s", parser.lookAhead().val)
+	}
 	t, err := root.validate(expectedFreeVars)
 	if err != nil {
 		return nil, fmt.Errorf("validation error: %w", err)
@@ -102,11 +105,11 @@ func (p *parser) parseImpl() (node, error) {
 	}
 	for next := p.lookAhead(); next.typ == itemImpl; {
 		p.next()
-		next = p.lookAhead()
 		rightChild, err := p.parseOr()
 		if err != nil {
 			return nil, err
 		}
+		next = p.lookAhead()
 		child = &impl{
 			leftChild:  child,
 			rightChild: rightChild,
@@ -122,11 +125,11 @@ func (p *parser) parseOr() (node, error) {
 	}
 	for next := p.lookAhead(); next.typ == itemOr; {
 		p.next()
-		next = p.lookAhead()
 		rightChild, err := p.parseAnd()
 		if err != nil {
 			return nil, err
 		}
+		next = p.lookAhead()
 		child = &or{
 			leftChild:  child,
 			rightChild: rightChild,
@@ -142,11 +145,11 @@ func (p *parser) parseAnd() (node, error) {
 	}
 	for next := p.lookAhead(); next.typ == itemAnd; {
 		p.next()
-		next = p.lookAhead()
 		rightChild, err := p.parseNot()
 		if err != nil {
 			return nil, err
 		}
+		next = p.lookAhead()
 		child = &and{
 			leftChild:  child,
 			rightChild: rightChild,
@@ -179,11 +182,11 @@ func (p *parser) parseEqual() (node, error) {
 	}
 	for next := p.lookAhead(); next.typ == itemEq; {
 		p.next()
-		next = p.lookAhead()
 		rightChild, err := p.parsePrimary()
 		if err != nil {
 			return nil, err
 		}
+		next = p.lookAhead()
 		child = &eq{
 			leftChild:  child,
 			rightChild: rightChild,
@@ -211,8 +214,10 @@ func (p *parser) parsePrimary() (node, error) {
 			val: next.val,
 		}, nil
 	case itemProjMatch:
+		p.next()
 		return buildProjMatcher(next.val)
 	case itemCtxMatch:
+		p.next()
 		return buildCtxMatcher(next.val)
 	case itemLeftParen:
 		p.next()
@@ -265,7 +270,11 @@ func (p *parser) parseArgs() (*args, error) {
 	if lParen.typ != itemLeftParen {
 		return nil, fmt.Errorf("expected opening parenthesis got: \"%s\" at position %d", lParen.val, lParen.pos)
 	}
-	for next := p.lookAhead(); next.typ != itemRightParen; next = p.lookAhead() {
+	if p.lookAhead().typ == itemRightParen {
+		p.next()
+		return &args{}, nil // args list is empty
+	}
+	for {
 		arg, err := p.parseExp()
 		if err != nil {
 			return nil, err
