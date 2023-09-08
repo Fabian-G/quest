@@ -34,6 +34,8 @@ const (
 	itemRightParen
 	itemComma
 	itemColon
+	itemProjMatch
+	itemCtxMatch
 )
 
 const eof = -1
@@ -152,6 +154,10 @@ func lexQuery(l *lexer) stateFunc {
 	case unicode.IsSpace(r):
 		l.discard()
 		return lexQuery
+	case r == '+':
+		return lexProjectMatcher
+	case r == '@':
+		return lexContextMatcher
 	case r == '!':
 		return l.emit(itemNot)
 	case r == '"':
@@ -189,7 +195,7 @@ func lexQuery(l *lexer) stateFunc {
 		return l.emit(itemRightParen)
 	case r == ':':
 		return l.emit(itemColon)
-	case r == '+' || r == '-' || ('0' <= r && r <= '9'):
+	case r == '-' || ('0' <= r && r <= '9'):
 		l.backup()
 		return lexInt
 	case isAlphaNumeric(r):
@@ -238,8 +244,40 @@ func lexIdentifier(l *lexer) stateFunc {
 	}
 }
 
+func lexProjectMatcher(l *lexer) stateFunc {
+	for {
+		switch r := l.next(); {
+		case isAlphaNumeric(r):
+
+		default:
+			l.backup()
+			if !l.isAtTerminator() {
+				return l.errorf("unexpected token in project matcher %#U", r)
+			}
+
+			return l.emit(itemProjMatch)
+		}
+	}
+}
+
+func lexContextMatcher(l *lexer) stateFunc {
+	for {
+		switch r := l.next(); {
+		case isAlphaNumeric(r):
+
+		default:
+			l.backup()
+			if !l.isAtTerminator() {
+				return l.errorf("unexpected token in context matcher %#U", r)
+			}
+
+			return l.emit(itemCtxMatch)
+		}
+	}
+}
+
 func lexInt(l *lexer) stateFunc {
-	l.accept("+-")
+	l.accept("-")
 	digits := "0123456789"
 	l.acceptRun(digits)
 	if isAlphaNumeric(l.peek()) {
@@ -267,7 +305,7 @@ Loop:
 }
 
 func isAlphaNumeric(r rune) bool {
-	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
+	return r == '-' || r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
 
 func (l *lexer) isAtTerminator() bool {

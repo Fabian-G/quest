@@ -1,7 +1,9 @@
 package query
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -36,7 +38,7 @@ func Test_lexOnValidQueries(t *testing.T) {
 			expectedTokens: []itemType{itemIdent, itemLeftParen, itemString, itemRightParen},
 		},
 		"Number in relation symbol": {
-			query:          "R(+51243)",
+			query:          "R(51243)",
 			expectedTokens: []itemType{itemIdent, itemLeftParen, itemInt, itemRightParen},
 		},
 		"Bool in relation symbol": {
@@ -147,5 +149,27 @@ func Test_lexOnInvalidQueries(t *testing.T) {
 			}
 			assert.Equal(t, itemErr, err.typ)
 		})
+	}
+}
+
+func Test_UsingPlusForANumberDoesNotCauseInfiniteLoop(t *testing.T) {
+	lexer := lex("R(+1234)")
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	for {
+		select {
+		case <-ctx.Done():
+			assert.FailNow(t, "Test did not finish before timeout")
+			return
+		default:
+			item := lexer.nextItem()
+			if item.typ == eof {
+				return
+			}
+			assert.NotEqualf(t, itemErr, item.typ, "Got error item %v", item)
+			if item.typ == itemErr {
+				return
+			}
+		}
 	}
 }

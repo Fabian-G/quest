@@ -73,10 +73,14 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			query:               "exists done in items: done(done)",
 			expectedParseResult: "(exists done in (items): done(done))",
 		},
-		//"project match shorthand gets compiled correctly": {
-		//query: "+foo",
-		//expectedParseResult: "exists p in (projects(it)): dotPrefix(p, \"foo\")",
-		//},
+		"project match shorthand gets compiled correctly": {
+			query:               "+foo",
+			expectedParseResult: "(exists p in (projects(it)): dotPrefix(p, \"+foo\"))",
+		},
+		"context match shorthand gets compiled correctly": {
+			query:               "@foo",
+			expectedParseResult: "(exists p in (contexts(it)): dotPrefix(p, \"@foo\"))",
+		},
 	}
 
 	for name, tc := range testCases {
@@ -202,6 +206,46 @@ func Test_eval(t *testing.T) {
 			`),
 			query:  `forall i in items: forall proj in projects(i): exists other in items: !i == other && (exists p in projects(other): p == proj)`,
 			result: true,
+		},
+		"project matcher matches project prefixes": {
+			list: listFromString(t, `
+			another +foo.bar item
+			`),
+			query:      `+foo`,
+			result:     true,
+			itemNumber: 0,
+		},
+		"project matcher matches project prefixes (false)": {
+			list: listFromString(t, `
+			another +foo2.bar item
+			`),
+			query:      `+foo`,
+			result:     false,
+			itemNumber: 0,
+		},
+		"context matcher matches context prefixes": {
+			list: listFromString(t, `
+			another +foo.bar item
+			`),
+			query:      `+foo`,
+			result:     true,
+			itemNumber: 0,
+		},
+		"context matcher matches context prefixes (false)": {
+			list: listFromString(t, `
+			another @foo2.bar item
+			`),
+			query:      `@foo`,
+			result:     false,
+			itemNumber: 0,
+		},
+		"project matcher does not match prefix without dot": {
+			list: listFromString(t, `
+			another +foo.bar item
+			`),
+			query:      `+fo`,
+			result:     false,
+			itemNumber: 0,
 		},
 	}
 

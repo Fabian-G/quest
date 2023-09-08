@@ -62,6 +62,13 @@ var functions = map[string]queryFunc{
 		trailingOptional: false,
 		injectIt:         true,
 	},
+	"contexts": {
+		fn:               contexts,
+		resultType:       qStringSlice,
+		argTypes:         []dType{qItem},
+		trailingOptional: false,
+		injectIt:         true,
+	},
 	"dotPrefix": {
 		fn:               dotPrefix,
 		resultType:       qBool,
@@ -86,6 +93,15 @@ func projects(args []any) any {
 	return projStrings
 }
 
+func contexts(args []any) any {
+	item := args[0].(*todotxt.Item)
+	contexts := item.Contexts()
+	contextStrings := make([]any, 0, len(contexts))
+	for _, p := range contexts {
+		contextStrings = append(contextStrings, p.String())
+	}
+	return contextStrings
+}
 func dotPrefix(args []any) any {
 	s1 := args[0].(string)
 	s2 := args[1].(string)

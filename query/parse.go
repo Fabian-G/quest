@@ -210,6 +210,10 @@ func (p *parser) parsePrimary() (node, error) {
 		return &boolConst{
 			val: next.val,
 		}, nil
+	case itemProjMatch:
+		return buildProjMatcher(next.val)
+	case itemCtxMatch:
+		return buildCtxMatcher(next.val)
 	case itemLeftParen:
 		p.next()
 		child, err := p.parseExp()
@@ -279,4 +283,20 @@ func (p *parser) parseArgs() (*args, error) {
 	return &args{
 		children: arguments,
 	}, nil
+}
+
+func buildProjMatcher(proj string) (node, error) {
+	query := fmt.Sprintf("(exists p in projects(it): dotPrefix(p, \"%s\"))", proj)
+	p := parser{lex: lex(query)}
+	p.next()
+	tree, err := p.parseExp()
+	return tree, err
+}
+
+func buildCtxMatcher(ctx string) (node, error) {
+	query := fmt.Sprintf("(exists p in contexts(it): dotPrefix(p, \"%s\"))", ctx)
+	p := parser{lex: lex(query)}
+	p.next()
+	tree, err := p.parseExp()
+	return tree, err
 }
