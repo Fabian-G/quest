@@ -28,6 +28,17 @@ func (q Func) Filter(l *todotxt.List) []*todotxt.Item {
 	return matches
 }
 
+func And(fns ...Func) Func {
+	return func(l *todotxt.List, i *todotxt.Item) bool {
+		for _, fn := range fns {
+			if !fn(l, i) {
+				return false
+			}
+		}
+		return true
+	}
+}
+
 func Compile(query string, typ Type) (Func, error) {
 	switch typ {
 	case FOL:

@@ -1,42 +1,40 @@
 package cmd
 
 import (
-	"github.com/Fabian-G/quest/config"
+	"fmt"
+
+	"github.com/Fabian-G/quest/todotxt"
 	"github.com/Fabian-G/quest/view"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 
 var (
-	query       string
 	interactive bool
+	projection  []string
 )
 var listCmd = &cobra.Command{
 	Use:     "list",
-	Short:   "list shows the items in your todo.txt optionally filtered by query",
+	Short:   "TODO",
 	GroupID: "query",
-	Long: `list is the basic command with which you can query your todo.txt file.
-With the -s option you can specify a filter, which can either be a FOL formula, a range expression or a string search.
-		`,
-	Example: "list -s 1-2,4",
+	Long:    `TODO`,
+	Example: "TODO",
 	RunE:    list,
 }
 
 func init() {
-	listCmd.Flags().StringVarP(&query, "select", "s", "", "can be a FOL query, range expression or a string search")
-	listCmd.Flags().BoolVarP(&interactive, "interactive", "i", true, "whether or not quest should be interactive")
+	listCmd.Flags().BoolVarP(&interactive, "interactive", "i", true, "TODO")
+	listCmd.Flags().StringSliceVarP(&projection, "projection", "p", []string{"idx", "description"}, "TODO")
+
 }
 
 func list(cmd *cobra.Command, args []string) error {
-	di := config.Di{}
-	repo := di.TodoTxtRepo()
-	list, err := repo.Read()
+	list := cmd.Context().Value(listKey).(*todotxt.List)
+	selection := cmd.Context().Value(selectionKey).([]*todotxt.Item)
+
+	listView, err := view.NewList(list, selection, projection, interactive)
 	if err != nil {
-		return err
-	}
-	listView, err := view.NewList(list, query, interactive)
-	if err != nil {
-		return err
+		return fmt.Errorf("could not create list view: %w", err)
 	}
 	programme := tea.NewProgram(listView)
 	if _, err := programme.Run(); err != nil {
