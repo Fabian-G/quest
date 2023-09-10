@@ -12,6 +12,8 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
+const StarProjection = "idx,description"
+
 type columnExtractor struct {
 	title     string
 	extractor func(*todotxt.Item) string

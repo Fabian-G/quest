@@ -259,6 +259,14 @@ func Test_eval(t *testing.T) {
 			result:     false,
 			itemNumber: 0,
 		},
+		"empty query matches everything": {
+			list: listFromString(t, `
+			another +foo.bar item
+			`),
+			query:      ``,
+			result:     true,
+			itemNumber: 0,
+		},
 	}
 
 	for name, tc := range testCases {

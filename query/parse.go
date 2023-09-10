@@ -26,6 +26,9 @@ func parseTree(query string, expectedFreeVars idSet) (node, error) {
 		lex: lex(query),
 	}
 	parser.next()
+	if parser.lookAhead().typ == eof {
+		return &boolConst{val: "true"}, nil
+	}
 	root, err := parser.parseExp()
 	if err != nil {
 		return nil, err
