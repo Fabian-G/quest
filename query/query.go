@@ -10,7 +10,7 @@ type Type int
 
 const (
 	Guess Type = iota
-	FOL
+	QQL
 	Range
 	StringSearch
 )
@@ -41,7 +41,7 @@ func And(fns ...Func) Func {
 
 func Compile(query string, typ Type) (Func, error) {
 	switch typ {
-	case FOL:
+	case QQL:
 		return compileFOL(query)
 	case Range:
 		return compileRange(query)

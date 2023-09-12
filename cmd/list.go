@@ -30,11 +30,15 @@ func listCmd(name, defaultSelection, defaultProjection, defaultSortOrder string,
 	list := func(cmd *cobra.Command, args []string) error {
 		list := cmd.Context().Value(listKey).(*todotxt.List)
 		userQuery := cmd.Context().Value(queryKey).(query.Func)
-		configQuery, err := query.Compile(defaultSelection, query.FOL)
+		configQuery, err := query.Compile(defaultSelection, query.QQL)
 		if err != nil {
 			return fmt.Errorf("config file contains invalid query for view %s: %w", name, err)
 		}
 		selection := query.And(userQuery, configQuery).Filter(list)
+		if len(selection) == 0 {
+			fmt.Println("no matches")
+			return nil
+		}
 
 		sortFunc, err := query.SortFunc(sortOrder)
 		if err != nil {

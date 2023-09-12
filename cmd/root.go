@@ -1,6 +1,3 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -26,7 +23,7 @@ var (
 )
 
 var (
-	folSearch    []string
+	qqlSearch    []string
 	rngSearch    []string
 	stringSearch []string
 )
@@ -74,8 +71,8 @@ func parseTaskSelection(cmd *cobra.Command, args []string) error {
 		}
 		selectors = append(selectors, q)
 	}
-	for _, f := range folSearch {
-		q, err := query.Compile(f, query.FOL)
+	for _, f := range qqlSearch {
+		q, err := query.Compile(f, query.QQL)
 		if err != nil {
 			return fmt.Errorf("could not compile FOL query %s: %w", f, err)
 		}
@@ -124,7 +121,7 @@ func saveList(cmd *cobra.Command, args []string) error {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringArrayVarP(&folSearch, "fol", "q", nil, "TODO")
+	rootCmd.PersistentFlags().StringArrayVarP(&qqlSearch, "qql", "q", nil, "TODO")
 	rootCmd.PersistentFlags().StringArrayVarP(&rngSearch, "range", "r", nil, "TODO")
 	rootCmd.PersistentFlags().StringArrayVarP(&stringSearch, "word", "w", nil, "TODO")
 	rootCmd.AddGroup(&cobra.Group{
