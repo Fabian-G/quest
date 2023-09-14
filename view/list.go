@@ -55,7 +55,7 @@ type List struct {
 
 type refreshListMsg struct{}
 
-func refreshList() tea.Msg {
+func RefreshList() tea.Msg {
 	return refreshListMsg{}
 }
 
@@ -70,10 +70,7 @@ func NewList(list *todotxt.List, selection []*todotxt.Item, projection []string)
 		return List{}, fmt.Errorf("invalid projection %v: %w", projection, err)
 	}
 	l.extractors = columnExtractors
-	l.table = table.New(
-		table.WithHeight(16),
-		table.WithFocused(true),
-	)
+	l.table = table.New()
 	return l, nil
 }
 
@@ -204,10 +201,7 @@ func (l List) allTagsExtractors() []columnExtractor {
 }
 
 func (l List) Init() tea.Cmd {
-	if l.Interactive {
-		return refreshList
-	}
-	return tea.Sequence(refreshList, tea.Quit)
+	return RefreshList
 }
 
 func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -217,12 +211,14 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return l, tea.Quit
 		}
 	case refreshListMsg:
-		rows, columns := l.mapToColumns()
-		l.table.SetColumns(columns)
-		l.table.SetRows(rows)
+		l = l.refreshTable()
 	}
 	m, cmd := l.table.Update(msg)
 	l.table = m
+
+	if !l.Interactive {
+		return l, tea.Quit
+	}
 	return l, cmd
 }
 
@@ -258,4 +254,22 @@ func (l List) View() string {
 	builder.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, "Description:\t", selectedItem.Description()))
 
 	return builder.String()
+}
+
+func (l List) refreshTable() List {
+	rows, columns := l.mapToColumns()
+	l.table.SetColumns(columns)
+	l.table.SetRows(rows)
+	if l.Interactive {
+		l.table.Focus()
+		l.table.SetHeight(16)
+		l.table.SetStyles(table.DefaultStyles())
+	} else {
+		l.table.SetHeight(len(rows))
+		defaultStyles := table.DefaultStyles()
+		defaultStyles.Selected = lipgloss.NewStyle()
+		l.table.SetStyles(defaultStyles)
+	}
+	l.table.UpdateViewport()
+	return l
 }

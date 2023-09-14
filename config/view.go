@@ -13,7 +13,7 @@ type OutputMode = string
 const (
 	JsonOutput        OutputMode = "json"
 	InteractiveOutput OutputMode = "interactive"
-	ListOutputMode    OutputMode = "list"
+	ListOutput        OutputMode = "list"
 )
 
 var ListViewDef = ViewDef{

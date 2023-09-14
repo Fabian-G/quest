@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"slices"
 	"strings"
 
@@ -86,8 +87,18 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 	listView.CleanContexts = cleanContexts
 	listView.CleanTags = cleanTags
 	programme := tea.NewProgram(listView)
-	if _, err := programme.Run(); err != nil {
-		return err
+	switch v.output {
+	case config.InteractiveOutput:
+		if _, err := programme.Run(); err != nil {
+			return err
+		}
+	case config.JsonOutput:
+		log.Fatal("Not implemented")
+	case config.ListOutput:
+		l, _ := listView.Update(view.RefreshList())
+		fmt.Println(l.View())
+	default:
+		return fmt.Errorf("unknown output mode: %s\nAvailable modes are %v", v.output, []string{config.InteractiveOutput, config.JsonOutput, config.ListOutput})
 	}
 	return nil
 }
