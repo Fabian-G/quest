@@ -55,6 +55,13 @@ var functions = map[string]queryFunc{
 		trailingOptional: false,
 		injectIt:         true,
 	},
+	"description": {
+		fn:               description,
+		argTypes:         []dType{qItem},
+		resultType:       qString,
+		trailingOptional: false,
+		injectIt:         true,
+	},
 	"projects": {
 		fn:               projects,
 		resultType:       qStringSlice,
@@ -76,11 +83,23 @@ var functions = map[string]queryFunc{
 		trailingOptional: false,
 		injectIt:         false,
 	},
+	"substring": {
+		fn:               substring,
+		resultType:       qBool,
+		argTypes:         []dType{qString, qString},
+		trailingOptional: false,
+		injectIt:         false,
+	},
 }
 
 func done(args []any) any {
 	item := args[0].(*todotxt.Item)
 	return item.Done()
+}
+
+func description(args []any) any {
+	item := args[0].(*todotxt.Item)
+	return item.Description()
 }
 
 func projects(args []any) any {
@@ -102,6 +121,7 @@ func contexts(args []any) any {
 	}
 	return contextStrings
 }
+
 func dotPrefix(args []any) any {
 	s1 := args[0].(string)
 	s2 := args[1].(string)
@@ -113,4 +133,11 @@ func dotPrefix(args []any) any {
 		return true
 	}
 	return s1[len(s2)] == '.'
+}
+
+func substring(args []any) any {
+	s1 := args[0].(string)
+	s2 := args[1].(string)
+
+	return strings.Contains(s1, s2)
 }
