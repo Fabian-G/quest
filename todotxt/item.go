@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -46,6 +47,24 @@ func (i *Item) CreationDate() *time.Time {
 
 func (i *Item) Description() string {
 	return i.description
+}
+
+func (i *Item) CleanDescription(projects []Project, contexts []Context, tags []string) string {
+	desc := i.Description()
+	for _, p := range projects {
+		matcher := p.Matcher()
+		fmt.Printf("Matching: %s\n", strconv.FormatBool(matcher.MatchString(desc)))
+		desc = strings.TrimSpace(matcher.ReplaceAllString(desc, " "))
+	}
+	for _, c := range contexts {
+		matcher := c.Matcher()
+		desc = strings.TrimSpace(matcher.ReplaceAllString(desc, " "))
+	}
+	for _, t := range tags {
+		matcher := MatcherForTag(t)
+		desc = strings.TrimSpace(matcher.ReplaceAllString(desc, " "))
+	}
+	return desc
 }
 
 func (i *Item) Projects() []Project {

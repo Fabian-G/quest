@@ -14,14 +14,14 @@ func TestProject_Matcher(t *testing.T) {
 	}{
 		"Matcher finds all matches": {
 			desc: "+proj foo +proj bar +proj",
-			proj: Project("+proj"),
+			proj: Project("proj"),
 			expectedMatches: [][]int{
 				{0, 6}, {9, 16}, {19, 25},
 			},
 		},
 		"Matcher finds only matches": {
 			desc:            "+proj2 foo+proj bar proj+",
-			proj:            Project("+proj"),
+			proj:            Project("proj"),
 			expectedMatches: [][]int{},
 		},
 	}

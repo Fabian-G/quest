@@ -237,3 +237,49 @@ func Test_SetTagForNewTag(t *testing.T) {
 
 	assert.Equal(t, "This is rec:+5y a description with tags rec:5y new:+1d", item.Description())
 }
+
+func Test_CleaDescripton(t *testing.T) {
+	testCases := map[string]struct {
+		cleanProjects      []todotxt.Project
+		cleanContexts      []todotxt.Context
+		cleanTags          []string
+		description        string
+		cleanedDescription string
+	}{
+		"Cleans Projects": {
+			cleanProjects: []todotxt.Project{
+				todotxt.Project("beginning"),
+				todotxt.Project("middle"),
+				todotxt.Project("end"),
+			},
+			description:        "+beginning an +middle example +foo task +end",
+			cleanedDescription: "an example +foo task",
+		},
+		"Cleans Contexts": {
+			cleanContexts: []todotxt.Context{
+				todotxt.Context("beginning"),
+				todotxt.Context("middle"),
+				todotxt.Context("end"),
+			},
+			description:        "@beginning an @middle example @foo task @end",
+			cleanedDescription: "an example @foo task",
+		},
+		"Cleans Tags": {
+			cleanTags: []string{
+				"beginning",
+				"middle",
+				"end",
+			},
+			description:        "beginning:foo an middle:foo example task end:foo",
+			cleanedDescription: "an example task",
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			testItem := todotxt.MustBuildItem(todotxt.WithDescription(tc.description))
+			cleanedDescription := testItem.CleanDescription(tc.cleanProjects, tc.cleanContexts, tc.cleanTags)
+			assert.Equal(t, tc.cleanedDescription, cleanedDescription)
+		})
+	}
+}

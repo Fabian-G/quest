@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/Fabian-G/quest/config"
 	"github.com/Fabian-G/quest/query"
@@ -129,31 +130,50 @@ func init() {
 		Title: "Query",
 	})
 
-	rootCmd.AddCommand(listCmd("list", "", view.StarProjection, "+done,+creation,+description", interactiveOutput))
+	rootCmd.AddCommand(listCmd(viewDef{
+		name:              "list",
+		defaultSelection:  "",
+		defaultProjection: view.StarProjection,
+		defaultSortOrder:  "+done,+creation,+description",
+		defaultOutputMode: interactiveOutput,
+		defaultClean:      nil,
+	}))
 	views := viper.GetStringMap("view")
 	for name, viewDefA := range views {
-		viewDef, ok := viewDefA.(map[string]any)
+		viewDefM, ok := viewDefA.(map[string]any)
 		if !ok {
 			log.Fatalf("error in config file. expected view definition in section [view.%s], but got %T", name, viewDefA)
 		}
 		var (
-			selection   string = ""
-			projection  string = view.StarProjection
-			sortOrder   string = "+done,+cretion,+description"
-			interactive string = interactiveOutput
+			selection  string   = ""
+			projection string   = view.StarProjection
+			sortOrder  string   = "+done,+cretion,+description"
+			output     string   = interactiveOutput
+			clean      []string = nil
 		)
-		if s, ok := viewDef["query"]; ok {
+		if s, ok := viewDefM["query"]; ok {
 			selection = s.(string)
 		}
-		if p, ok := viewDef["projection"]; ok {
+		if p, ok := viewDefM["projection"]; ok {
 			projection = p.(string)
 		}
-		if s, ok := viewDef["sort"]; ok {
+		if s, ok := viewDefM["sort"]; ok {
 			sortOrder = s.(string)
 		}
-		if i, ok := viewDef["output"]; ok {
-			interactive = i.(string)
+		if i, ok := viewDefM["output"]; ok {
+			output = i.(string)
 		}
-		rootCmd.AddCommand(listCmd(name, selection, projection, sortOrder, interactive))
+		if c, ok := viewDefM["clean"]; ok {
+			cleanS := c.(string)
+			clean = strings.Split(cleanS, ",")
+		}
+		rootCmd.AddCommand(listCmd(viewDef{
+			name:              name,
+			defaultSelection:  selection,
+			defaultProjection: projection,
+			defaultSortOrder:  sortOrder,
+			defaultOutputMode: output,
+			defaultClean:      clean,
+		}))
 	}
 }

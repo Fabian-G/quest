@@ -17,48 +17,52 @@ const StarProjection = "idx,done,completion,creation,projects,contexts,tags,desc
 
 type columnExtractor struct {
 	title     string
-	extractor func(*todotxt.Item) string
+	extractor func(List, *todotxt.Item) string
 }
 
 type List struct {
-	list        *todotxt.List
-	selection   []*todotxt.Item
-	table       table.Model
-	interactive bool
+	list          *todotxt.List
+	selection     []*todotxt.Item
+	extractors    []columnExtractor
+	table         table.Model
+	Interactive   bool
+	CleanProjects []todotxt.Project
+	CleanContexts []todotxt.Context
+	CleanTags     []string
 }
 
-func NewList(list *todotxt.List, selection []*todotxt.Item, projection []string, interactive bool) (List, error) {
+type refreshListMsg struct{}
+
+func refreshList() tea.Msg {
+	return refreshListMsg{}
+}
+
+func NewList(list *todotxt.List, selection []*todotxt.Item, projection []string) (List, error) {
 	l := List{
-		list:        list,
-		selection:   selection,
-		interactive: interactive,
+		list:      list,
+		selection: selection,
 	}
 
 	columnExtractors, err := l.columnExtractors(projection)
 	if err != nil {
 		return List{}, fmt.Errorf("invalid projection %v: %w", projection, err)
 	}
-
-	rows, columns := l.mapToColumns(columnExtractors)
-
+	l.extractors = columnExtractors
 	l.table = table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
 		table.WithHeight(16),
-		table.WithFocused(l.interactive),
+		table.WithFocused(true),
 	)
-
 	return l, nil
 }
 
-func (l List) mapToColumns(extractors []columnExtractor) ([]table.Row, []table.Column) {
-	columns := make([]table.Column, 0, len(extractors))
+func (l List) mapToColumns() ([]table.Row, []table.Column) {
+	columns := make([]table.Column, 0, len(l.extractors))
 	rows := make([]table.Row, len(l.selection))
-	for _, c := range extractors {
+	for _, c := range l.extractors {
 		maxWidth := 0
-		values := make([]string, 0, len(extractors))
+		values := make([]string, 0, len(l.extractors))
 		for _, i := range l.selection {
-			val := c.extractor(i)
+			val := c.extractor(l, i)
 			values = append(values, val)
 			maxWidth = max(maxWidth, len(val))
 		}
@@ -80,21 +84,21 @@ func (l List) columnExtractors(projection []string) ([]columnExtractor, error) {
 		switch {
 		case strings.HasPrefix(p, "tag:"):
 			tagKey := strings.Split(p, ":")[1]
-			fns = append(fns, columnExtractor{tagKey, l.tagColumn(tagKey)})
+			fns = append(fns, columnExtractor{tagKey, tagColumn(tagKey)})
 		case p == "idx":
-			fns = append(fns, columnExtractor{"Idx", l.idxColumn})
+			fns = append(fns, columnExtractor{"Idx", idxColumn})
 		case p == "done":
-			fns = append(fns, columnExtractor{"Done", l.doneColumn})
+			fns = append(fns, columnExtractor{"Done", doneColumn})
 		case p == "description":
-			fns = append(fns, columnExtractor{"Description", l.descriptionColumn})
+			fns = append(fns, columnExtractor{"Description", descriptionColumn})
 		case p == "creation":
-			fns = append(fns, columnExtractor{"Created On", l.creationColumn})
+			fns = append(fns, columnExtractor{"Created On", creationColumn})
 		case p == "completion":
-			fns = append(fns, columnExtractor{"Completed On", l.completionColumn})
+			fns = append(fns, columnExtractor{"Completed On", completionColumn})
 		case p == "projects":
-			fns = append(fns, columnExtractor{"Projects", l.projectsColumn})
+			fns = append(fns, columnExtractor{"Projects", projectsColumn})
 		case p == "contexts":
-			fns = append(fns, columnExtractor{"Contexts", l.contextsColumn})
+			fns = append(fns, columnExtractor{"Contexts", contextsColumn})
 		case p == "tags":
 			fns = append(fns, l.allTagsExtractors()...)
 		default:
@@ -105,21 +109,21 @@ func (l List) columnExtractors(projection []string) ([]columnExtractor, error) {
 	return fns, nil
 }
 
-func (l List) tagColumn(key string) func(*todotxt.Item) string {
-	return func(i *todotxt.Item) string {
+func tagColumn(key string) func(List, *todotxt.Item) string {
+	return func(l List, i *todotxt.Item) string {
 		tagValues := i.Tags()[key]
 		return strings.Join(tagValues, ",")
 	}
 }
 
-func (l List) doneColumn(i *todotxt.Item) string {
+func doneColumn(l List, i *todotxt.Item) string {
 	if i.Done() {
 		return "x"
 	}
 	return ""
 }
 
-func (l List) creationColumn(i *todotxt.Item) string {
+func creationColumn(l List, i *todotxt.Item) string {
 	date := i.CreationDate()
 	if date == nil {
 		return ""
@@ -127,7 +131,7 @@ func (l List) creationColumn(i *todotxt.Item) string {
 	return date.Format(time.DateOnly)
 }
 
-func (l List) completionColumn(i *todotxt.Item) string {
+func completionColumn(l List, i *todotxt.Item) string {
 	date := i.CompletionDate()
 	if date == nil {
 		return ""
@@ -135,7 +139,7 @@ func (l List) completionColumn(i *todotxt.Item) string {
 	return date.Format(time.DateOnly)
 }
 
-func (l List) projectsColumn(i *todotxt.Item) string {
+func projectsColumn(l List, i *todotxt.Item) string {
 	projects := i.Projects()
 	projectStrings := make([]string, 0, len(projects))
 	for _, p := range projects {
@@ -144,7 +148,7 @@ func (l List) projectsColumn(i *todotxt.Item) string {
 	return strings.Join(projectStrings, ",")
 }
 
-func (l List) contextsColumn(i *todotxt.Item) string {
+func contextsColumn(l List, i *todotxt.Item) string {
 	contexts := i.Contexts()
 	contextStrings := make([]string, 0, len(contexts))
 	for _, p := range contexts {
@@ -153,12 +157,12 @@ func (l List) contextsColumn(i *todotxt.Item) string {
 	return strings.Join(contextStrings, ",")
 }
 
-func (l List) idxColumn(i *todotxt.Item) string {
+func idxColumn(l List, i *todotxt.Item) string {
 	return strconv.Itoa(l.list.IndexOf(i))
 }
 
-func (l List) descriptionColumn(i *todotxt.Item) string {
-	return runewidth.Truncate(i.Description(), 50, "...")
+func descriptionColumn(l List, i *todotxt.Item) string {
+	return runewidth.Truncate(i.CleanDescription(l.CleanProjects, l.CleanContexts, l.CleanTags), 50, "...")
 }
 
 func (l List) allTagsExtractors() []columnExtractor {
@@ -172,16 +176,16 @@ func (l List) allTagsExtractors() []columnExtractor {
 
 	extractors := make([]columnExtractor, 0, len(tagKeys))
 	for key := range tagKeys {
-		extractors = append(extractors, columnExtractor{key, l.tagColumn(key)})
+		extractors = append(extractors, columnExtractor{key, tagColumn(key)})
 	}
 	return extractors
 }
 
 func (l List) Init() tea.Cmd {
-	if l.interactive {
-		return nil
+	if l.Interactive {
+		return refreshList
 	}
-	return tea.Quit
+	return tea.Sequence(refreshList, tea.Quit)
 }
 
 func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -190,6 +194,10 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return l, tea.Quit
 		}
+	case refreshListMsg:
+		rows, columns := l.mapToColumns()
+		l.table.SetColumns(columns)
+		l.table.SetRows(rows)
 	}
 	m, cmd := l.table.Update(msg)
 	l.table = m
@@ -199,7 +207,7 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (l List) View() string {
 	builder := strings.Builder{}
 	builder.WriteString(l.table.View())
-	if !l.interactive {
+	if !l.Interactive {
 		return builder.String()
 	}
 	selectedItem := l.selection[l.table.Cursor()]

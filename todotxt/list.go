@@ -107,6 +107,54 @@ func (l *List) Len() int {
 	return len(l.taskMap())
 }
 
+func (l *List) AllProjects() []Project {
+	allProjectsM := make(map[Project]struct{})
+	for _, i := range l.tasks {
+		projects := i.Projects()
+		for _, p := range projects {
+			allProjectsM[p] = struct{}{}
+		}
+	}
+
+	allProjects := make([]Project, 0, len(allProjectsM))
+	for p := range allProjectsM {
+		allProjects = append(allProjects, p)
+	}
+	return allProjects
+}
+
+func (l *List) AllContexts() []Context {
+	allContextsM := make(map[Context]struct{})
+	for _, i := range l.tasks {
+		contexts := i.Contexts()
+		for _, c := range contexts {
+			allContextsM[c] = struct{}{}
+		}
+	}
+
+	allContexts := make([]Context, 0, len(allContextsM))
+	for c := range allContextsM {
+		allContexts = append(allContexts, c)
+	}
+	return allContexts
+}
+
+func (l *List) AllTags() []string {
+	allTagsM := make(map[string]struct{})
+	for _, i := range l.tasks {
+		tags := i.Tags()
+		for k := range tags {
+			allTagsM[k] = struct{}{}
+		}
+	}
+
+	allTags := make([]string, 0, len(allTagsM))
+	for t := range allTagsM {
+		allTags = append(allTags, t)
+	}
+	return allTags
+}
+
 func (l *List) validate() error {
 	errs := make([]error, 0)
 	for key, value := range l.taskMap() {
