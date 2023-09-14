@@ -15,6 +15,28 @@ import (
 
 const StarProjection = "idx,done,completion,creation,projects,contexts,tags,description"
 
+var columnIds = []string{
+	idxColumnId,
+	doneColumnId,
+	descriptionColumnId,
+	creationColumnId,
+	completionColumnId,
+	projectsColumnId,
+	contextsColumnId,
+	tagsColumnId,
+}
+
+const (
+	idxColumnId         = "idx"
+	doneColumnId        = "done"
+	descriptionColumnId = "description"
+	creationColumnId    = "creation"
+	completionColumnId  = "completion"
+	projectsColumnId    = "projects"
+	contextsColumnId    = "contexts"
+	tagsColumnId        = "tags"
+)
+
 type columnExtractor struct {
 	title     string
 	extractor func(List, *todotxt.Item) string
@@ -85,24 +107,24 @@ func (l List) columnExtractors(projection []string) ([]columnExtractor, error) {
 		case strings.HasPrefix(p, "tag:"):
 			tagKey := strings.Split(p, ":")[1]
 			fns = append(fns, columnExtractor{tagKey, tagColumn(tagKey)})
-		case p == "idx":
+		case p == idxColumnId:
 			fns = append(fns, columnExtractor{"Idx", idxColumn})
-		case p == "done":
+		case p == doneColumnId:
 			fns = append(fns, columnExtractor{"Done", doneColumn})
-		case p == "description":
+		case p == descriptionColumnId:
 			fns = append(fns, columnExtractor{"Description", descriptionColumn})
-		case p == "creation":
+		case p == creationColumnId:
 			fns = append(fns, columnExtractor{"Created On", creationColumn})
-		case p == "completion":
+		case p == completionColumnId:
 			fns = append(fns, columnExtractor{"Completed On", completionColumn})
-		case p == "projects":
+		case p == projectsColumnId:
 			fns = append(fns, columnExtractor{"Projects", projectsColumn})
-		case p == "contexts":
+		case p == contextsColumnId:
 			fns = append(fns, columnExtractor{"Contexts", contextsColumn})
-		case p == "tags":
+		case p == tagsColumnId:
 			fns = append(fns, l.allTagsExtractors()...)
 		default:
-			return nil, fmt.Errorf("unknown column in specification: %s", p)
+			return nil, fmt.Errorf("unknown column: %s\nAvailable columns are: %v", p, columnIds)
 		}
 	}
 

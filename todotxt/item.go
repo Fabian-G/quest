@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -53,7 +52,6 @@ func (i *Item) CleanDescription(projects []Project, contexts []Context, tags []s
 	desc := i.Description()
 	for _, p := range projects {
 		matcher := p.Matcher()
-		fmt.Printf("Matching: %s\n", strconv.FormatBool(matcher.MatchString(desc)))
 		desc = strings.TrimSpace(matcher.ReplaceAllString(desc, " "))
 	}
 	for _, c := range contexts {
