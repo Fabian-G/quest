@@ -97,7 +97,7 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			root, err := parseTree(tc.query, idSet{"it": qItem, "items": qItemSlice})
+			root, err := parseQQLTree(tc.query, idSet{"it": QItem, "items": QItemSlice}, make(map[string]DType))
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expectedParseResult, root.String())
 		})
@@ -271,7 +271,7 @@ func Test_eval(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			queryFn, err := Compile(tc.query, QQL)
+			queryFn, err := DefaultCompiler.CompileQQL(tc.query)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.result, queryFn(tc.list, tc.list.Get(tc.itemNumber)))
 		})
@@ -307,7 +307,7 @@ func Test_InvalidQuerysResultInParseError(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			_, err := Compile(tc.query, QQL)
+			_, err := DefaultCompiler.CompileQQL(tc.query)
 			assert.Error(t, err)
 		})
 	}

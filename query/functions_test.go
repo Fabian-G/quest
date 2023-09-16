@@ -11,79 +11,79 @@ import (
 func TestQueryFunc_validate(t *testing.T) {
 	testcases := map[string]struct {
 		fn      queryFunc
-		actual  []dType
+		actual  []DType
 		allowed bool
 	}{
 		"one missing it": {
 			fn: queryFunc{
-				argTypes:         []dType{qBool, qItem, qBool},
+				argTypes:         []DType{QBool, QItem, QBool},
 				trailingOptional: false,
 				injectIt:         true,
 			},
-			actual:  []dType{qBool, qBool},
+			actual:  []DType{QBool, QBool},
 			allowed: true,
 		},
 		"Exact args": {
 			fn: queryFunc{
-				argTypes:         []dType{qBool, qItem, qBool},
+				argTypes:         []DType{QBool, QItem, QBool},
 				trailingOptional: true,
 				injectIt:         true,
 			},
-			actual:  []dType{qBool, qItem, qBool},
+			actual:  []DType{QBool, QItem, QBool},
 			allowed: true,
 		},
 		"Inserting it leads to too many args": {
 			fn: queryFunc{
-				argTypes:         []dType{qItem, qItem, qItem},
+				argTypes:         []DType{QItem, QItem, QItem},
 				trailingOptional: true,
 				injectIt:         true,
 			},
-			actual:  []dType{qItem, qItem, qBool},
+			actual:  []DType{QItem, QItem, QBool},
 			allowed: false,
 		},
 		"It on zero args can be inserted": {
 			fn: queryFunc{
-				argTypes:         []dType{qItem},
+				argTypes:         []DType{QItem},
 				trailingOptional: true,
 				injectIt:         true,
 			},
-			actual:  []dType{},
+			actual:  []DType{},
 			allowed: true,
 		},
 		"Trailing Optional can be omitted": {
 			fn: queryFunc{
-				argTypes:         []dType{qBool},
+				argTypes:         []DType{QBool},
 				trailingOptional: true,
 				injectIt:         true,
 			},
-			actual:  []dType{},
+			actual:  []DType{},
 			allowed: true,
 		},
 		"Trailing Optional can be omitted (with many args)": {
 			fn: queryFunc{
-				argTypes:         []dType{qBool, qBool, qBool},
+				argTypes:         []DType{QBool, QBool, QBool},
 				trailingOptional: true,
 				injectIt:         true,
 			},
-			actual:  []dType{qBool, qBool},
+			actual:  []DType{QBool, QBool},
 			allowed: true,
 		},
 		"Only one trailing arg can be omitted": {
 			fn: queryFunc{
-				argTypes:         []dType{qBool, qBool, qBool},
+				argTypes:         []DType{QBool, QBool, QBool},
 				trailingOptional: true,
 				injectIt:         true,
 			},
-			actual:  []dType{qBool},
+			actual:  []DType{QBool},
 			allowed: false,
 		},
 		"Injecting it and trailing optional can happen at the same time": {
 			fn: queryFunc{
-				argTypes:         []dType{qBool, qItem, qBool, qBool},
+				argTypes:         []DType{QBool, QItem, QBool, QBool},
 				trailingOptional: true,
 				injectIt:         true,
 			},
-			actual:  []dType{qBool, qBool},
+			actual:  []DType{QBool, QBool},
 			allowed: true,
 		},
 	}
@@ -93,7 +93,7 @@ func TestQueryFunc_validate(t *testing.T) {
 			err := tc.fn.validate(tc.actual)
 			var missingItemError missingItemError
 			if errors.As(err, &missingItemError) {
-				tc.actual = slices.Insert(tc.actual, missingItemError.position, qItem)
+				tc.actual = slices.Insert(tc.actual, missingItemError.position, QItem)
 			}
 			err = tc.fn.validate(tc.actual)
 			if tc.allowed {

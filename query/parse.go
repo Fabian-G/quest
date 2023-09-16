@@ -3,25 +3,9 @@ package query
 import (
 	"errors"
 	"fmt"
-
-	"github.com/Fabian-G/quest/todotxt"
 )
 
-func compileFOL(query string) (Func, error) {
-	root, err := parseTree(query, idSet{"it": qItem, "items": qItemSlice})
-	if err != nil {
-		return nil, err
-	}
-	evalFunc := func(universe *todotxt.List, it *todotxt.Item) bool {
-		alpha := make(map[string]any)
-		alpha["it"] = it
-		alpha["items"] = toAnySlice(universe.Tasks())
-		return root.eval(alpha).(bool)
-	}
-	return evalFunc, nil
-}
-
-func parseTree(query string, expectedFreeVars idSet) (node, error) {
+func parseQQLTree(query string, expectedFreeVars idSet, tagTypes map[string]DType) (node, error) {
 	parser := parser{
 		lex: lex(query),
 	}
@@ -40,7 +24,7 @@ func parseTree(query string, expectedFreeVars idSet) (node, error) {
 	if err != nil {
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
-	if t != qBool {
+	if t != QBool {
 		return nil, fmt.Errorf("query result must be bool, got: %s", t)
 	}
 	return root, nil

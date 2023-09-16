@@ -1,18 +1,7 @@
 package query
 
 import (
-	"fmt"
-
 	"github.com/Fabian-G/quest/todotxt"
-)
-
-type Type int
-
-const (
-	Guess Type = iota
-	QQL
-	Range
-	StringSearch
 )
 
 type Func func(*todotxt.List, *todotxt.Item) bool
@@ -39,24 +28,46 @@ func And(fns ...Func) Func {
 	}
 }
 
-func Compile(query string, typ Type) (Func, error) {
-	switch typ {
-	case QQL:
-		return compileFOL(query)
-	case Range:
-		return compileRange(query)
-	case StringSearch:
-		return compileStringSearch(query), nil
-	case Guess:
-		q, err := compileFOL(query)
-		if err == nil {
-			return q, nil
-		}
-		q, err = compileRange(query)
-		if err == nil {
-			return q, nil
-		}
-		return compileStringSearch(query), nil
+var DefaultCompiler = Compiler{}
+
+type Compiler struct {
+	TagTypes map[string]DType
+}
+
+func (c *Compiler) CompileQuery(query string) (Func, error) {
+	q, err := c.CompileQQL(query)
+	if err == nil {
+		return q, nil
 	}
-	return nil, fmt.Errorf("unknown query type")
+	q, err = compileRange(query)
+	if err == nil {
+		return q, nil
+	}
+	return compileStringSearch(query), nil
+}
+
+func (c *Compiler) CompileQQL(query string) (Func, error) {
+	root, err := parseQQLTree(query, idSet{"it": QItem, "items": QItemSlice}, c.TagTypes)
+	if err != nil {
+		return nil, err
+	}
+	evalFunc := func(universe *todotxt.List, it *todotxt.Item) bool {
+		alpha := make(map[string]any)
+		alpha["it"] = it
+		alpha["items"] = toAnySlice(universe.Tasks())
+		return root.eval(alpha).(bool)
+	}
+	return evalFunc, nil
+}
+
+func (c *Compiler) CompileRange(query string) (Func, error) {
+	return compileRange(query)
+}
+
+func (c *Compiler) CompileWordSearch(query string) (Func, error) {
+	return compileStringSearch(query), nil
+}
+
+func (c *Compiler) CompileSortFunc(sort string) (func(*todotxt.Item, *todotxt.Item) int, error) {
+	return sortFunc(sort, c.TagTypes)
 }

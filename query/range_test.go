@@ -53,7 +53,7 @@ func Test_Range(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			query, err := query.Compile(tc.rng, query.Range)
+			query, err := query.DefaultCompiler.CompileRange(tc.rng)
 			assert.Nil(t, err)
 			matches := query.Filter(testList)
 			descriptions := make([]string, 0, len(matches))

@@ -122,7 +122,7 @@ func Test_Sort(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			cmpFunc, err := query.SortFunc(tc.sortString)
+			cmpFunc, err := query.DefaultCompiler.CompileSortFunc(tc.sortString)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expectedOrder, cmpFunc(tc.first, tc.second))
 		})

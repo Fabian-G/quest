@@ -8,30 +8,32 @@ import (
 	"strings"
 )
 
-type dType string
+type DType string
 
 const (
-	qError       dType = "error"
-	qInt         dType = "int"
-	qString      dType = "string"
-	qStringSlice dType = "[]string"
-	qBool        dType = "bool"
-	qItem        dType = "item"
-	qItemSlice   dType = "[]item"
+	QError       DType = "error"
+	QInt         DType = "int"
+	QDate        DType = "date"
+	QDuration    DType = "duration"
+	QString      DType = "string"
+	QStringSlice DType = "[]string"
+	QBool        DType = "bool"
+	QItem        DType = "item"
+	QItemSlice   DType = "[]item"
 )
 
-func (d dType) isSliceType() bool {
-	return slices.Contains([]dType{qStringSlice, qItemSlice}, d)
+func (d DType) isSliceType() bool {
+	return slices.Contains([]DType{QStringSlice, QItemSlice}, d)
 }
 
-func (d dType) sliceTypeToItemType() dType {
+func (d DType) sliceTypeToItemType() DType {
 	switch d {
-	case qItemSlice:
-		return qItem
-	case qStringSlice:
-		return qString
+	case QItemSlice:
+		return QItem
+	case QStringSlice:
+		return QString
 	}
-	return qError
+	return QError
 }
 
 func toAnySlice[S ~[]E, E any](s S) []any {
@@ -43,10 +45,10 @@ func toAnySlice[S ~[]E, E any](s S) []any {
 }
 
 type varMap map[string]any
-type idSet map[string]dType
+type idSet map[string]DType
 
 type node interface {
-	validate(idSet) (dType, error)
+	validate(idSet) (DType, error)
 	eval(varMap) any
 	fmt.Stringer
 }
@@ -73,13 +75,13 @@ func (a *allQuant) String() string {
 	return fmt.Sprintf("(forall %s in (%s): %s)", a.boundId, a.collection.String(), a.child.String())
 }
 
-func (a *allQuant) validate(knownIds idSet) (dType, error) {
+func (a *allQuant) validate(knownIds idSet) (DType, error) {
 	collectionType, err := a.collection.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
 	if !collectionType.isSliceType() {
-		return qError, fmt.Errorf("can not use non slice type %s as collection in quantifier", collectionType)
+		return QError, fmt.Errorf("can not use non slice type %s as collection in quantifier", collectionType)
 	}
 	if _, ok := knownIds[a.boundId]; !ok {
 		knownIds[a.boundId] = collectionType.sliceTypeToItemType()
@@ -87,12 +89,12 @@ func (a *allQuant) validate(knownIds idSet) (dType, error) {
 	}
 	childType, err := a.child.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
-	if childType != qBool {
-		return qError, fmt.Errorf("can not apply all quantor on expression of type %s", childType)
+	if childType != QBool {
+		return QError, fmt.Errorf("can not apply all quantor on expression of type %s", childType)
 	}
-	return qBool, nil
+	return QBool, nil
 }
 
 type existQuant struct {
@@ -117,13 +119,13 @@ func (e *existQuant) String() string {
 	return fmt.Sprintf("(exists %s in (%s): %s)", e.boundId, e.collection.String(), e.child.String())
 }
 
-func (e *existQuant) validate(knownIds idSet) (dType, error) {
+func (e *existQuant) validate(knownIds idSet) (DType, error) {
 	collectionType, err := e.collection.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
 	if !collectionType.isSliceType() {
-		return qError, fmt.Errorf("can not use non slice type %s as collection in quantifier", collectionType)
+		return QError, fmt.Errorf("can not use non slice type %s as collection in quantifier", collectionType)
 	}
 	if _, ok := knownIds[e.boundId]; !ok {
 		knownIds[e.boundId] = collectionType.sliceTypeToItemType()
@@ -131,12 +133,12 @@ func (e *existQuant) validate(knownIds idSet) (dType, error) {
 	}
 	childType, err := e.child.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
-	if childType != qBool {
-		return qError, fmt.Errorf("can not apply exists quantor on expression of type %s", childType)
+	if childType != QBool {
+		return QError, fmt.Errorf("can not apply exists quantor on expression of type %s", childType)
 	}
-	return qBool, nil
+	return QBool, nil
 }
 
 type impl struct {
@@ -152,19 +154,19 @@ func (i *impl) String() string {
 	return fmt.Sprintf("(%s -> %s)", i.leftChild.String(), i.rightChild.String())
 }
 
-func (i *impl) validate(knownIds idSet) (dType, error) {
+func (i *impl) validate(knownIds idSet) (DType, error) {
 	c1, err := i.leftChild.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
 	c2, err := i.rightChild.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
-	if c1 != qBool || c2 != qBool {
-		return qError, fmt.Errorf("can not apply implication on (%s, %s)", c1, c2)
+	if c1 != QBool || c2 != QBool {
+		return QError, fmt.Errorf("can not apply implication on (%s, %s)", c1, c2)
 	}
-	return qBool, nil
+	return QBool, nil
 }
 
 type and struct {
@@ -180,19 +182,19 @@ func (a *and) String() string {
 	return fmt.Sprintf("(%s && %s)", a.leftChild.String(), a.rightChild.String())
 }
 
-func (a *and) validate(knownIds idSet) (dType, error) {
+func (a *and) validate(knownIds idSet) (DType, error) {
 	c1, err := a.leftChild.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
 	c2, err := a.rightChild.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
-	if c1 != qBool || c2 != qBool {
-		return qError, fmt.Errorf("can not apply conjunction on (%s, %s)", c1, c2)
+	if c1 != QBool || c2 != QBool {
+		return QError, fmt.Errorf("can not apply conjunction on (%s, %s)", c1, c2)
 	}
-	return qBool, nil
+	return QBool, nil
 }
 
 type eq struct {
@@ -210,19 +212,19 @@ func (e *eq) String() string {
 	return fmt.Sprintf("(%s == %s)", e.leftChild.String(), e.rightChild.String())
 }
 
-func (e *eq) validate(knownIds idSet) (dType, error) {
+func (e *eq) validate(knownIds idSet) (DType, error) {
 	leftType, err := e.leftChild.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
 	rightChild, err := e.rightChild.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
 	if leftType.isSliceType() || rightChild.isSliceType() {
-		return qError, errors.New("comparing slice types is not allowed")
+		return QError, errors.New("comparing slice types is not allowed")
 	}
-	return qBool, nil
+	return QBool, nil
 }
 
 type or struct {
@@ -238,19 +240,19 @@ func (o *or) String() string {
 	return fmt.Sprintf("(%s || %s)", o.leftChild.String(), o.rightChild.String())
 }
 
-func (o *or) validate(knownIds idSet) (dType, error) {
+func (o *or) validate(knownIds idSet) (DType, error) {
 	c1, err := o.leftChild.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
 	c2, err := o.rightChild.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
-	if c1 != qBool || c2 != qBool {
-		return qError, fmt.Errorf("can not apply disjunction on (%s, %s)", c1, c2)
+	if c1 != QBool || c2 != QBool {
+		return QError, fmt.Errorf("can not apply disjunction on (%s, %s)", c1, c2)
 	}
-	return qBool, nil
+	return QBool, nil
 }
 
 type not struct {
@@ -265,15 +267,15 @@ func (n *not) String() string {
 	return fmt.Sprintf("!%s", n.child)
 }
 
-func (n *not) validate(knownIds idSet) (dType, error) {
+func (n *not) validate(knownIds idSet) (DType, error) {
 	c, err := n.child.validate(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
-	if c != qBool {
-		return qError, fmt.Errorf("can not apply not on %s", c)
+	if c != QBool {
+		return QError, fmt.Errorf("can not apply not on %s", c)
 	}
-	return qBool, nil
+	return QBool, nil
 }
 
 type stringConst struct {
@@ -288,8 +290,8 @@ func (s *stringConst) String() string {
 	return s.val
 
 }
-func (s *stringConst) validate(knownIds idSet) (dType, error) {
-	return qString, nil
+func (s *stringConst) validate(knownIds idSet) (DType, error) {
+	return QString, nil
 }
 
 type intConst struct {
@@ -305,11 +307,11 @@ func (i *intConst) String() string {
 	return i.val
 }
 
-func (i *intConst) validate(knownIds idSet) (dType, error) {
+func (i *intConst) validate(knownIds idSet) (DType, error) {
 	if _, err := strconv.Atoi(i.val); err != nil {
-		return qError, fmt.Errorf("could not parse integer constant: %s", i.val)
+		return QError, fmt.Errorf("could not parse integer constant: %s", i.val)
 	}
-	return qString, nil
+	return QString, nil
 }
 
 type boolConst struct {
@@ -325,11 +327,11 @@ func (b *boolConst) String() string {
 	return b.val
 }
 
-func (b *boolConst) validate(knownIds idSet) (dType, error) {
+func (b *boolConst) validate(knownIds idSet) (DType, error) {
 	if _, err := strconv.ParseBool(b.val); err != nil {
-		return qError, fmt.Errorf("could not parse boolean constant: %s", b.val)
+		return QError, fmt.Errorf("could not parse boolean constant: %s", b.val)
 	}
-	return qBool, nil
+	return QBool, nil
 }
 
 type identifier struct {
@@ -344,9 +346,9 @@ func (i *identifier) String() string {
 	return i.name
 }
 
-func (i *identifier) validate(knownIds idSet) (dType, error) {
+func (i *identifier) validate(knownIds idSet) (DType, error) {
 	if _, ok := knownIds[i.name]; !ok {
-		return qError, fmt.Errorf("unknown identifier: %s", i.name)
+		return QError, fmt.Errorf("unknown identifier: %s", i.name)
 	}
 	return knownIds[i.name], nil
 }
@@ -373,19 +375,19 @@ func (c *call) String() string {
 	return fmt.Sprintf("%s%s", c.name, c.args.String())
 }
 
-func (c *call) validate(knownIds idSet) (dType, error) {
+func (c *call) validate(knownIds idSet) (DType, error) {
 	if _, ok := knownIds[c.name]; ok && c.ifBound != nil {
 		c.passThrough = true
 		return c.ifBound.validate(knownIds)
 	}
 	argTypes, err := c.args.validateAll(knownIds)
 	if err != nil {
-		return qError, err
+		return QError, err
 	}
 	var fn queryFunc
 	var ok bool
 	if fn, ok = functions[c.name]; !ok {
-		return qError, fmt.Errorf("unknown function with name %s", c.name)
+		return QError, fmt.Errorf("unknown function with name %s", c.name)
 	}
 	err = fn.validate(argTypes)
 	var missingItemError missingItemError
@@ -419,16 +421,16 @@ func (a *args) String() string {
 	return fmt.Sprintf("(%s)", argListString[:max(0, len(argListString)-2)])
 }
 
-func (a *args) validate(knownIds idSet) (dType, error) {
-	return qError, errors.New("args must only occur in the context of a function call")
+func (a *args) validate(knownIds idSet) (DType, error) {
+	return QError, errors.New("args must only occur in the context of a function call")
 }
 
-func (a *args) validateAll(knownIds idSet) ([]dType, error) {
-	types := make([]dType, 0, len(a.children))
+func (a *args) validateAll(knownIds idSet) ([]DType, error) {
+	types := make([]DType, 0, len(a.children))
 	for _, c := range a.children {
 		t, err := c.validate(knownIds)
 		if err != nil {
-			return []dType{qError}, err
+			return []DType{QError}, err
 		}
 		types = append(types, t)
 	}

@@ -14,7 +14,7 @@ const (
 	desc = -1
 )
 
-func SortFunc(sort string) (func(*todotxt.Item, *todotxt.Item) int, error) {
+func sortFunc(sort string, tagTypes map[string]DType) (func(*todotxt.Item, *todotxt.Item) int, error) {
 	sortingKeys := strings.Split(sort, ",")
 	compareFuncs := make([]func(*todotxt.Item, *todotxt.Item) int, 0, len(sortingKeys))
 

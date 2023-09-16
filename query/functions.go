@@ -17,8 +17,8 @@ func (m missingItemError) Error() string {
 
 type queryFunc struct {
 	fn               func([]any) any
-	argTypes         []dType
-	resultType       dType
+	argTypes         []DType
+	resultType       DType
 	trailingOptional bool
 	injectIt         bool
 }
@@ -27,18 +27,18 @@ func (q queryFunc) call(args []any) any {
 	return q.fn(args)
 }
 
-func (q queryFunc) validate(actual []dType) error {
+func (q queryFunc) validate(actual []DType) error {
 	for i, t := range q.argTypes {
 		switch {
 		case len(actual) > len(q.argTypes):
 			return fmt.Errorf("expecting parameters %#v, but got %#v", q.argTypes, actual)
 		case i >= len(actual) && i == len(q.argTypes)-1 && q.trailingOptional:
 			return nil
-		case i >= len(actual) && t == qItem && q.injectIt:
+		case i >= len(actual) && t == QItem && q.injectIt:
 			return missingItemError{i}
 		case i >= len(actual):
 			return fmt.Errorf("expecting parameters %#v, but got %#v", q.argTypes, actual)
-		case actual[i] != t && t == qItem && q.injectIt:
+		case actual[i] != t && t == QItem && q.injectIt:
 			return missingItemError{i}
 		case actual[i] != t:
 			return fmt.Errorf("expecting parameters %#v, but got %#v", q.argTypes, actual)
@@ -50,43 +50,43 @@ func (q queryFunc) validate(actual []dType) error {
 var functions = map[string]queryFunc{
 	"done": {
 		fn:               done,
-		argTypes:         []dType{qItem},
-		resultType:       qBool,
+		argTypes:         []DType{QItem},
+		resultType:       QBool,
 		trailingOptional: false,
 		injectIt:         true,
 	},
 	"description": {
 		fn:               description,
-		argTypes:         []dType{qItem},
-		resultType:       qString,
+		argTypes:         []DType{QItem},
+		resultType:       QString,
 		trailingOptional: false,
 		injectIt:         true,
 	},
 	"projects": {
 		fn:               projects,
-		resultType:       qStringSlice,
-		argTypes:         []dType{qItem},
+		resultType:       QStringSlice,
+		argTypes:         []DType{QItem},
 		trailingOptional: false,
 		injectIt:         true,
 	},
 	"contexts": {
 		fn:               contexts,
-		resultType:       qStringSlice,
-		argTypes:         []dType{qItem},
+		resultType:       QStringSlice,
+		argTypes:         []DType{QItem},
 		trailingOptional: false,
 		injectIt:         true,
 	},
 	"dotPrefix": {
 		fn:               dotPrefix,
-		resultType:       qBool,
-		argTypes:         []dType{qString, qString},
+		resultType:       QBool,
+		argTypes:         []DType{QString, QString},
 		trailingOptional: false,
 		injectIt:         false,
 	},
 	"substring": {
 		fn:               substring,
-		resultType:       qBool,
-		argTypes:         []dType{qString, qString},
+		resultType:       QBool,
+		argTypes:         []DType{QString, QString},
 		trailingOptional: false,
 		injectIt:         false,
 	},

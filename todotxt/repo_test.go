@@ -18,7 +18,7 @@ func Test_ItemsAreOrderedCorrectly(t *testing.T) {
 	item 3
 	item 2`)
 	repo := todotxt.NewRepo(file)
-	s, err := query.SortFunc("+done,-description")
+	s, err := query.DefaultCompiler.CompileSortFunc("+done,-description")
 	assert.Nil(t, err)
 	repo.DefaultOrder = s
 
