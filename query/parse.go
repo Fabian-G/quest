@@ -3,6 +3,7 @@ package query
 import (
 	"errors"
 	"fmt"
+	"slices"
 )
 
 func parseQQLTree(query string, expectedFreeVars idSet, tagTypes map[string]DType) (node, error) {
@@ -148,11 +149,11 @@ func (p *parser) parseAnd() (node, error) {
 func (p *parser) parseNot() (node, error) {
 	next := p.lookAhead()
 	if next.typ != itemNot {
-		return p.parseEqual()
+		return p.parseComparison()
 	}
 
 	p.next()
-	child, err := p.parseEqual()
+	child, err := p.parseComparison()
 	if err != nil {
 		return nil, err
 	}
@@ -162,22 +163,24 @@ func (p *parser) parseNot() (node, error) {
 	}, nil
 }
 
-func (p *parser) parseEqual() (node, error) {
+func (p *parser) parseComparison() (node, error) {
+	comparisons := []itemType{itemEq, itemLeq, itemLt, itemGeq, itemGt}
 	child, err := p.parsePrimary()
 	if err != nil {
 		return nil, err
 	}
-	for next := p.lookAhead(); next.typ == itemEq; {
+	for next := p.lookAhead(); slices.Contains(comparisons, next.typ); {
 		p.next()
 		rightChild, err := p.parsePrimary()
 		if err != nil {
 			return nil, err
 		}
-		next = p.lookAhead()
-		child = &eq{
+		child = &comparison{
+			comparator: next.typ,
 			leftChild:  child,
 			rightChild: rightChild,
 		}
+		next = p.lookAhead()
 	}
 	return child, nil
 }

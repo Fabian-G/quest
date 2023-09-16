@@ -1,11 +1,13 @@
 package query
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type DType string
@@ -197,33 +199,113 @@ func (a *and) validate(knownIds idSet) (DType, error) {
 	return QBool, nil
 }
 
-type eq struct {
+type comparison struct {
+	comparator itemType
+	lType      DType
+	rType      DType
 	leftChild  node
 	rightChild node
 }
 
-func (e *eq) eval(alpha varMap) any {
-	v1 := e.leftChild.eval(alpha)
-	v2 := e.rightChild.eval(alpha)
-	return v1 == v2
+func (e *comparison) eval(alpha varMap) any {
+	if e.lType != e.rType {
+		return false
+	}
+	switch e.lType {
+	case QString:
+		v1 := e.leftChild.eval(alpha).(string)
+		v2 := e.rightChild.eval(alpha).(string)
+		return compareComparable(e.comparator, v1, v2)
+	case QItem:
+		v1 := e.leftChild.eval(alpha)
+		v2 := e.rightChild.eval(alpha)
+		return v1 == v2 // Only eq comparison allowed. Wrong usage is already caught in validaton
+	case QDate:
+		v1 := e.leftChild.eval(alpha).(time.Time)
+		v2 := e.rightChild.eval(alpha).(time.Time)
+		return e.compareDates(v1, v2)
+	case QDuration:
+		v1 := e.leftChild.eval(alpha).(time.Duration)
+		v2 := e.rightChild.eval(alpha).(time.Duration)
+		return compareComparable(e.comparator, v1, v2)
+	case QInt:
+		v1 := e.leftChild.eval(alpha).(int)
+		v2 := e.rightChild.eval(alpha).(int)
+		return compareComparable(e.comparator, v1, v2)
+	case QBool:
+		v1 := e.leftChild.eval(alpha).(bool)
+		v2 := e.leftChild.eval(alpha).(bool)
+		var v1i, v2i int
+		if v1 {
+			v1i = 1
+		}
+		if v2 {
+			v2i = 1
+		}
+		return compareComparable(e.comparator, v1i, v2i)
+	}
+
+	return false
 }
 
-func (e *eq) String() string {
+func compareComparable[E cmp.Ordered](op itemType, s1, s2 E) bool {
+	switch op {
+	case itemEq:
+		return s1 == s2
+	case itemLt:
+		return s1 < s2
+	case itemLeq:
+		return s1 <= s2
+	case itemGt:
+		return s1 > s2
+	case itemGeq:
+		return s1 >= s2
+	default:
+		return false
+	}
+}
+
+func (e *comparison) compareDates(d1, d2 time.Time) bool {
+	switch e.comparator {
+	case itemEq:
+		return d1.Equal(d2)
+	case itemLt:
+		return d1.Before(d2)
+	case itemLeq:
+		return d1.Before(d2) || d1.Equal(d2)
+	case itemGt:
+		return d1.After(d2)
+	case itemGeq:
+		return d1.After(d2) || d1.Equal(d2)
+	default:
+		return false
+	}
+}
+func (e *comparison) String() string {
 	return fmt.Sprintf("(%s == %s)", e.leftChild.String(), e.rightChild.String())
 }
 
-func (e *eq) validate(knownIds idSet) (DType, error) {
+func (e *comparison) validate(knownIds idSet) (DType, error) {
 	leftType, err := e.leftChild.validate(knownIds)
 	if err != nil {
 		return QError, err
 	}
-	rightChild, err := e.rightChild.validate(knownIds)
+	rightType, err := e.rightChild.validate(knownIds)
 	if err != nil {
 		return QError, err
 	}
-	if leftType.isSliceType() || rightChild.isSliceType() {
+	if leftType.isSliceType() || rightType.isSliceType() {
 		return QError, errors.New("comparing slice types is not allowed")
 	}
+	if leftType == QItem && e.comparator != itemEq {
+		return QError, errors.New("items can only be compared using ==")
+	}
+	allowedTypes := []DType{QString, QItem, QDate, QDuration, QInt, QBool}
+	if !slices.Contains(allowedTypes, leftType) || !slices.Contains(allowedTypes, rightType) {
+		return QError, fmt.Errorf("can not compare %s with %s. Allowed types are: %v", leftType, rightType, allowedTypes)
+	}
+	e.lType = leftType
+	e.rType = rightType
 	return QBool, nil
 }
 
@@ -311,7 +393,7 @@ func (i *intConst) validate(knownIds idSet) (DType, error) {
 	if _, err := strconv.Atoi(i.val); err != nil {
 		return QError, fmt.Errorf("could not parse integer constant: %s", i.val)
 	}
-	return QString, nil
+	return QInt, nil
 }
 
 type boolConst struct {

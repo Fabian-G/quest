@@ -267,6 +267,41 @@ func Test_eval(t *testing.T) {
 			result:     true,
 			itemNumber: 0,
 		},
+		"date after": {
+			list: listFromString(t, `
+			dummy item (does not matter)	
+			`),
+			query:  `date(2022, 02, 02) > date(2022, 02, 01)`,
+			result: true,
+		},
+		"date after (false)": {
+			list: listFromString(t, `
+			dummy item (does not matter)	
+			`),
+			query:  `date(2022, 02, 02) > date(2022, 02, 02)`,
+			result: false,
+		},
+		"date before": {
+			list: listFromString(t, `
+			dummy item (does not matter)	
+			`),
+			query:  `date(2022, 02, 01) < date(2022, 02, 02)`,
+			result: true,
+		},
+		"date before (false)": {
+			list: listFromString(t, `
+			dummy item (does not matter)	
+			`),
+			query:  `date(2022, 02, 01) < date(2022, 02, 01)`,
+			result: false,
+		},
+		"date equal": {
+			list: listFromString(t, `
+			dummy item (does not matter)	
+			`),
+			query:  `date(2022, 02, 01) == date(2022, 02, 01)`,
+			result: true,
+		},
 	}
 
 	for name, tc := range testCases {

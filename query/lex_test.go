@@ -37,9 +37,9 @@ func Test_lexOnValidQueries(t *testing.T) {
 			query:          "R(\"Hello World\")",
 			expectedTokens: []itemType{itemIdent, itemLeftParen, itemString, itemRightParen},
 		},
-		"Number in relation symbol": {
-			query:          "R(51243)",
-			expectedTokens: []itemType{itemIdent, itemLeftParen, itemInt, itemRightParen},
+		"Numbers in relation symbol": {
+			query:          "R(51243, 123, 04)",
+			expectedTokens: []itemType{itemIdent, itemLeftParen, itemInt, itemComma, itemInt, itemComma, itemInt, itemRightParen},
 		},
 		"Bool in relation symbol": {
 			query:          "R(true)",
@@ -76,6 +76,10 @@ func Test_lexOnValidQueries(t *testing.T) {
 		"impl can be used for ->": {
 			query:          "true impl false",
 			expectedTokens: []itemType{itemBool, itemImpl, itemBool},
+		},
+		"less than, greater than tokens are lexed correctly": {
+			query:          `"a" > "b" && "b" >= "c" && "c" < "d" && "d"<="e"`,
+			expectedTokens: []itemType{itemString, itemGt, itemString, itemAnd, itemString, itemGeq, itemString, itemAnd, itemString, itemLt, itemString, itemAnd, itemString, itemLeq, itemString},
 		},
 	}
 

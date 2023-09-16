@@ -23,6 +23,10 @@ const (
 	itemEq
 	itemOr
 	itemImpl
+	itemLt
+	itemGt
+	itemLeq
+	itemGeq
 	itemNot
 	itemString
 	itemInt
@@ -167,6 +171,18 @@ func lexQuery(l *lexer) stateFunc {
 			return l.errorf("expected &&")
 		}
 		return l.emit(itemAnd)
+	case r == '<':
+		if l.next() == '=' {
+			return l.emit(itemLeq)
+		}
+		l.backup()
+		return l.emit(itemLt)
+	case r == '>':
+		if l.next() == '=' {
+			return l.emit(itemGeq)
+		}
+		l.backup()
+		return l.emit(itemGt)
 	case r == '=':
 		if l.next() != '=' {
 			return l.errorf("expected ==")

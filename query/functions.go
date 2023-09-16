@@ -3,6 +3,7 @@ package query
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Fabian-G/quest/todotxt"
 )
@@ -90,6 +91,13 @@ var functions = map[string]queryFunc{
 		trailingOptional: false,
 		injectIt:         false,
 	},
+	"date": {
+		fn:               date,
+		resultType:       QDate,
+		argTypes:         []DType{QInt, QInt, QInt},
+		trailingOptional: false,
+		injectIt:         false,
+	},
 }
 
 func done(args []any) any {
@@ -140,4 +148,12 @@ func substring(args []any) any {
 	s2 := args[1].(string)
 
 	return strings.Contains(s1, s2)
+}
+
+func date(args []any) any {
+	year := args[0].(int)
+	month := args[1].(int)
+	day := args[2].(int)
+
+	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
 }
