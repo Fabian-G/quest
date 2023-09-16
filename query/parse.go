@@ -6,7 +6,7 @@ import (
 	"slices"
 )
 
-func parseQQLTree(query string, expectedFreeVars idSet, tagTypes map[string]DType) (node, error) {
+func parseQQLTree(query string, expectedFreeVars idSet) (node, error) {
 	parser := parser{
 		lex: lex(query),
 	}
@@ -205,10 +205,10 @@ func (p *parser) parsePrimary() (node, error) {
 		}, nil
 	case itemProjMatch:
 		p.next()
-		return buildProjMatcher(next.val)
+		return p.buildProjMatcher(next.val)
 	case itemCtxMatch:
 		p.next()
-		return buildCtxMatcher(next.val)
+		return p.buildCtxMatcher(next.val)
 	case itemLeftParen:
 		p.next()
 		child, err := p.parseExp()
@@ -235,10 +235,12 @@ func (p *parser) parsePrimary() (node, error) {
 			return &call{
 				name: next.val,
 				args: args,
+				fn:   functions[next.val],
 			}, nil
-		} else if _, ok := functions[next.val]; ok { // This is really a function call without args
+		} else if fn, ok := functions[next.val]; ok { // This is really a function call without args
 			return &call{
 				name: next.val,
+				fn:   fn,
 				args: &args{},
 				ifBound: &identifier{ // Except if this id is bound by a quantifier. In that cas treat it as an identifier
 					name: next.val,
@@ -284,18 +286,20 @@ func (p *parser) parseArgs() (*args, error) {
 	}, nil
 }
 
-func buildProjMatcher(proj string) (node, error) {
+func (p *parser) buildProjMatcher(proj string) (node, error) {
 	query := fmt.Sprintf("(exists p in projects(it): dotPrefix(p, \"%s\"))", proj)
-	p := parser{lex: lex(query)}
-	p.next()
-	tree, err := p.parseExp()
+	parser := *p
+	parser.lex = lex(query)
+	parser.next()
+	tree, err := parser.parseExp()
 	return tree, err
 }
 
-func buildCtxMatcher(ctx string) (node, error) {
+func (p *parser) buildCtxMatcher(ctx string) (node, error) {
 	query := fmt.Sprintf("(exists p in contexts(it): dotPrefix(p, \"%s\"))", ctx)
-	p := parser{lex: lex(query)}
-	p.next()
-	tree, err := p.parseExp()
+	parser := *p
+	parser.lex = lex(query)
+	parser.next()
+	tree, err := parser.parseExp()
 	return tree, err
 }

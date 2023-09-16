@@ -208,33 +208,38 @@ type comparison struct {
 }
 
 func (e *comparison) eval(alpha varMap) any {
-	if e.lType != e.rType {
+	left, right := e.leftChild.eval(alpha), e.rightChild.eval(alpha)
+	lType := e.lType
+	rType := e.rType
+	return compare(e.comparator, lType, rType, left, right)
+}
+
+func compare(op itemType, t1 DType, t2 DType, left, right any) bool {
+	if t1 != t2 {
 		return false
 	}
-	switch e.lType {
+	switch t1 {
 	case QString:
-		v1 := e.leftChild.eval(alpha).(string)
-		v2 := e.rightChild.eval(alpha).(string)
-		return compareComparable(e.comparator, v1, v2)
+		v1 := left.(string)
+		v2 := right.(string)
+		return compareComparable(op, v1, v2)
 	case QItem:
-		v1 := e.leftChild.eval(alpha)
-		v2 := e.rightChild.eval(alpha)
-		return v1 == v2 // Only eq comparison allowed. Wrong usage is already caught in validaton
+		return left == right // Only eq comparison allowed. Wrong usage is already caught in validaton
 	case QDate:
-		v1 := e.leftChild.eval(alpha).(time.Time)
-		v2 := e.rightChild.eval(alpha).(time.Time)
-		return e.compareDates(v1, v2)
+		v1 := left.(time.Time)
+		v2 := right.(time.Time)
+		return compareDates(op, v1, v2)
 	case QDuration:
-		v1 := e.leftChild.eval(alpha).(time.Duration)
-		v2 := e.rightChild.eval(alpha).(time.Duration)
-		return compareComparable(e.comparator, v1, v2)
+		v1 := left.(time.Duration)
+		v2 := right.(time.Duration)
+		return compareComparable(op, v1, v2)
 	case QInt:
-		v1 := e.leftChild.eval(alpha).(int)
-		v2 := e.rightChild.eval(alpha).(int)
-		return compareComparable(e.comparator, v1, v2)
+		v1 := left.(int)
+		v2 := right.(int)
+		return compareComparable(op, v1, v2)
 	case QBool:
-		v1 := e.leftChild.eval(alpha).(bool)
-		v2 := e.leftChild.eval(alpha).(bool)
+		v1 := left.(bool)
+		v2 := right.(bool)
 		var v1i, v2i int
 		if v1 {
 			v1i = 1
@@ -242,10 +247,10 @@ func (e *comparison) eval(alpha varMap) any {
 		if v2 {
 			v2i = 1
 		}
-		return compareComparable(e.comparator, v1i, v2i)
+		return compareComparable(op, v1i, v2i)
+	default:
+		panic(fmt.Errorf("comparing uncomparable types %s and %s", t1, t2))
 	}
-
-	return false
 }
 
 func compareComparable[E cmp.Ordered](op itemType, s1, s2 E) bool {
@@ -265,8 +270,8 @@ func compareComparable[E cmp.Ordered](op itemType, s1, s2 E) bool {
 	}
 }
 
-func (e *comparison) compareDates(d1, d2 time.Time) bool {
-	switch e.comparator {
+func compareDates(op itemType, d1, d2 time.Time) bool {
+	switch op {
 	case itemEq:
 		return d1.Equal(d2)
 	case itemLt:
@@ -437,6 +442,7 @@ func (i *identifier) validate(knownIds idSet) (DType, error) {
 
 type call struct {
 	name        string
+	fn          queryFunc
 	args        *args
 	ifBound     node
 	passThrough bool // if true, all calls will get passed to ifBound. This field is set by validate()
@@ -446,8 +452,7 @@ func (c *call) eval(alpha varMap) any {
 	if c.passThrough {
 		return c.ifBound.eval(alpha)
 	}
-	fn := functions[c.name]
-	return fn.call(c.args.eval(alpha).([]any))
+	return c.fn.call(c.args.eval(alpha).([]any))
 }
 
 func (c *call) String() string {
@@ -466,19 +471,17 @@ func (c *call) validate(knownIds idSet) (DType, error) {
 	if err != nil {
 		return QError, err
 	}
-	var fn queryFunc
-	var ok bool
-	if fn, ok = functions[c.name]; !ok {
+	if c.fn.fn == nil {
 		return QError, fmt.Errorf("unknown function with name %s", c.name)
 	}
-	err = fn.validate(argTypes)
+	err = c.fn.validate(argTypes)
 	var missingItemError missingItemError
 	if errors.As(err, &missingItemError) {
 		it := identifier{name: "it"}
 		c.args.children = slices.Insert[[]node, node](c.args.children, missingItemError.position, &it)
 		return c.validate(knownIds)
 	}
-	return fn.resultType, err
+	return c.fn.resultType, err
 }
 
 type args struct {

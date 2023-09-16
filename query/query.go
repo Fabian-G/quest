@@ -1,6 +1,8 @@
 package query
 
 import (
+	"time"
+
 	"github.com/Fabian-G/quest/todotxt"
 )
 
@@ -47,7 +49,7 @@ func (c *Compiler) CompileQuery(query string) (Func, error) {
 }
 
 func (c *Compiler) CompileQQL(query string) (Func, error) {
-	root, err := parseQQLTree(query, idSet{"it": QItem, "items": QItemSlice}, c.TagTypes)
+	root, err := parseQQLTree(query, idSet{"it": QItem, "items": QItemSlice, "today": QDate})
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +57,8 @@ func (c *Compiler) CompileQQL(query string) (Func, error) {
 		alpha := make(map[string]any)
 		alpha["it"] = it
 		alpha["items"] = toAnySlice(universe.Tasks())
+		now := time.Now()
+		alpha["today"] = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 		return root.eval(alpha).(bool)
 	}
 	return evalFunc, nil

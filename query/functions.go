@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -98,6 +99,34 @@ var functions = map[string]queryFunc{
 		trailingOptional: false,
 		injectIt:         false,
 	},
+	"dateTag": {
+		fn:               dateTag,
+		resultType:       QDate,
+		argTypes:         []DType{QItem, QString, QDate},
+		trailingOptional: true,
+		injectIt:         true,
+	},
+	"stringTag": {
+		fn:               stringTag,
+		resultType:       QDate,
+		argTypes:         []DType{QItem, QString, QString},
+		trailingOptional: true,
+		injectIt:         true,
+	},
+	"intTag": {
+		fn:               intTag,
+		resultType:       QInt,
+		argTypes:         []DType{QItem, QString, QInt},
+		trailingOptional: true,
+		injectIt:         true,
+	},
+	"stringSliceTag": {
+		fn:               stringSliceTag,
+		resultType:       QStringSlice,
+		argTypes:         []DType{QItem, QString, QStringSlice},
+		trailingOptional: true,
+		injectIt:         true,
+	},
 }
 
 func done(args []any) any {
@@ -156,4 +185,80 @@ func date(args []any) any {
 	day := args[2].(int)
 
 	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+
+}
+
+func dateTag(args []any) any {
+	item := args[0].(*todotxt.Item)
+	key := args[1].(string)
+	defaultDate := time.Time{}
+	if len(args) == 3 {
+		defaultDate = args[2].(time.Time)
+	}
+
+	tags := item.Tags()
+	tagValues := tags[key]
+	if len(tagValues) == 0 {
+		return defaultDate
+	}
+	dateString := tagValues[0]
+	date, err := time.Parse(time.DateOnly, dateString)
+	if err != nil {
+		return defaultDate
+	}
+	return date
+}
+
+func stringTag(args []any) any {
+	item := args[0].(*todotxt.Item)
+	key := args[1].(string)
+	defaultValue := ""
+	if len(args) == 3 {
+		defaultValue = args[2].(string)
+	}
+
+	tags := item.Tags()
+	tagValues := tags[key]
+	if len(tagValues) == 0 {
+		return defaultValue
+	}
+	return tagValues[0]
+}
+
+func intTag(args []any) any {
+	item := args[0].(*todotxt.Item)
+	key := args[1].(string)
+	defaultInt := 0
+	if len(args) == 3 {
+		defaultInt = args[2].(int)
+	}
+
+	tags := item.Tags()
+	tagValues := tags[key]
+	if len(tagValues) == 0 {
+		return defaultInt
+	}
+	intString := tagValues[0]
+	i, err := strconv.Atoi(intString)
+	if err != nil {
+		return defaultInt
+	}
+	return i
+}
+
+func stringSliceTag(args []any) any {
+	item := args[0].(*todotxt.Item)
+	key := args[1].(string)
+	var defaultStringSlice []any = nil
+	if len(args) == 3 {
+		defaultStringSlice = args[2].([]any)
+	}
+
+	tags := item.Tags()
+	tagValues := tags[key]
+	if len(tagValues) == 0 {
+		return defaultStringSlice
+	}
+	sliceString := tagValues[0]
+	return toAnySlice(strings.Split(sliceString, ","))
 }
