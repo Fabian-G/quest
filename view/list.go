@@ -14,7 +14,7 @@ const StarProjection = "idx,done,completion,creation,projects,contexts,tags,desc
 
 type columnExtractor struct {
 	title     string
-	extractor extractionFunc
+	extractor ExtractionFunc
 }
 
 type List struct {
@@ -50,11 +50,11 @@ func NewList(list *todotxt.List, selection []*todotxt.Item, projection []string)
 }
 
 func (l List) mapToColumns() ([]table.Row, []table.Column) {
-	ctx := extractionCtx{
-		list:          l.list,
-		cleanTags:     l.CleanTags,
-		cleanProjects: l.CleanProjects,
-		cleanContexts: l.CleanContexts,
+	ctx := ExtractionCtx{
+		List:          l.list,
+		CleanTags:     l.CleanTags,
+		CleanProjects: l.CleanProjects,
+		CleanContexts: l.CleanContexts,
 	}
 	columns := make([]table.Column, 0, len(l.extractors))
 	rows := make([]table.Row, len(l.selection))
@@ -62,7 +62,7 @@ func (l List) mapToColumns() ([]table.Row, []table.Column) {
 		maxWidth := 0
 		values := make([]string, 0, len(l.extractors))
 		for _, i := range l.selection {
-			ctx.item = i
+			ctx.Item = i
 			val := c.extractor(ctx)
 			values = append(values, val)
 			maxWidth = max(maxWidth, len(val))
