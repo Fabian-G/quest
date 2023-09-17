@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Fabian-G/quest/view"
 	"github.com/spf13/viper"
@@ -63,6 +64,6 @@ func getViewDef(subCfg *viper.Viper) ViewDef {
 		DefaultProjection: subCfg.GetString("projection"),
 		DefaultSortOrder:  subCfg.GetString("sortOrder"),
 		DefaultOutputMode: subCfg.GetString("output"),
-		DefaultClean:      subCfg.GetStringSlice("clean"),
+		DefaultClean:      strings.Split(subCfg.GetString("clean"), ","),
 	}
 }
