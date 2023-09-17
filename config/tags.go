@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"slices"
 
 	"github.com/Fabian-G/quest/query"
 	"github.com/spf13/viper"
@@ -12,18 +13,11 @@ func TagTypes() map[string]query.DType {
 	typeDefs := make(map[string]query.DType)
 
 	for key, value := range typeDefsConfig {
-		switch value {
-		case "string":
-			typeDefs[key] = query.QString
-		case "date":
-			typeDefs[key] = query.QDate
-		case "duration":
-			typeDefs[key] = query.QDuration
-		case "int":
-			typeDefs[key] = query.QInt
-		default:
+		typ := query.DType(value)
+		if !slices.Contains(query.AllDTypes, typ) {
 			log.Fatalf("unknown type %s for tag key %s in config file", value, key)
 		}
+		typeDefs[key] = typ
 	}
 	return typeDefs
 }

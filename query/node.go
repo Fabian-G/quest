@@ -24,6 +24,8 @@ const (
 	QItemSlice   DType = "[]item"
 )
 
+var AllDTypes = []DType{QInt, QDate, QDuration, QString, QStringSlice, QBool, QItem, QItemSlice}
+
 func (d DType) isSliceType() bool {
 	return slices.Contains([]DType{QStringSlice, QItemSlice}, d)
 }
