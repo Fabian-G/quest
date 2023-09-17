@@ -315,7 +315,7 @@ func Test_eval(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			queryFn, err := DefaultCompiler.CompileQQL(tc.query)
+			queryFn, err := CompileQQL(tc.query)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.result, queryFn(tc.list, tc.list.Get(tc.itemNumber)))
 		})
@@ -351,7 +351,7 @@ func Test_InvalidQuerysResultInParseError(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			_, err := DefaultCompiler.CompileQQL(tc.query)
+			_, err := CompileQQL(tc.query)
 			assert.Error(t, err)
 		})
 	}

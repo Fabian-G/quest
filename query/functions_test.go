@@ -124,7 +124,7 @@ func Test_CanRegisterMacros(t *testing.T) {
 	an item after completed after:2
 	`)
 
-	query, err := DefaultCompiler.CompileQQL("!done && !blocked")
+	query, err := CompileQQL("!done && !blocked")
 	assert.Nil(t, err)
 
 	matches := query.Filter(list)

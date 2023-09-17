@@ -31,17 +31,12 @@ func And(fns ...Func) Func {
 	}
 }
 
-var DefaultCompiler = Compiler{}
 var defaultFreeVars = idSet{
 	"it": QItem, "items": QItemSlice, "today": QDate,
 }
 
-type Compiler struct {
-	TagTypes map[string]DType
-}
-
-func (c *Compiler) CompileQuery(query string) (Func, error) {
-	q, err := c.CompileQQL(query)
+func CompileQuery(query string) (Func, error) {
+	q, err := CompileQQL(query)
 	if err == nil {
 		return q, nil
 	}
@@ -52,7 +47,7 @@ func (c *Compiler) CompileQuery(query string) (Func, error) {
 	return compileStringSearch(query), nil
 }
 
-func (c *Compiler) CompileQQL(query string) (Func, error) {
+func CompileQQL(query string) (Func, error) {
 	root, err := parseQQLTree(query, maps.Clone(defaultFreeVars), QBool)
 	if err != nil {
 		return nil, err
@@ -68,14 +63,14 @@ func (c *Compiler) CompileQQL(query string) (Func, error) {
 	return evalFunc, nil
 }
 
-func (c *Compiler) CompileRange(query string) (Func, error) {
+func CompileRange(query string) (Func, error) {
 	return compileRange(query)
 }
 
-func (c *Compiler) CompileWordSearch(query string) (Func, error) {
+func CompileWordSearch(query string) (Func, error) {
 	return compileStringSearch(query), nil
 }
 
-func (c *Compiler) CompileSortFunc(sort string) (func(*todotxt.Item, *todotxt.Item) int, error) {
-	return sortFunc(sort, c.TagTypes)
+func CompileSortFunc(sort string, tagTypes map[string]DType) (func(*todotxt.Item, *todotxt.Item) int, error) {
+	return sortFunc(sort, tagTypes)
 }
