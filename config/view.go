@@ -1,8 +1,7 @@
 package config
 
 import (
-	"log"
-	"strings"
+	"fmt"
 
 	"github.com/Fabian-G/quest/view"
 	"github.com/spf13/viper"
@@ -16,9 +15,9 @@ const (
 	ListOutput        OutputMode = "list"
 )
 
-var ListViewDef = ViewDef{
+var fallbackListViewDef = ViewDef{
 	Name:              "list",
-	DefaultSelection:  "",
+	DefaultQuery:      "",
 	DefaultProjection: view.StarProjection,
 	DefaultSortOrder:  "+done,+creation,+description",
 	DefaultOutputMode: InteractiveOutput,
@@ -27,56 +26,43 @@ var ListViewDef = ViewDef{
 
 type ViewDef struct {
 	Name              string
-	DefaultSelection  string
+	DefaultQuery      string
 	DefaultProjection string
 	DefaultSortOrder  string
 	DefaultOutputMode OutputMode
 	DefaultClean      []string
 }
 
+func DefaultViewDef() ViewDef {
+	defView := viper.Sub("default-view")
+	if defView == nil {
+		return fallbackListViewDef
+	}
+	return getViewDef(defView)
+}
+
 func GetViewDefs() []ViewDef {
 	views := viper.Get("view").([]any)
 	defs := make([]ViewDef, 0, len(views))
-	for idx, viewDefA := range views {
-		viewDefM, ok := viewDefA.(map[string]any)
-		if !ok {
-			log.Fatalf("error in config file. expected view definition in section [view.%d], but got %T", idx, viewDefA)
-		}
-		var (
-			name       string   = ""
-			selection  string   = ""
-			projection string   = view.StarProjection
-			sortOrder  string   = "+done,+creation,+description"
-			output     string   = InteractiveOutput
-			clean      []string = nil
-		)
-		if n, ok := viewDefM["name"]; ok {
-			name = n.(string)
-		}
-		if s, ok := viewDefM["query"]; ok {
-			selection = s.(string)
-		}
-		if p, ok := viewDefM["projection"]; ok {
-			projection = p.(string)
-		}
-		if s, ok := viewDefM["sort"]; ok {
-			sortOrder = s.(string)
-		}
-		if i, ok := viewDefM["output"]; ok {
-			output = i.(string)
-		}
-		if c, ok := viewDefM["clean"]; ok {
-			cleanS := c.(string)
-			clean = strings.Split(cleanS, ",")
-		}
-		defs = append(defs, ViewDef{
-			Name:              name,
-			DefaultSelection:  selection,
-			DefaultProjection: projection,
-			DefaultSortOrder:  sortOrder,
-			DefaultOutputMode: output,
-			DefaultClean:      clean,
-		})
+	for idx := range views {
+		defs = append(defs, getViewDef(viper.Sub(fmt.Sprintf("view.%d", idx))))
 	}
 	return defs
+}
+
+func getViewDef(subCfg *viper.Viper) ViewDef {
+	subCfg.SetDefault("name", "")
+	subCfg.SetDefault("query", "")
+	subCfg.SetDefault("projection", view.StarProjection)
+	subCfg.SetDefault("sortOrder", "+done,+creation,+description")
+	subCfg.SetDefault("output", InteractiveOutput)
+	subCfg.SetDefault("clean", nil)
+	return ViewDef{
+		Name:              subCfg.GetString("name"),
+		DefaultQuery:      subCfg.GetString("query"),
+		DefaultProjection: subCfg.GetString("projection"),
+		DefaultSortOrder:  subCfg.GetString("sortOrder"),
+		DefaultOutputMode: subCfg.GetString("output"),
+		DefaultClean:      subCfg.GetStringSlice("clean"),
+	}
 }

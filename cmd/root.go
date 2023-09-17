@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{}
+var rootCmd *cobra.Command
 
 func Execute() {
 	err := rootCmd.Execute()
@@ -17,13 +17,12 @@ func Execute() {
 }
 
 func init() {
+	rootCmd = newViewCommand(config.DefaultViewDef()).command()
 	rootCmd.AddGroup(&cobra.Group{
 		ID:    "query",
 		Title: "Query",
 	})
 
-	viewCommand := newViewCommand(config.ListViewDef)
-	rootCmd.AddCommand(viewCommand.command())
 	for _, def := range config.GetViewDefs() {
 		viewCommand := newViewCommand(def)
 		rootCmd.AddCommand(viewCommand.command())

@@ -62,7 +62,7 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("invalid query specified: %w", err)
 	}
-	configQuery, err := di.QueryCompiler().CompileQQL(v.def.DefaultSelection)
+	configQuery, err := di.QueryCompiler().CompileQQL(v.def.DefaultQuery)
 	if err != nil {
 		return fmt.Errorf("config file contains invalid query for view %s: %w", v.def.Name, err)
 	}
