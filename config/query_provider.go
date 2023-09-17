@@ -5,6 +5,7 @@ import (
 )
 
 func buildQueryCompiler() *query.Compiler {
+	registerMacros()
 	return &query.Compiler{
 		TagTypes: TagTypes(),
 	}
