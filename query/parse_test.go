@@ -97,7 +97,7 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			root, err := parseQQLTree(tc.query, idSet{"it": QItem, "items": QItemSlice})
+			root, err := parseQQLTree(tc.query, idSet{"it": QItem, "items": QItemSlice}, QBool)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expectedParseResult, root.String())
 		})

@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 	"time"
@@ -23,9 +24,13 @@ type queryFunc struct {
 	resultType       DType
 	trailingOptional bool
 	injectIt         bool
+	wantsContext     bool
 }
 
-func (q queryFunc) call(args []any) any {
+func (q queryFunc) call(ctx map[string]any, args []any) any {
+	if q.wantsContext {
+		return q.fn(append([]any{ctx}, args...))
+	}
 	return q.fn(args)
 }
 
@@ -56,6 +61,7 @@ var functions = map[string]queryFunc{
 		resultType:       QBool,
 		trailingOptional: false,
 		injectIt:         true,
+		wantsContext:     false,
 	},
 	"description": {
 		fn:               description,
@@ -63,6 +69,7 @@ var functions = map[string]queryFunc{
 		resultType:       QString,
 		trailingOptional: false,
 		injectIt:         true,
+		wantsContext:     false,
 	},
 	"projects": {
 		fn:               projects,
@@ -70,6 +77,7 @@ var functions = map[string]queryFunc{
 		argTypes:         []DType{QItem},
 		trailingOptional: false,
 		injectIt:         true,
+		wantsContext:     false,
 	},
 	"contexts": {
 		fn:               contexts,
@@ -77,6 +85,7 @@ var functions = map[string]queryFunc{
 		argTypes:         []DType{QItem},
 		trailingOptional: false,
 		injectIt:         true,
+		wantsContext:     false,
 	},
 	"dotPrefix": {
 		fn:               dotPrefix,
@@ -84,6 +93,7 @@ var functions = map[string]queryFunc{
 		argTypes:         []DType{QString, QString},
 		trailingOptional: false,
 		injectIt:         false,
+		wantsContext:     false,
 	},
 	"substring": {
 		fn:               substring,
@@ -91,6 +101,7 @@ var functions = map[string]queryFunc{
 		argTypes:         []DType{QString, QString},
 		trailingOptional: false,
 		injectIt:         false,
+		wantsContext:     false,
 	},
 	"date": {
 		fn:               date,
@@ -98,6 +109,7 @@ var functions = map[string]queryFunc{
 		argTypes:         []DType{QInt, QInt, QInt},
 		trailingOptional: false,
 		injectIt:         false,
+		wantsContext:     false,
 	},
 	"dateTag": {
 		fn:               dateTag,
@@ -105,6 +117,7 @@ var functions = map[string]queryFunc{
 		argTypes:         []DType{QItem, QString, QDate},
 		trailingOptional: true,
 		injectIt:         true,
+		wantsContext:     false,
 	},
 	"tag": {
 		fn:               tag,
@@ -112,6 +125,7 @@ var functions = map[string]queryFunc{
 		argTypes:         []DType{QItem, QString, QString},
 		trailingOptional: true,
 		injectIt:         true,
+		wantsContext:     false,
 	},
 	"intTag": {
 		fn:               intTag,
@@ -119,6 +133,7 @@ var functions = map[string]queryFunc{
 		argTypes:         []DType{QItem, QString, QInt},
 		trailingOptional: true,
 		injectIt:         true,
+		wantsContext:     false,
 	},
 	"stringSliceTag": {
 		fn:               stringSliceTag,
@@ -126,7 +141,35 @@ var functions = map[string]queryFunc{
 		argTypes:         []DType{QItem, QString, QStringSlice},
 		trailingOptional: true,
 		injectIt:         true,
+		wantsContext:     false,
 	},
+}
+
+func RegisterMacro(name, qql string, inTypes []DType, outType DType, injectIt bool) error {
+	expectedFreeVars := maps.Clone(defaultFreeVars)
+	for i, d := range inTypes {
+		expectedFreeVars[fmt.Sprintf("arg%d", i)] = d
+	}
+	root, err := parseQQLTree(qql, expectedFreeVars, outType)
+	if err != nil {
+		return err
+	}
+	qFunc := queryFunc{
+		fn: func(args []interface{}) interface{} {
+			alpha := args[0].(map[string]any)
+			for i, arg := range args[1:] {
+				alpha[fmt.Sprintf("arg%d", i)] = arg
+			}
+			return root.eval(alpha)
+		},
+		argTypes:         inTypes,
+		resultType:       outType,
+		trailingOptional: false,
+		injectIt:         true,
+		wantsContext:     true,
+	}
+	functions[name] = qFunc
+	return nil
 }
 
 func done(args []any) any {

@@ -104,3 +104,31 @@ func TestQueryFunc_validate(t *testing.T) {
 		})
 	}
 }
+
+func Test_CanRegisterMacros(t *testing.T) {
+	err := RegisterMacro("blocked",
+		`exists i in items: (exists pre in stringSliceTag(arg0, "after"): tag(i, "id") == pre) && !done(i)`,
+		[]DType{QItem},
+		QBool,
+		true,
+	)
+	assert.Nil(t, err)
+	defer func() {
+		delete(functions, "blocked")
+	}()
+
+	list := listFromString(t, `
+	a precondition id:1
+	a blocked item after:1,2
+	x a completed precondition id:2
+	an item after completed after:2
+	`)
+
+	query, err := DefaultCompiler.CompileQQL("!done && !blocked")
+	assert.Nil(t, err)
+
+	matches := query.Filter(list)
+	assert.Len(t, matches, 2)
+	assert.Equal(t, list.Get(0).Description(), matches[0].Description())
+	assert.Equal(t, list.Get(3).Description(), matches[1].Description())
+}

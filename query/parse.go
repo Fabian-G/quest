@@ -6,7 +6,7 @@ import (
 	"slices"
 )
 
-func parseQQLTree(query string, expectedFreeVars idSet) (node, error) {
+func parseQQLTree(query string, expectedFreeVars idSet, expectedResultType DType) (node, error) {
 	parser := parser{
 		lex: lex(query),
 	}
@@ -25,8 +25,8 @@ func parseQQLTree(query string, expectedFreeVars idSet) (node, error) {
 	if err != nil {
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
-	if t != QBool {
-		return nil, fmt.Errorf("query result must be bool, got: %s", t)
+	if t != expectedResultType {
+		return nil, fmt.Errorf("query result must be %s, got: %s", expectedResultType, t)
 	}
 	return root, nil
 }

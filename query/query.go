@@ -1,6 +1,7 @@
 package query
 
 import (
+	"maps"
 	"time"
 
 	"github.com/Fabian-G/quest/todotxt"
@@ -31,6 +32,9 @@ func And(fns ...Func) Func {
 }
 
 var DefaultCompiler = Compiler{}
+var defaultFreeVars = idSet{
+	"it": QItem, "items": QItemSlice, "today": QDate,
+}
 
 type Compiler struct {
 	TagTypes map[string]DType
@@ -49,7 +53,7 @@ func (c *Compiler) CompileQuery(query string) (Func, error) {
 }
 
 func (c *Compiler) CompileQQL(query string) (Func, error) {
-	root, err := parseQQLTree(query, idSet{"it": QItem, "items": QItemSlice, "today": QDate})
+	root, err := parseQQLTree(query, maps.Clone(defaultFreeVars), QBool)
 	if err != nil {
 		return nil, err
 	}

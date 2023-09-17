@@ -465,7 +465,7 @@ func (c *call) eval(alpha varMap) any {
 	if c.passThrough {
 		return c.ifBound.eval(alpha)
 	}
-	return c.fn.call(c.args.eval(alpha).([]any))
+	return c.fn.call(alpha, c.args.eval(alpha).([]any))
 }
 
 func (c *call) String() string {
