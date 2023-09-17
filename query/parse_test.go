@@ -307,7 +307,7 @@ func Test_eval(t *testing.T) {
 			a precondition id:pre
 			a blocked task after:pre
 			`),
-			query:      `forall i in items: (exists pre in stringSliceTag("after"): tag(i, "id") == pre) -> done(i)`,
+			query:      `forall i in items: (exists pre in stringListTag("after"): tag(i, "id") == pre) -> done(i)`,
 			itemNumber: 1,
 			result:     false,
 		},

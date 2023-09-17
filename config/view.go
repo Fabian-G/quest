@@ -35,20 +35,24 @@ type ViewDef struct {
 }
 
 func GetViewDefs() []ViewDef {
-	views := viper.GetStringMap("view")
+	views := viper.Get("view").([]any)
 	defs := make([]ViewDef, 0, len(views))
-	for name, viewDefA := range views {
+	for idx, viewDefA := range views {
 		viewDefM, ok := viewDefA.(map[string]any)
 		if !ok {
-			log.Fatalf("error in config file. expected view definition in section [view.%s], but got %T", name, viewDefA)
+			log.Fatalf("error in config file. expected view definition in section [view.%d], but got %T", idx, viewDefA)
 		}
 		var (
+			name       string   = ""
 			selection  string   = ""
 			projection string   = view.StarProjection
 			sortOrder  string   = "+done,+creation,+description"
 			output     string   = InteractiveOutput
 			clean      []string = nil
 		)
+		if n, ok := viewDefM["name"]; ok {
+			name = n.(string)
+		}
 		if s, ok := viewDefM["query"]; ok {
 			selection = s.(string)
 		}

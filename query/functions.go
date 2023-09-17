@@ -135,8 +135,8 @@ var functions = map[string]queryFunc{
 		injectIt:         true,
 		wantsContext:     false,
 	},
-	"stringSliceTag": {
-		fn:               stringSliceTag,
+	"stringListTag": {
+		fn:               stringListTag,
 		resultType:       QStringSlice,
 		argTypes:         []DType{QItem, QString, QStringSlice},
 		trailingOptional: true,
@@ -289,7 +289,7 @@ func intTag(args []any) any {
 	return i
 }
 
-func stringSliceTag(args []any) any {
+func stringListTag(args []any) any {
 	item := args[0].(*todotxt.Item)
 	key := args[1].(string)
 	var defaultStringSlice []any = nil
@@ -302,6 +302,10 @@ func stringSliceTag(args []any) any {
 	if len(tagValues) == 0 {
 		return defaultStringSlice
 	}
-	sliceString := tagValues[0]
-	return toAnySlice(strings.Split(sliceString, ","))
+
+	allValues := make([]string, 0, len(tagValues))
+	for _, v := range tagValues {
+		allValues = append(allValues, strings.Split(v, ",")...)
+	}
+	return toAnySlice(allValues)
 }
