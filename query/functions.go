@@ -106,9 +106,9 @@ var functions = map[string]queryFunc{
 		trailingOptional: true,
 		injectIt:         true,
 	},
-	"stringTag": {
-		fn:               stringTag,
-		resultType:       QDate,
+	"tag": {
+		fn:               tag,
+		resultType:       QString,
 		argTypes:         []DType{QItem, QString, QString},
 		trailingOptional: true,
 		injectIt:         true,
@@ -209,7 +209,7 @@ func dateTag(args []any) any {
 	return date
 }
 
-func stringTag(args []any) any {
+func tag(args []any) any {
 	item := args[0].(*todotxt.Item)
 	key := args[1].(string)
 	defaultValue := ""

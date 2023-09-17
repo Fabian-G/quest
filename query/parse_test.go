@@ -19,11 +19,11 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 		},
 		"Single implication with quantor": {
 			query:               "exists x in items: true -> true",
-			expectedParseResult: "(exists x in (items): (true -> true))",
+			expectedParseResult: "(exists x in items: (true -> true))",
 		},
 		"Deeply nested alternating quantors": {
 			query:               "exists x in items: forall y in items: exists z in items: forall w in items: true -> true",
-			expectedParseResult: "(exists x in (items): (forall y in (items): (exists z in (items): (forall w in (items): (true -> true)))))",
+			expectedParseResult: "(exists x in items: (forall y in items: (exists z in items: (forall w in items: (true -> true)))))",
 		},
 		"And operation": {
 			query:               "true && false",
@@ -55,7 +55,7 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 		},
 		"Quantor in the middle": {
 			query:               "!done(it) && exists x in items: done(x)",
-			expectedParseResult: "(!done(it) && (exists x in (items): done(x)))",
+			expectedParseResult: "(!done(it) && (exists x in items: done(x)))",
 		},
 		"it is optional for functions that require one item": {
 			query:               "done()",
@@ -71,19 +71,19 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 		},
 		"bound id with name of a function gets parsed as identifier": {
 			query:               "exists done in items: done(done)",
-			expectedParseResult: "(exists done in (items): done(done))",
+			expectedParseResult: "(exists done in items: done(done))",
 		},
 		"project match shorthand gets compiled correctly": {
 			query:               "+foo",
-			expectedParseResult: "(exists p in (projects(it)): dotPrefix(p, \"+foo\"))",
+			expectedParseResult: "(exists p in projects(it): dotPrefix(p, \"+foo\"))",
 		},
 		"context match shorthand gets compiled correctly": {
 			query:               "@foo",
-			expectedParseResult: "(exists p in (contexts(it)): dotPrefix(p, \"@foo\"))",
+			expectedParseResult: "(exists p in contexts(it): dotPrefix(p, \"@foo\"))",
 		},
 		"stuff after project matcher": {
 			query:               "+foo && !done",
-			expectedParseResult: "((exists p in (projects(it)): dotPrefix(p, \"+foo\")) && !done(it))",
+			expectedParseResult: "((exists p in projects(it): dotPrefix(p, \"+foo\")) && !done(it))",
 		},
 		"chained and": {
 			query:               "done && done && done",
@@ -91,7 +91,7 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 		},
 		"project matcher in between": {
 			query:               "done && +foo && !done",
-			expectedParseResult: "((done(it) && (exists p in (projects(it)): dotPrefix(p, \"+foo\"))) && !done(it))",
+			expectedParseResult: "((done(it) && (exists p in projects(it): dotPrefix(p, \"+foo\"))) && !done(it))",
 		},
 	}
 
@@ -301,6 +301,15 @@ func Test_eval(t *testing.T) {
 			`),
 			query:  `date(2022, 02, 01) == date(2022, 02, 01)`,
 			result: true,
+		},
+		"blocked": {
+			list: listFromString(t, `
+			a precondition id:pre
+			a blocked task after:pre
+			`),
+			query:      `forall i in items: (exists pre in stringSliceTag("after"): tag(i, "id") == pre) -> done(i)`,
+			itemNumber: 1,
+			result:     false,
 		},
 	}
 

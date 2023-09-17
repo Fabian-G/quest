@@ -74,7 +74,7 @@ func (a *allQuant) eval(alpha varMap) any {
 }
 
 func (a *allQuant) String() string {
-	return fmt.Sprintf("(forall %s in (%s): %s)", a.boundId, a.collection.String(), a.child.String())
+	return fmt.Sprintf("(forall %s in %s: %s)", a.boundId, a.collection.String(), a.child.String())
 }
 
 func (a *allQuant) validate(knownIds idSet) (DType, error) {
@@ -118,7 +118,7 @@ func (e *existQuant) eval(alpha varMap) any {
 }
 
 func (e *existQuant) String() string {
-	return fmt.Sprintf("(exists %s in (%s): %s)", e.boundId, e.collection.String(), e.child.String())
+	return fmt.Sprintf("(exists %s in %s: %s)", e.boundId, e.collection.String(), e.child.String())
 }
 
 func (e *existQuant) validate(knownIds idSet) (DType, error) {
@@ -215,9 +215,6 @@ func (e *comparison) eval(alpha varMap) any {
 }
 
 func compare(op itemType, t1 DType, t2 DType, left, right any) bool {
-	if t1 != t2 {
-		return false
-	}
 	switch t1 {
 	case QString:
 		v1 := left.(string)
@@ -287,7 +284,20 @@ func compareDates(op itemType, d1, d2 time.Time) bool {
 	}
 }
 func (e *comparison) String() string {
-	return fmt.Sprintf("(%s == %s)", e.leftChild.String(), e.rightChild.String())
+	var opString string
+	switch e.comparator {
+	case itemEq:
+		opString = "=="
+	case itemLt:
+		opString = "<"
+	case itemLeq:
+		opString = "<="
+	case itemGt:
+		opString = ">"
+	case itemGeq:
+		opString = ">="
+	}
+	return fmt.Sprintf("(%s %s %s)", e.leftChild.String(), opString, e.rightChild.String())
 }
 
 func (e *comparison) validate(knownIds idSet) (DType, error) {
@@ -298,6 +308,9 @@ func (e *comparison) validate(knownIds idSet) (DType, error) {
 	rightType, err := e.rightChild.validate(knownIds)
 	if err != nil {
 		return QError, err
+	}
+	if leftType != rightType {
+		return QError, fmt.Errorf("can not compare %s with %s", leftType, rightType)
 	}
 	if leftType.isSliceType() || rightType.isSliceType() {
 		return QError, errors.New("comparing slice types is not allowed")
