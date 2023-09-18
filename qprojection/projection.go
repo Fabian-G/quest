@@ -19,6 +19,14 @@ type Column struct {
 	Projector Func
 }
 
+func MustCompile(cfg Config) []Column {
+	c, err := Compile(cfg)
+	if err != nil {
+		panic(err)
+	}
+	return c
+}
+
 func Compile(cfg Config) ([]Column, error) {
 	projectionColumns := expandAliasColumns(cfg, cfg.ColumnNames)
 

@@ -2,6 +2,7 @@ package view
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/Fabian-G/quest/qprojection"
@@ -10,6 +11,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
+
+var detailsProjection = strings.Split(strings.ReplaceAll(qprojection.StarProjection, ",tags", ""), ",")
 
 type List struct {
 	list        *todotxt.List
@@ -77,7 +80,7 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case refreshListMsg:
 		l = l.refreshTable()
 	case tea.WindowSizeMsg:
-		l.table.SetHeight(min(len(l.selection), msg.Height-7))
+		l.table.SetHeight(min(len(l.selection), msg.Height-len(detailsProjection)-3))
 	}
 	m, cmd := l.table.Update(msg)
 	l.table = m
@@ -91,35 +94,29 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (l List) View() string {
 	builder := strings.Builder{}
 	builder.WriteString(l.table.View())
-	if !l.interactive {
-		return builder.String()
+	if l.interactive {
+		builder.WriteString("\n\n")
+		l.renderDetails(&builder)
 	}
-	selectedItem := l.selection[l.table.Cursor()]
-	builder.WriteString("\n")
-	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("Index:\t\t%d\n", l.list.IndexOf(selectedItem)))
-	if selectedItem.Done() {
-		builder.WriteString("Status:\t\tdone\n")
-	} else {
-		builder.WriteString("Status:\t\tpending\n")
-	}
-	projects := make([]string, 0)
-	for _, p := range selectedItem.Projects() {
-		projects = append(projects, p.String())
-	}
-	builder.WriteString("Projects:\t")
-	builder.WriteString(strings.Join(projects, ", "))
-	builder.WriteString("\n")
-	contexts := make([]string, 0)
-	for _, c := range selectedItem.Contexts() {
-		contexts = append(contexts, c.String())
-	}
-	builder.WriteString("Contexts:\t")
-	builder.WriteString(strings.Join(contexts, ", "))
-	builder.WriteString("\n")
-	builder.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, "Description:\t", selectedItem.Description()))
-
 	return builder.String()
+}
+
+func (l List) renderDetails(writer io.StringWriter) {
+	selectedItem := l.selection[l.table.Cursor()]
+	detailsProjectionConfig := qprojection.Config{
+		ColumnNames: detailsProjection,
+		List:        l.list,
+	}
+	columns := qprojection.MustCompile(detailsProjectionConfig)
+	var maxTitleWidth int
+	for _, c := range columns {
+		maxTitleWidth = max(maxTitleWidth, len(c.Title))
+	}
+	titleStyle := lipgloss.NewStyle().Width(maxTitleWidth).Align(lipgloss.Left)
+	for _, c := range columns {
+		writer.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, fmt.Sprintf("%s:\t", titleStyle.Render(c.Title)), c.Projector(selectedItem)))
+		writer.WriteString("\n")
+	}
 }
 
 func (l List) refreshTable() List {
@@ -128,7 +125,6 @@ func (l List) refreshTable() List {
 	l.table.SetRows(rows)
 	if l.interactive {
 		l.table.Focus()
-		l.table.SetHeight(16)
 		l.table.SetStyles(table.DefaultStyles())
 	} else {
 		l.table.SetHeight(len(rows))
