@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/qprojection"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
@@ -78,15 +79,18 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 	}
 	slices.SortFunc(selection, sortFunc)
 
-	listView, err := view.NewList(list, selection, v.projection)
+	cleanProjects, cleanContexts, cleanTags := cleanAttributes(list, v.clean)
+	projectionCfg := qprojection.Config{
+		ColumnNames:   v.projection,
+		List:          list,
+		CleanTags:     cleanTags,
+		CleanProjects: cleanProjects,
+		CleanContexts: cleanContexts,
+	}
+	listView, err := view.NewList(list, selection, v.output == config.InteractiveOutput, projectionCfg)
 	if err != nil {
 		return fmt.Errorf("could not create list view: %w", err)
 	}
-	listView.Interactive = v.output == config.InteractiveOutput
-	cleanProjects, cleanContexts, cleanTags := cleanAttributes(list, v.clean)
-	listView.CleanProjects = cleanProjects
-	listView.CleanContexts = cleanContexts
-	listView.CleanTags = cleanTags
 	programme := tea.NewProgram(listView)
 	switch v.output {
 	case config.InteractiveOutput:

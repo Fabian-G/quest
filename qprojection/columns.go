@@ -12,29 +12,23 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
+const StarProjection = "idx,done,completion,creation,projects,contexts,tags,description"
+
 type matcher interface {
 	match(string) bool
 	fmt.Stringer
 }
 
-type Func func(Context) string
-
-type Context struct {
-	List          *todotxt.List
-	Item          *todotxt.Item
-	CleanTags     []string
-	CleanProjects []todotxt.Project
-	CleanContexts []todotxt.Context
-}
+type Func func(*todotxt.Item) string
 
 type columnDef struct {
 	matcher   matcher
-	name      func(string) string
-	extractor func(string) Func
+	name      func(Config, string) string
+	extractor func(Config, string) Func
 }
 
 var columns = []columnDef{
-	{idxMatcher, idxName, staticColumn(idxColumn)},
+	{idxMatcher, idxName, idxColumn},
 	{tagMatcher, tagName, tagColumn},
 	{doneMatcher, doneName, staticColumn(doneColumn)},
 	{creationMatcher, creationName, staticColumn(creationColumn)},
@@ -44,16 +38,16 @@ var columns = []columnDef{
 	{descriptionMatcher, descriptionName, descriptionColumn},
 }
 
-func FindColumn(key string) (string, Func) {
+func findColumn(ctx Config, key string) (Column, error) {
 	for _, cDef := range columns {
 		if cDef.matcher.match(key) {
-			return cDef.name(key), cDef.extractor(key)
+			return Column{cDef.name(ctx, key), cDef.extractor(ctx, key)}, nil
 		}
 	}
-	return "", nil
+	return Column{}, fmt.Errorf("column %s not found. Available columns are: %v", key, availableColumns())
 }
 
-func AvailableColumns() []string {
+func availableColumns() []string {
 	availableColumns := make([]string, 0, len(columns))
 	for _, c := range columns {
 		availableColumns = append(availableColumns, c.matcher.String())
@@ -63,14 +57,14 @@ func AvailableColumns() []string {
 
 var tagMatcher = regexMatch("tag:.+")
 
-func tagName(key string) string {
+func tagName(cfg Config, key string) string {
 	return strings.Split(key, ":")[1]
 }
 
-func tagColumn(key string) Func {
+func tagColumn(cfg Config, key string) Func {
 	tagKey := strings.Split(key, ":")[1]
-	return func(ctx Context) string {
-		tagValues := ctx.Item.Tags()[tagKey]
+	return func(i *todotxt.Item) string {
+		tagValues := i.Tags()[tagKey]
 		return strings.Join(tagValues, ",")
 	}
 }
@@ -78,8 +72,8 @@ func tagColumn(key string) Func {
 var doneMatcher = staticMatch("done")
 var doneName = staticName("Done")
 
-func doneColumn(ctx Context) string {
-	if ctx.Item.Done() {
+func doneColumn(i *todotxt.Item) string {
+	if i.Done() {
 		return "x"
 	}
 	return ""
@@ -88,8 +82,8 @@ func doneColumn(ctx Context) string {
 var creationMatcher = staticMatch("creation")
 var creationName = staticName("Created On")
 
-func creationColumn(ctx Context) string {
-	date := ctx.Item.CreationDate()
+func creationColumn(i *todotxt.Item) string {
+	date := i.CreationDate()
 	if date == nil {
 		return ""
 	}
@@ -99,8 +93,8 @@ func creationColumn(ctx Context) string {
 var completionMatcher = staticMatch("completion")
 var CompletionName = staticName("Completed On")
 
-func completionColumn(ctx Context) string {
-	date := ctx.Item.CompletionDate()
+func completionColumn(i *todotxt.Item) string {
+	date := i.CompletionDate()
 	if date == nil {
 		return ""
 	}
@@ -110,8 +104,8 @@ func completionColumn(ctx Context) string {
 var projectsMatcher = staticMatch("projects")
 var projectsName = staticName("Projects")
 
-func projectsColumn(ctx Context) string {
-	projects := ctx.Item.Projects()
+func projectsColumn(i *todotxt.Item) string {
+	projects := i.Projects()
 	projectStrings := make([]string, 0, len(projects))
 	for _, p := range projects {
 		projectStrings = append(projectStrings, p.String())
@@ -122,8 +116,8 @@ func projectsColumn(ctx Context) string {
 var contextsMatcher = staticMatch("contexts")
 var contextsName = staticName("Contexts")
 
-func contextsColumn(ctx Context) string {
-	contexts := ctx.Item.Contexts()
+func contextsColumn(i *todotxt.Item) string {
+	contexts := i.Contexts()
 	contextStrings := make([]string, 0, len(contexts))
 	for _, p := range contexts {
 		contextStrings = append(contextStrings, p.String())
@@ -134,14 +128,16 @@ func contextsColumn(ctx Context) string {
 var idxMatcher = staticMatch("idx")
 var idxName = staticName("Idx")
 
-func idxColumn(ctx Context) string {
-	return strconv.Itoa(ctx.List.IndexOf(ctx.Item))
+func idxColumn(cfg Config, key string) Func {
+	return func(i *todotxt.Item) string {
+		return strconv.Itoa(cfg.List.IndexOf(i))
+	}
 }
 
 var descriptionMatcher = regexMatch("description(\\([0-9]+\\))?")
 var descriptionName = staticName("Description")
 
-func descriptionColumn(key string) Func {
+func descriptionColumn(cfg Config, key string) Func {
 	key = strings.TrimPrefix(key, "description")
 	var width = math.MaxInt
 	if len(key) > 0 {
@@ -151,9 +147,8 @@ func descriptionColumn(key string) Func {
 			panic(err) // can not happen, because matcher ensures that there is a valid number
 		}
 	}
-	return func(ctx Context) string {
-
-		return runewidth.Truncate(ctx.Item.CleanDescription(ctx.CleanProjects, ctx.CleanContexts, ctx.CleanTags), width, "...")
+	return func(item *todotxt.Item) string {
+		return runewidth.Truncate(item.CleanDescription(cfg.CleanProjects, cfg.CleanContexts, cfg.CleanTags), width, "...")
 	}
 }
 
@@ -166,14 +161,14 @@ func staticMatch(columnKey string) matcher {
 	return staticMatcher{columnKey}
 }
 
-func staticColumn(f Func) func(string) Func {
-	return func(s string) Func {
+func staticColumn(f Func) func(Config, string) Func {
+	return func(cfg Config, s string) Func {
 		return f
 	}
 }
 
-func staticName(columnKey string) func(string) string {
-	return func(s string) string {
+func staticName(columnKey string) func(Config, string) string {
+	return func(cfg Config, s string) string {
 		return columnKey
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Fabian-G/quest/view"
+	"github.com/Fabian-G/quest/qprojection"
 	"github.com/spf13/viper"
 )
 
@@ -19,7 +19,7 @@ const (
 var fallbackListViewDef = ViewDef{
 	Name:              "list",
 	DefaultQuery:      "",
-	DefaultProjection: view.StarProjection,
+	DefaultProjection: qprojection.StarProjection,
 	DefaultSortOrder:  "+done,+creation,+description",
 	DefaultOutputMode: InteractiveOutput,
 	DefaultClean:      nil,
@@ -54,7 +54,7 @@ func GetViewDefs() []ViewDef {
 func getViewDef(subCfg *viper.Viper) ViewDef {
 	subCfg.SetDefault("name", "")
 	subCfg.SetDefault("query", "")
-	subCfg.SetDefault("projection", view.StarProjection)
+	subCfg.SetDefault("projection", qprojection.StarProjection)
 	subCfg.SetDefault("sortOrder", "+done,+creation,+description")
 	subCfg.SetDefault("output", InteractiveOutput)
 	subCfg.SetDefault("clean", nil)

@@ -11,22 +11,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-const StarProjection = "idx,done,completion,creation,projects,contexts,tags,description"
-
-type columnExtractor struct {
-	title     string
-	extractor qprojection.Func
-}
-
 type List struct {
-	list          *todotxt.List
-	selection     []*todotxt.Item
-	extractors    []columnExtractor
-	table         table.Model
-	Interactive   bool
-	CleanProjects []todotxt.Project
-	CleanContexts []todotxt.Context
-	CleanTags     []string
+	list        *todotxt.List
+	selection   []*todotxt.Item
+	extractors  []qprojection.Column
+	table       table.Model
+	interactive bool
 }
 
 type refreshListMsg struct{}
@@ -35,36 +25,30 @@ func RefreshList() tea.Msg {
 	return refreshListMsg{}
 }
 
-func NewList(list *todotxt.List, selection []*todotxt.Item, projection []string) (List, error) {
+func NewList(list *todotxt.List, selection []*todotxt.Item, interactive bool, pCfg qprojection.Config) (List, error) {
 	l := List{
-		list:      list,
-		selection: selection,
+		list:        list,
+		selection:   selection,
+		interactive: interactive,
 	}
 
-	columnExtractors, err := l.columnExtractors(projection)
+	columnExtractors, err := qprojection.Compile(pCfg)
 	if err != nil {
-		return List{}, fmt.Errorf("invalid projection %v: %w", projection, err)
+		return List{}, fmt.Errorf("invalid projection %v: %w", pCfg.ColumnNames, err)
 	}
 	l.extractors = columnExtractors
 	l.table = table.New()
-	return l, nil
+	return l.refreshTable(), nil
 }
 
 func (l List) mapToColumns() ([]table.Row, []table.Column) {
-	ctx := qprojection.Context{
-		List:          l.list,
-		CleanTags:     l.CleanTags,
-		CleanProjects: l.CleanProjects,
-		CleanContexts: l.CleanContexts,
-	}
 	columns := make([]table.Column, 0, len(l.extractors))
 	rows := make([]table.Row, len(l.selection))
 	for _, c := range l.extractors {
 		maxWidth := 0
 		values := make([]string, 0, len(l.extractors))
 		for _, i := range l.selection {
-			ctx.Item = i
-			val := c.extractor(ctx)
+			val := c.Projector(i)
 			values = append(values, val)
 			maxWidth = max(maxWidth, len(val))
 		}
@@ -72,7 +56,7 @@ func (l List) mapToColumns() ([]table.Row, []table.Column) {
 			continue
 		}
 
-		columns = append(columns, table.Column{Title: c.title, Width: max(maxWidth, len(c.title))})
+		columns = append(columns, table.Column{Title: c.Title, Width: max(maxWidth, len(c.Title))})
 		for i, v := range values {
 			rows[i] = append(rows[i], v)
 		}
@@ -80,44 +64,8 @@ func (l List) mapToColumns() ([]table.Row, []table.Column) {
 	return rows, columns
 }
 
-func (l List) columnExtractors(projection []string) ([]columnExtractor, error) {
-	projection = l.expandAliasColumns(projection)
-	fns := make([]columnExtractor, 0, len(projection))
-	for _, p := range projection {
-		name, extractor := qprojection.FindColumn(p)
-		if extractor == nil {
-			return nil, fmt.Errorf("unknown column: %s\nAvailable columns are: %v", p, qprojection.AvailableColumns())
-		}
-		fns = append(fns, columnExtractor{name, extractor})
-	}
-
-	return fns, nil
-}
-
-func (l List) expandAliasColumns(projection []string) []string {
-	realProjection := make([]string, 0, len(projection))
-	for _, p := range projection {
-		switch p {
-		case "tags":
-			tagKeys := make(map[string]struct{})
-			for _, i := range l.selection {
-				tags := i.Tags()
-				for k := range tags {
-					tagKeys[k] = struct{}{}
-				}
-			}
-			for key := range tagKeys {
-				realProjection = append(realProjection, fmt.Sprintf("tag:%s", key))
-			}
-		default:
-			realProjection = append(realProjection, p)
-		}
-	}
-	return realProjection
-}
-
 func (l List) Init() tea.Cmd {
-	return RefreshList
+	return nil
 }
 
 func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -128,11 +76,13 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case refreshListMsg:
 		l = l.refreshTable()
+	case tea.WindowSizeMsg:
+		l.table.SetHeight(min(len(l.selection), msg.Height-7))
 	}
 	m, cmd := l.table.Update(msg)
 	l.table = m
 
-	if !l.Interactive {
+	if !l.interactive {
 		return l, tea.Quit
 	}
 	return l, cmd
@@ -141,7 +91,7 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (l List) View() string {
 	builder := strings.Builder{}
 	builder.WriteString(l.table.View())
-	if !l.Interactive {
+	if !l.interactive {
 		return builder.String()
 	}
 	selectedItem := l.selection[l.table.Cursor()]
@@ -176,7 +126,7 @@ func (l List) refreshTable() List {
 	rows, columns := l.mapToColumns()
 	l.table.SetColumns(columns)
 	l.table.SetRows(rows)
-	if l.Interactive {
+	if l.interactive {
 		l.table.Focus()
 		l.table.SetHeight(16)
 		l.table.SetStyles(table.DefaultStyles())
