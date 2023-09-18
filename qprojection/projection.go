@@ -40,7 +40,7 @@ func expandAliasColumns(cfg Config, projection []string) []string {
 		switch p {
 		case "tags":
 			tagKeys := cfg.List.AllTags()
-			for key := range tagKeys {
+			for _, key := range tagKeys {
 				realProjection = append(realProjection, fmt.Sprintf("tag:%s", key))
 			}
 		default:
