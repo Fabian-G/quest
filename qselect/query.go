@@ -1,4 +1,4 @@
-package query
+package qselect
 
 import (
 	"maps"
@@ -69,8 +69,4 @@ func CompileRange(query string) (Func, error) {
 
 func CompileWordSearch(query string) (Func, error) {
 	return compileStringSearch(query), nil
-}
-
-func CompileSortFunc(sort string, tagTypes map[string]DType) (func(*todotxt.Item, *todotxt.Item) int, error) {
-	return sortFunc(sort, tagTypes)
 }

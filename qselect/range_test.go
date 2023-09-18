@@ -1,9 +1,9 @@
-package query_test
+package qselect_test
 
 import (
 	"testing"
 
-	"github.com/Fabian-G/quest/query"
+	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/stretchr/testify/assert"
 )
@@ -53,7 +53,7 @@ func Test_Range(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			query, err := query.CompileRange(tc.rng)
+			query, err := qselect.CompileRange(tc.rng)
 			assert.Nil(t, err)
 			matches := query.Filter(testList)
 			descriptions := make([]string, 0, len(matches))

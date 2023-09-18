@@ -1,4 +1,4 @@
-package view
+package qprojection
 
 import (
 	"fmt"
@@ -12,14 +12,14 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-type Matcher interface {
-	Match(string) bool
+type matcher interface {
+	match(string) bool
 	fmt.Stringer
 }
 
-type ExtractionFunc func(ExtractionCtx) string
+type Func func(Context) string
 
-type ExtractionCtx struct {
+type Context struct {
 	List          *todotxt.List
 	Item          *todotxt.Item
 	CleanTags     []string
@@ -27,13 +27,13 @@ type ExtractionCtx struct {
 	CleanContexts []todotxt.Context
 }
 
-type ColumnDef struct {
-	matcher   Matcher
+type columnDef struct {
+	matcher   matcher
 	name      func(string) string
-	extractor func(string) ExtractionFunc
+	extractor func(string) Func
 }
 
-var columns = []ColumnDef{
+var columns = []columnDef{
 	{idxMatcher, idxName, staticColumn(idxColumn)},
 	{tagMatcher, tagName, tagColumn},
 	{doneMatcher, doneName, staticColumn(doneColumn)},
@@ -44,16 +44,16 @@ var columns = []ColumnDef{
 	{descriptionMatcher, descriptionName, descriptionColumn},
 }
 
-func findColumn(key string) (string, ExtractionFunc) {
+func FindColumn(key string) (string, Func) {
 	for _, cDef := range columns {
-		if cDef.matcher.Match(key) {
+		if cDef.matcher.match(key) {
 			return cDef.name(key), cDef.extractor(key)
 		}
 	}
 	return "", nil
 }
 
-func availableColumns() []string {
+func AvailableColumns() []string {
 	availableColumns := make([]string, 0, len(columns))
 	for _, c := range columns {
 		availableColumns = append(availableColumns, c.matcher.String())
@@ -67,9 +67,9 @@ func tagName(key string) string {
 	return strings.Split(key, ":")[1]
 }
 
-func tagColumn(key string) ExtractionFunc {
+func tagColumn(key string) Func {
 	tagKey := strings.Split(key, ":")[1]
-	return func(ctx ExtractionCtx) string {
+	return func(ctx Context) string {
 		tagValues := ctx.Item.Tags()[tagKey]
 		return strings.Join(tagValues, ",")
 	}
@@ -78,7 +78,7 @@ func tagColumn(key string) ExtractionFunc {
 var doneMatcher = staticMatch("done")
 var doneName = staticName("Done")
 
-func doneColumn(ctx ExtractionCtx) string {
+func doneColumn(ctx Context) string {
 	if ctx.Item.Done() {
 		return "x"
 	}
@@ -88,7 +88,7 @@ func doneColumn(ctx ExtractionCtx) string {
 var creationMatcher = staticMatch("creation")
 var creationName = staticName("Created On")
 
-func creationColumn(ctx ExtractionCtx) string {
+func creationColumn(ctx Context) string {
 	date := ctx.Item.CreationDate()
 	if date == nil {
 		return ""
@@ -99,7 +99,7 @@ func creationColumn(ctx ExtractionCtx) string {
 var completionMatcher = staticMatch("completion")
 var CompletionName = staticName("Completed On")
 
-func completionColumn(ctx ExtractionCtx) string {
+func completionColumn(ctx Context) string {
 	date := ctx.Item.CompletionDate()
 	if date == nil {
 		return ""
@@ -110,7 +110,7 @@ func completionColumn(ctx ExtractionCtx) string {
 var projectsMatcher = staticMatch("projects")
 var projectsName = staticName("Projects")
 
-func projectsColumn(ctx ExtractionCtx) string {
+func projectsColumn(ctx Context) string {
 	projects := ctx.Item.Projects()
 	projectStrings := make([]string, 0, len(projects))
 	for _, p := range projects {
@@ -122,7 +122,7 @@ func projectsColumn(ctx ExtractionCtx) string {
 var contextsMatcher = staticMatch("contexts")
 var contextsName = staticName("Contexts")
 
-func contextsColumn(ctx ExtractionCtx) string {
+func contextsColumn(ctx Context) string {
 	contexts := ctx.Item.Contexts()
 	contextStrings := make([]string, 0, len(contexts))
 	for _, p := range contexts {
@@ -134,14 +134,14 @@ func contextsColumn(ctx ExtractionCtx) string {
 var idxMatcher = staticMatch("idx")
 var idxName = staticName("Idx")
 
-func idxColumn(ctx ExtractionCtx) string {
+func idxColumn(ctx Context) string {
 	return strconv.Itoa(ctx.List.IndexOf(ctx.Item))
 }
 
 var descriptionMatcher = regexMatch("description(\\([0-9]+\\))?")
 var descriptionName = staticName("Description")
 
-func descriptionColumn(key string) ExtractionFunc {
+func descriptionColumn(key string) Func {
 	key = strings.TrimPrefix(key, "description")
 	var width = math.MaxInt
 	if len(key) > 0 {
@@ -151,23 +151,23 @@ func descriptionColumn(key string) ExtractionFunc {
 			panic(err) // can not happen, because matcher ensures that there is a valid number
 		}
 	}
-	return func(ctx ExtractionCtx) string {
+	return func(ctx Context) string {
 
 		return runewidth.Truncate(ctx.Item.CleanDescription(ctx.CleanProjects, ctx.CleanContexts, ctx.CleanTags), width, "...")
 	}
 }
 
-func regexMatch(columnRegex string) Matcher {
+func regexMatch(columnRegex string) matcher {
 	regex := regexp.MustCompile(columnRegex)
 	return regexMatcher{regex}
 }
 
-func staticMatch(columnKey string) Matcher {
+func staticMatch(columnKey string) matcher {
 	return staticMatcher{columnKey}
 }
 
-func staticColumn(f ExtractionFunc) func(string) ExtractionFunc {
-	return func(s string) ExtractionFunc {
+func staticColumn(f Func) func(string) Func {
+	return func(s string) Func {
 		return f
 	}
 }
@@ -182,7 +182,7 @@ type regexMatcher struct {
 	regex *regexp.Regexp
 }
 
-func (m regexMatcher) Match(key string) bool {
+func (m regexMatcher) match(key string) bool {
 	return m.regex.MatchString(key)
 }
 
@@ -194,7 +194,7 @@ type staticMatcher struct {
 	key string
 }
 
-func (m staticMatcher) Match(key string) bool {
+func (m staticMatcher) match(key string) bool {
 	return m.key == key
 }
 

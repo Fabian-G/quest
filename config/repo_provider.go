@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/Fabian-G/quest/hook"
-	"github.com/Fabian-G/quest/query"
+	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/viper"
 )
@@ -14,7 +14,7 @@ func buildTodoTxtRepo() *todotxt.Repo {
 	repo.DefaultHooks = []todotxt.HookBuilder{
 		hook.NewRecurrence,
 	}
-	defOrder, err := query.CompileSortFunc(viper.GetString(DefaultSortOrder), TagTypes())
+	defOrder, err := qsort.CompileSortFunc(viper.GetString(DefaultSortOrder), TagTypes())
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,11 +1,16 @@
-package query
+package qsort
 
 import (
 	"fmt"
 	"strings"
 
+	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 )
+
+func CompileSortFunc(sort string, tagTypes map[string]qselect.DType) (func(*todotxt.Item, *todotxt.Item) int, error) {
+	return sortFunc(sort, tagTypes)
+}
 
 type sortOrder int
 
@@ -14,7 +19,7 @@ const (
 	desc = -1
 )
 
-func sortFunc(sort string, tagTypes map[string]DType) (func(*todotxt.Item, *todotxt.Item) int, error) {
+func sortFunc(sort string, tagTypes map[string]qselect.DType) (func(*todotxt.Item, *todotxt.Item) int, error) {
 	sortingKeys := strings.Split(sort, ",")
 	compareFuncs := make([]func(*todotxt.Item, *todotxt.Item) int, 0, len(sortingKeys))
 

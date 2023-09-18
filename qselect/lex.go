@@ -1,5 +1,5 @@
 // Highly inspired by text/template
-package query
+package qselect
 
 import (
 	"fmt"

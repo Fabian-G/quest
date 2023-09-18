@@ -1,10 +1,10 @@
-package query_test
+package qsort_test
 
 import (
 	"testing"
 	"time"
 
-	"github.com/Fabian-G/quest/query"
+	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/stretchr/testify/assert"
 )
@@ -122,7 +122,7 @@ func Test_Sort(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			cmpFunc, err := query.CompileSortFunc(tc.sortString, nil)
+			cmpFunc, err := qsort.CompileSortFunc(tc.sortString, nil)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expectedOrder, cmpFunc(tc.first, tc.second))
 		})

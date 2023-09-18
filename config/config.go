@@ -45,4 +45,5 @@ func init() {
 		}
 		log.Fatal(err)
 	}
+	registerMacros()
 }

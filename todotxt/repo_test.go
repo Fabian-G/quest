@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Fabian-G/quest/query"
+	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,7 +18,7 @@ func Test_ItemsAreOrderedCorrectly(t *testing.T) {
 	item 3
 	item 2`)
 	repo := todotxt.NewRepo(file)
-	s, err := query.CompileSortFunc("+done,-description", nil)
+	s, err := qsort.CompileSortFunc("+done,-description", nil)
 	assert.Nil(t, err)
 	repo.DefaultOrder = s
 

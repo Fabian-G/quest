@@ -4,17 +4,17 @@ import (
 	"log"
 	"slices"
 
-	"github.com/Fabian-G/quest/query"
+	"github.com/Fabian-G/quest/qselect"
 	"github.com/spf13/viper"
 )
 
-func TagTypes() map[string]query.DType {
+func TagTypes() map[string]qselect.DType {
 	typeDefsConfig := viper.GetStringMapString("tag.types")
-	typeDefs := make(map[string]query.DType)
+	typeDefs := make(map[string]qselect.DType)
 
 	for key, value := range typeDefsConfig {
-		typ := query.DType(value)
-		if !slices.Contains(query.AllDTypes, typ) {
+		typ := qselect.DType(value)
+		if !slices.Contains(qselect.AllDTypes, typ) {
 			log.Fatalf("unknown type %s for tag key %s in config file", value, key)
 		}
 		typeDefs[key] = typ

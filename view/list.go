@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Fabian-G/quest/qprojection"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,7 +15,7 @@ const StarProjection = "idx,done,completion,creation,projects,contexts,tags,desc
 
 type columnExtractor struct {
 	title     string
-	extractor ExtractionFunc
+	extractor qprojection.Func
 }
 
 type List struct {
@@ -50,7 +51,7 @@ func NewList(list *todotxt.List, selection []*todotxt.Item, projection []string)
 }
 
 func (l List) mapToColumns() ([]table.Row, []table.Column) {
-	ctx := ExtractionCtx{
+	ctx := qprojection.Context{
 		List:          l.list,
 		CleanTags:     l.CleanTags,
 		CleanProjects: l.CleanProjects,
@@ -83,9 +84,9 @@ func (l List) columnExtractors(projection []string) ([]columnExtractor, error) {
 	projection = l.expandAliasColumns(projection)
 	fns := make([]columnExtractor, 0, len(projection))
 	for _, p := range projection {
-		name, extractor := findColumn(p)
+		name, extractor := qprojection.FindColumn(p)
 		if extractor == nil {
-			return nil, fmt.Errorf("unknown column: %s\nAvailable columns are: %v", p, availableColumns())
+			return nil, fmt.Errorf("unknown column: %s\nAvailable columns are: %v", p, qprojection.AvailableColumns())
 		}
 		fns = append(fns, columnExtractor{name, extractor})
 	}
