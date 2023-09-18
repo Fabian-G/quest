@@ -12,7 +12,7 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-const StarProjection = "idx,done,prio,completion,creation,projects,contexts,tags,description"
+const StarProjection = "idx,done,priority,completion,creation,projects,contexts,tags,description"
 
 type matcher interface {
 	match(string) bool

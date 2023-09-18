@@ -85,7 +85,7 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m, cmd := l.table.Update(msg)
 	l.table = m
 
-	if !l.interactive {
+	if !l.interactive || len(l.selection) <= 1 {
 		return l, tea.Quit
 	}
 	return l, cmd
@@ -93,10 +93,15 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (l List) View() string {
 	builder := strings.Builder{}
-	builder.WriteString(l.table.View())
-	if l.interactive {
+	switch {
+	case len(l.selection) <= 1:
+		l.renderDetails(&builder)
+	case l.interactive:
+		builder.WriteString(l.table.View())
 		builder.WriteString("\n\n")
 		l.renderDetails(&builder)
+	default:
+		builder.WriteString(l.table.View())
 	}
 	return builder.String()
 }
@@ -113,10 +118,13 @@ func (l List) renderDetails(writer io.StringWriter) {
 		maxTitleWidth = max(maxTitleWidth, len(c.Title))
 	}
 	titleStyle := lipgloss.NewStyle().Width(maxTitleWidth).Align(lipgloss.Left)
+	lines := make([]string, 0, len(columns))
 	for _, c := range columns {
-		writer.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, fmt.Sprintf("%s:\t", titleStyle.Render(c.Title)), c.Projector(selectedItem)))
-		writer.WriteString("\n")
+		if projection := c.Projector(selectedItem); len(projection) > 0 {
+			lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, fmt.Sprintf("%s:\t", titleStyle.Render(c.Title)), projection))
+		}
 	}
+	writer.WriteString(strings.Join(lines, "\n"))
 }
 
 func (l List) refreshTable() List {
