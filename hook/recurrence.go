@@ -11,10 +11,6 @@ import (
 	"github.com/Fabian-G/quest/todotxt"
 )
 
-var defaultRecurrenceTag = "rec"
-var defaultDueTag = "due"
-var defaultThresholdTag = "t"
-
 var ErrNoRecurrenceBase = errors.New("when the recurrence tag is set, either the due tag or the threshold tag (or both) must be set")
 
 type recurrenceParams struct {
@@ -27,24 +23,33 @@ type recurrenceParams struct {
 
 type Recurrence struct {
 	list    *todotxt.List
+	tags    RecurrenceTags
 	nowFunc func() time.Time
 }
 
-func NewRecurrence(list *todotxt.List) todotxt.Hook {
+type RecurrenceTags struct {
+	Rec       string
+	Due       string
+	Threshold string
+}
+
+func NewRecurrence(list *todotxt.List, tags RecurrenceTags) todotxt.Hook {
 	return &Recurrence{
 		list: list,
+		tags: tags,
 	}
 }
 
-func NewRecurrenceWithNowFunc(list *todotxt.List, now func() time.Time) todotxt.Hook {
+func NewRecurrenceWithNowFunc(list *todotxt.List, tags RecurrenceTags, now func() time.Time) todotxt.Hook {
 	return &Recurrence{
 		list:    list,
 		nowFunc: now,
+		tags:    tags,
 	}
 }
 
 func (r Recurrence) OnMod(event todotxt.ModEvent) error {
-	if !event.IsCompleteEvent() || len(event.Current.Tags()[r.recTag()]) == 0 {
+	if !event.IsCompleteEvent() || len(event.Current.Tags()[r.tags.Rec]) == 0 {
 		return nil
 	}
 	param, err := r.parseRecurrenceParams(event.Current)
@@ -59,7 +64,7 @@ func (r Recurrence) OnMod(event todotxt.ModEvent) error {
 }
 
 func (r Recurrence) OnValidate(event todotxt.ValidationEvent) error {
-	if len(event.Item.Tags()[r.recTag()]) == 0 {
+	if len(event.Item.Tags()[r.tags.Rec]) == 0 {
 		return nil
 	}
 	_, err := r.parseRecurrenceParams(event.Item)
@@ -90,24 +95,24 @@ func (r Recurrence) spawnRelative(params recurrenceParams) error {
 	switch {
 	case params.threshold != zeroTime && params.due != zeroTime:
 		newThreshold := completionDate.Add(params.duration)
-		err := newItem.SetTag(r.thresholdTag(), newThreshold.Format(time.DateOnly))
+		err := newItem.SetTag(r.tags.Threshold, newThreshold.Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new threshold date when trying to spawn new recurrent task")
 		}
 		diff := max(params.due.Sub(params.threshold), 0)
-		err = newItem.SetTag(r.dueTag(), newThreshold.Add(diff).Format(time.DateOnly))
+		err = newItem.SetTag(r.tags.Due, newThreshold.Add(diff).Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new due date when trying to spawn new recurrent task")
 		}
 	case params.threshold != zeroTime:
 		newThreshold := completionDate.Add(params.duration)
-		err := newItem.SetTag(r.thresholdTag(), newThreshold.Format(time.DateOnly))
+		err := newItem.SetTag(r.tags.Threshold, newThreshold.Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new threshold date when trying to spawn new recurrent task")
 		}
 	case params.due != zeroTime:
 		newDue := completionDate.Add(params.duration)
-		err := newItem.SetTag(r.dueTag(), newDue.Format(time.DateOnly))
+		err := newItem.SetTag(r.tags.Due, newDue.Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new due date when trying to spawn new recurrent task")
 		}
@@ -127,13 +132,13 @@ func (r Recurrence) spawnAbsolute(params recurrenceParams) error {
 	}
 	var zeroTime = time.Time{}
 	if params.due != zeroTime {
-		err := newItem.SetTag(r.dueTag(), params.due.Add(params.duration).Format(time.DateOnly))
+		err := newItem.SetTag(r.tags.Due, params.due.Add(params.duration).Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new due date when trying to spawn new recurrent task")
 		}
 	}
 	if params.threshold != zeroTime {
-		err := newItem.SetTag(r.thresholdTag(), params.threshold.Add(params.duration).Format(time.DateOnly))
+		err := newItem.SetTag(r.tags.Threshold, params.threshold.Add(params.duration).Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new threshold date when trying to spawn new recurrent task")
 		}
@@ -141,30 +146,15 @@ func (r Recurrence) spawnAbsolute(params recurrenceParams) error {
 	return r.list.Add(newItem)
 }
 
-func (r Recurrence) recTag() string {
-	// TODO Read from config
-	return defaultRecurrenceTag
-}
-
-func (r Recurrence) dueTag() string {
-	// TODO Read from config
-	return defaultDueTag
-}
-
-func (r Recurrence) thresholdTag() string {
-	// TODO Read from config
-	return defaultThresholdTag
-}
-
 func (r Recurrence) parseRecurrenceParams(current *todotxt.Item) (recurrenceParams, error) {
 	params := recurrenceParams{
 		base: current,
 	}
 	tags := current.Tags()
-	recTag := r.recTag()
+	recTag := r.tags.Rec
 	rec := tags[recTag][0] // Cannot be 0 length, because it was checked before
-	due := tags[r.dueTag()]
-	t := tags[r.thresholdTag()]
+	due := tags[r.tags.Due]
+	t := tags[r.tags.Threshold]
 	if len(due) == 0 && len(t) == 0 {
 		return params, ErrNoRecurrenceBase
 	}

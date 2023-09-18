@@ -10,6 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var defaultTags = hook.RecurrenceTags{
+	Rec:       "rec",
+	Due:       "due",
+	Threshold: "t",
+}
+
 func Test_dueDateRecurrence(t *testing.T) {
 	testCases := map[string]struct {
 		dueDate         string
@@ -79,7 +85,7 @@ func Test_dueDateRecurrence(t *testing.T) {
 				todotxt.WithNowFunc(nowFunc),
 			)
 			list := todotxt.ListOf(recurrentItem)
-			list.AddHook(hook.NewRecurrenceWithNowFunc(list, nowFunc))
+			list.AddHook(hook.NewRecurrenceWithNowFunc(list, defaultTags, nowFunc))
 
 			err := recurrentItem.Complete()
 
@@ -162,7 +168,7 @@ func Test_thresholdDateRecurrence(t *testing.T) {
 				todotxt.WithNowFunc(nowFunc),
 			)
 			list := todotxt.ListOf(recurrentItem)
-			list.AddHook(hook.NewRecurrenceWithNowFunc(list, nowFunc))
+			list.AddHook(hook.NewRecurrenceWithNowFunc(list, defaultTags, nowFunc))
 
 			err := recurrentItem.Complete()
 
@@ -216,7 +222,7 @@ func Test_bothDateRecurrence(t *testing.T) {
 				todotxt.WithNowFunc(nowFunc),
 			)
 			list := todotxt.ListOf(recurrentItem)
-			list.AddHook(hook.NewRecurrenceWithNowFunc(list, nowFunc))
+			list.AddHook(hook.NewRecurrenceWithNowFunc(list, defaultTags, nowFunc))
 
 			err := recurrentItem.Complete()
 
@@ -235,7 +241,7 @@ func Test_CreationDateGetsUpdatedToToday(t *testing.T) {
 		todotxt.WithDescription("A recurrent item rec:5d due:2023-01-01"),
 	)
 	list := todotxt.ListOf(recurrentItem)
-	list.AddHook(hook.NewRecurrenceWithNowFunc(list, func() time.Time { return time.Date(1990, 05, 05, 10, 2, 3, 4, time.UTC) }))
+	list.AddHook(hook.NewRecurrenceWithNowFunc(list, defaultTags, func() time.Time { return time.Date(1990, 05, 05, 10, 2, 3, 4, time.UTC) }))
 
 	err := recurrentItem.Complete()
 
@@ -247,7 +253,7 @@ func Test_CreationDateGetsUpdatedToToday(t *testing.T) {
 
 func Test_RecurrenceValidationOnMissing(t *testing.T) {
 	list := todotxt.ListOf()
-	list.AddHook(hook.NewRecurrence(list))
+	list.AddHook(hook.NewRecurrence(list, defaultTags))
 
 	err := list.Add(
 		todotxt.MustBuildItem(todotxt.WithDescription("Hello world rec:+1y")),

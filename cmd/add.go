@@ -15,9 +15,9 @@ type addCommand struct {
 	def config.AddDef
 }
 
-func newAddCommand(def config.AddDef) *addCommand {
+func newAddCommand(def config.ViewDef) *addCommand {
 	cmd := addCommand{
-		def: def,
+		def: def.Add,
 	}
 
 	return &cmd

@@ -54,22 +54,18 @@ func (v *viewCommand) command() *cobra.Command {
 	listCmd.Flags().StringArrayVarP(&v.rngSearch, "range", "r", nil, "TODO")
 	listCmd.Flags().StringArrayVarP(&v.stringSearch, "word", "w", nil, "TODO")
 
-	listCmd.AddCommand(newAddCommand(v.def.Add).command())
+	listCmd.AddCommand(newAddCommand(v.def).command())
 
 	return listCmd
 }
 
 func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 	list := cmd.Context().Value(listKey).(*todotxt.List)
-	userQuery, err := parseTaskSelection(args, v.qqlSearch, v.rngSearch, v.stringSearch)
+	query, err := parseTaskSelection(v.def.DefaultQuery, args, v.qqlSearch, v.rngSearch, v.stringSearch)
 	if err != nil {
 		return fmt.Errorf("invalid query specified: %w", err)
 	}
-	configQuery, err := qselect.CompileQQL(v.def.DefaultQuery)
-	if err != nil {
-		return fmt.Errorf("config file contains invalid query for view %s: %w", v.def.Name, err)
-	}
-	selection := qselect.And(userQuery, configQuery).Filter(list)
+	selection := query.Filter(list)
 	if len(selection) == 0 {
 		fmt.Println("no matches")
 		return nil
@@ -93,9 +89,9 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("could not create list view: %w", err)
 	}
-	programme := tea.NewProgram(listView)
 	switch v.output {
 	case config.InteractiveOutput:
+		programme := tea.NewProgram(listView)
 		if _, err := programme.Run(); err != nil {
 			return err
 		}
@@ -133,8 +129,13 @@ func cleanAttributes(list *todotxt.List, clean []string) (proj []todotxt.Project
 	return
 }
 
-func parseTaskSelection(guess, qqlSearch, rngSearch, stringSearch []string) (qselect.Func, error) {
+func parseTaskSelection(defaultQuery string, guess, qqlSearch, rngSearch, stringSearch []string) (qselect.Func, error) {
 	selectors := make([]qselect.Func, 0)
+	q, err := qselect.CompileQQL(defaultQuery)
+	if err != nil {
+		return nil, fmt.Errorf("config file contains invalid query: %w", err)
+	}
+	selectors = append(selectors, q)
 	for _, arg := range guess {
 		q, err := qselect.CompileQuery(arg)
 		if err != nil {
