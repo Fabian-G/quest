@@ -54,6 +54,8 @@ func (v *viewCommand) command() *cobra.Command {
 	listCmd.Flags().StringArrayVarP(&v.rngSearch, "range", "r", nil, "TODO")
 	listCmd.Flags().StringArrayVarP(&v.stringSearch, "word", "w", nil, "TODO")
 
+	listCmd.AddCommand(newAddCommand(v.def.Add).command())
+
 	return listCmd
 }
 

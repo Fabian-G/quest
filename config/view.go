@@ -32,6 +32,12 @@ type ViewDef struct {
 	DefaultSortOrder  string
 	DefaultOutputMode OutputMode
 	DefaultClean      []string
+	Add               AddDef
+}
+
+type AddDef struct {
+	Prefix string
+	Suffix string
 }
 
 func DefaultViewDef() ViewDef {
@@ -65,5 +71,18 @@ func getViewDef(subCfg *viper.Viper) ViewDef {
 		DefaultSortOrder:  subCfg.GetString("sortOrder"),
 		DefaultOutputMode: subCfg.GetString("output"),
 		DefaultClean:      strings.Split(subCfg.GetString("clean"), ","),
+		Add:               getAddDef(subCfg.Sub("add")),
+	}
+}
+
+func getAddDef(subCfg *viper.Viper) AddDef {
+	if subCfg == nil {
+		return AddDef{}
+	}
+	subCfg.SetDefault("prefix", "")
+	subCfg.SetDefault("suffix", "")
+	return AddDef{
+		Prefix: subCfg.GetString("prefix"),
+		Suffix: subCfg.GetString("suffix"),
 	}
 }
