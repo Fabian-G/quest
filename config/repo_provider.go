@@ -14,7 +14,7 @@ func buildTodoTxtRepo() *todotxt.Repo {
 	repo.DefaultHooks = []todotxt.HookBuilder{
 		hook.NewRecurrence,
 	}
-	defOrder, err := qsort.CompileSortFunc(viper.GetString(DefaultSortOrder), TagTypes())
+	defOrder, err := qsort.CompileSortFunc(viper.GetString(IdxOrder), TagTypes())
 	if err != nil {
 		log.Fatal(err)
 	}

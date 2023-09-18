@@ -1,6 +1,7 @@
 package todotxt_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Fabian-G/quest/todotxt"
@@ -138,7 +139,23 @@ func Test_ModificationsMadeInTheHookGetThroughToTheList(t *testing.T) {
 func TestList_Remove(t *testing.T) {
 	list := todotxt.ListOf(todotxt.MustBuildItem(todotxt.WithDescription("Hello World")))
 
-	list.Remove(0)
+	err := list.Remove(0)
 
+	assert.Nil(t, err)
 	assert.Equal(t, 0, list.Len())
+}
+
+func TestList_Add(t *testing.T) {
+	list := todotxt.ListOf(todotxt.MustBuildItem(
+		todotxt.WithDescription("A"),
+		todotxt.WithDescription("C"),
+	))
+	list.IdxOrderFunc = func(i1, i2 *todotxt.Item) int { return strings.Compare(i1.Description(), i2.Description()) }
+	list.Reindex()
+
+	newItem := todotxt.MustBuildItem(todotxt.WithDescription("B"))
+	err := list.Add(newItem)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 1, list.IndexOf(newItem))
 }

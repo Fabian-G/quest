@@ -61,7 +61,7 @@ func getViewDef(subCfg *viper.Viper) ViewDef {
 	subCfg.SetDefault("name", "")
 	subCfg.SetDefault("query", "")
 	subCfg.SetDefault("projection", qprojection.StarProjection)
-	subCfg.SetDefault("sortOrder", "+done,+creation,+description")
+	subCfg.SetDefault("sortOrder", "+done,-creation,+description")
 	subCfg.SetDefault("output", InteractiveOutput)
 	subCfg.SetDefault("clean", nil)
 	return ViewDef{

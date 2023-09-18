@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Fabian-G/quest/config"
 	"github.com/Fabian-G/quest/todotxt"
@@ -42,7 +43,10 @@ func (a *addCommand) add(cmd *cobra.Command, args []string) error {
 	if len(description) == 0 {
 		return errors.New("can not add item with empty description")
 	}
-	newItem, err := todotxt.BuildItem(todotxt.WithDescription(fmt.Sprintf("%s %s %s", a.def.Prefix, description, a.def.Suffix)))
+	newItem, err := todotxt.BuildItem(
+		todotxt.WithDescription(strings.TrimSpace(fmt.Sprintf("%s %s %s", a.def.Prefix, description, a.def.Suffix))),
+		todotxt.WithCreationDate(time.Now()),
+	)
 	if err != nil {
 		return fmt.Errorf("could not create task: %w", err)
 	}
@@ -50,6 +54,7 @@ func (a *addCommand) add(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("could not add task: %w", err)
 	}
+	list.Reindex()
 	fmt.Printf("Successfully added task with index %d\n", list.IndexOf(newItem))
 	return nil
 }

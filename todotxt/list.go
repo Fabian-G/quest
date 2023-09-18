@@ -1,7 +1,6 @@
 package todotxt
 
 import (
-	"cmp"
 	"errors"
 	"fmt"
 	"slices"
@@ -22,57 +21,58 @@ func (v ValidationError) Error() string {
 }
 
 type List struct {
-	tasks         map[int]*Item // This is a map to make sure indices remain stable between cli invocations
+	diskOrder     []*Item // The order in which the items are stored on disk
+	idxOrder      []*Item // The order according to the default order
+	IdxOrderFunc  func(*Item, *Item) int
 	hooksDisabled bool
 	hooks         []Hook
-	currentIdx    int
 }
 
 func ListOf(items ...*Item) *List {
 	newList := &List{}
-	for _, item := range items {
-		newList.Add(item)
-	}
+	_ = newList.Add(items...) // error can be ignored here, because list does not have any hooks yet
 	return newList
 }
 
 // Tasks returns the list as a slice of Items ordered by their respective index.
 func (l *List) Tasks() []*Item {
-	type pair struct {
-		key   int
-		value *Item
+	tasks := make([]*Item, 0, len(l.idxOrder))
+	for _, i := range l.idxOrder {
+		if i != nil {
+			tasks = append(tasks, i)
+		}
 	}
-	pairs := make([]pair, 0, len(l.taskMap()))
-	for key, value := range l.taskMap() {
-		pairs = append(pairs, pair{key, value})
-	}
-	slices.SortFunc(pairs, func(a, b pair) int { return cmp.Compare(a.key, b.key) })
-	items := make([]*Item, 0, len(pairs))
-	for _, pair := range pairs {
-		items = append(items, pair.value)
-	}
-	return items
+	return tasks
 }
 
-func (l *List) Add(item *Item) (err error) {
-	item.emitFunc = l.emit
-	l.taskMap()[l.currentIdx] = item
-	l.currentIdx++
+func (l *List) Add(items ...*Item) (err error) {
+	originalLength := len(l.diskOrder)
 	defer func() {
 		if err != nil {
-			delete(l.taskMap(), l.currentIdx-1)
-			l.currentIdx--
+			l.diskOrder = l.diskOrder[:originalLength]
+			l.idxOrder = l.idxOrder[:originalLength]
 		}
 	}()
-	err = item.validate()
-	if err != nil {
-		return
-	}
-	err = l.emit(ModEvent{Previous: nil, Current: item})
-	if err != nil {
-		return
+	for _, i := range items {
+		i.emitFunc = l.emit
+		l.diskOrder = append(l.diskOrder, i)
+		l.idxOrder = append(l.idxOrder, i)
+		err = i.validate()
+		if err != nil {
+			return
+		}
+		err = l.emit(ModEvent{Previous: nil, Current: i})
+		if err != nil {
+			return
+		}
 	}
 	return
+}
+
+func (l *List) Reindex() {
+	if l.IdxOrderFunc != nil {
+		slices.SortStableFunc(l.idxOrder, l.IdxOrderFunc)
+	}
 }
 
 func (l *List) AddHook(hook Hook) {
@@ -81,35 +81,37 @@ func (l *List) AddHook(hook Hook) {
 
 func (l *List) Remove(idx int) error {
 	itemToRemove := l.Get(idx)
+	if itemToRemove == nil {
+		return fmt.Errorf("item with idx %d does not exists", idx)
+	}
 	itemToRemove.emitFunc = nil
-	delete(l.taskMap(), idx)
+
+	diskIdx := slices.Index(l.diskOrder, l.idxOrder[idx])
+	l.diskOrder[diskIdx] = nil
+	l.idxOrder[idx] = nil
 	err := l.emit(ModEvent{Previous: itemToRemove, Current: nil})
 	if err != nil {
-		l.taskMap()[idx] = itemToRemove
+		l.diskOrder[diskIdx] = itemToRemove
+		l.idxOrder[idx] = itemToRemove
 	}
 	return err
 }
 
 func (l *List) Get(idx int) *Item {
-	return l.taskMap()[idx]
+	return l.idxOrder[idx]
 }
 
 func (l *List) IndexOf(i *Item) int {
-	for key, value := range l.taskMap() {
-		if i == value {
-			return key
-		}
-	}
-	return -1
+	return slices.Index(l.idxOrder, i)
 }
 
 func (l *List) Len() int {
-	return len(l.taskMap())
+	return len(l.Tasks())
 }
 
 func (l *List) AllProjects() []Project {
 	allProjectsM := make(map[Project]struct{})
-	for _, i := range l.tasks {
+	for _, i := range l.idxOrder {
 		projects := i.Projects()
 		for _, p := range projects {
 			allProjectsM[p] = struct{}{}
@@ -125,7 +127,7 @@ func (l *List) AllProjects() []Project {
 
 func (l *List) AllContexts() []Context {
 	allContextsM := make(map[Context]struct{})
-	for _, i := range l.tasks {
+	for _, i := range l.idxOrder {
 		contexts := i.Contexts()
 		for _, c := range contexts {
 			allContextsM[c] = struct{}{}
@@ -141,7 +143,7 @@ func (l *List) AllContexts() []Context {
 
 func (l *List) AllTags() []string {
 	allTagsM := make(map[string]struct{})
-	for _, i := range l.tasks {
+	for _, i := range l.idxOrder {
 		tags := i.Tags()
 		for k := range tags {
 			allTagsM[k] = struct{}{}
@@ -157,7 +159,7 @@ func (l *List) AllTags() []string {
 
 func (l *List) validate() error {
 	errs := make([]error, 0)
-	for key, value := range l.taskMap() {
+	for key, value := range l.idxOrder {
 		baseErr := value.validate()
 		if baseErr != nil {
 			errs = append(errs, ValidationError{
@@ -185,11 +187,4 @@ func (l *List) emit(me Event) error {
 		}
 	}
 	return nil
-}
-
-func (l *List) taskMap() map[int]*Item {
-	if l.tasks == nil {
-		l.tasks = make(map[int]*Item)
-	}
-	return l.tasks
 }

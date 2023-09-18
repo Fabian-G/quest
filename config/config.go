@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	TodoFile         = "todo-file"
-	DefaultSortOrder = "default.sortOrder"
+	TodoFile = "todo-file"
+	IdxOrder = "index-order"
 )
 
 func init() {
@@ -35,7 +35,7 @@ func init() {
 	viper.SetConfigType("toml")
 	viper.AddConfigPath(path.Join(configHome, "quest"))
 	viper.AddConfigPath("$HOME/.quest/")
-	viper.SetDefault(DefaultSortOrder, "+done,+creation,+description")
+	viper.SetDefault(IdxOrder, "+done,-creation,+description")
 	viper.SetDefault(TodoFile, path.Join(dataHome, "quest/todo.txt"))
 
 	if err := viper.ReadInConfig(); err != nil {
