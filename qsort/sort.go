@@ -1,6 +1,7 @@
 package qsort
 
 import (
+	"cmp"
 	"fmt"
 	"strings"
 
@@ -37,6 +38,8 @@ func sortFunc(sort string, tagTypes map[string]qselect.DType) (func(*todotxt.Ite
 			compareFuncs = append(compareFuncs, order.compareCreation)
 		case "completion":
 			compareFuncs = append(compareFuncs, order.compareCompletion)
+		case "priority":
+			compareFuncs = append(compareFuncs, order.comparePriority)
 		case "description":
 			compareFuncs = append(compareFuncs, order.compareDescription)
 		default:
@@ -70,6 +73,19 @@ func (o sortOrder) compareDone(i1 *todotxt.Item, i2 *todotxt.Item) int {
 		return int(o) * 1
 	default:
 		return 0
+	}
+}
+
+func (o sortOrder) comparePriority(i1 *todotxt.Item, i2 *todotxt.Item) int {
+	prio1 := i1.Priority()
+	prio2 := i2.Priority()
+	switch {
+	case prio1 == todotxt.PrioNone:
+		return int(o) * -1
+	case prio2 == todotxt.PrioNone:
+		return int(o) * 1
+	default:
+		return int(o) * -cmp.Compare(prio1, prio2)
 	}
 }
 

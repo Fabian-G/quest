@@ -34,6 +34,24 @@ func Test_Sort(t *testing.T) {
 			second:        todotxt.MustBuildItem(todotxt.WithDone(true)),
 			expectedOrder: secondSmaller,
 		},
+		"sorting by priority asc": {
+			sortString:    "+priority",
+			first:         todotxt.MustBuildItem(todotxt.WithPriority(todotxt.PrioA)),
+			second:        todotxt.MustBuildItem(todotxt.WithPriority(todotxt.PrioB)),
+			expectedOrder: secondSmaller,
+		},
+		"sorting by priority desc": {
+			sortString:    "-priority",
+			first:         todotxt.MustBuildItem(todotxt.WithPriority(todotxt.PrioA)),
+			second:        todotxt.MustBuildItem(todotxt.WithPriority(todotxt.PrioB)),
+			expectedOrder: firstSmaller,
+		},
+		"no priority is the smallest": {
+			sortString:    "+priority",
+			first:         todotxt.MustBuildItem(todotxt.WithPriority(todotxt.PrioNone)),
+			second:        todotxt.MustBuildItem(todotxt.WithPriority(todotxt.PrioZ)),
+			expectedOrder: firstSmaller,
+		},
 		"sorting by creation asc": {
 			sortString:    "+creation",
 			first:         todotxt.MustBuildItem(todotxt.WithCreationDate(time.Now())),
