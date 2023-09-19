@@ -34,10 +34,10 @@ func ListOf(items ...*Item) *List {
 	return newList
 }
 
-// Tasks returns the list as a slice of Items ordered by their respective index.
+// Tasks returns the list as a slice of Items ordered like they are ordered on disk.
 func (l *List) Tasks() []*Item {
-	tasks := make([]*Item, 0, len(l.idxOrder))
-	for _, i := range l.idxOrder {
+	tasks := make([]*Item, 0, len(l.diskOrder))
+	for _, i := range l.diskOrder {
 		if i != nil {
 			tasks = append(tasks, i)
 		}

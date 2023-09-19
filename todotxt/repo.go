@@ -49,7 +49,7 @@ func (t *Repo) Save(l *List) error {
 	}
 	err = t.write(l)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not save todo list: %w", err)
 	}
 	return nil
 }
@@ -77,16 +77,21 @@ func (t *Repo) write(l *List) error {
 		return fmt.Errorf("backup failed: %w", err)
 	}
 
-	file, err := os.OpenFile(t.file, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	tmp, err := os.CreateTemp(path.Dir(t.file), ".quest.part.*")
 	if err != nil {
-		return fmt.Errorf("could not open txt file %s for writing: %w", t.file, err)
+		return fmt.Errorf("could not create temporary file: %w", err)
 	}
-	defer file.Close()
 
 	buffer := bytes.Buffer{}
-	err = t.encoder().Encode(io.MultiWriter(file, &buffer), l.diskOrder)
+	err = t.encoder().Encode(io.MultiWriter(tmp, &buffer), l.Tasks())
 	if err != nil {
 		return fmt.Errorf("could not write txt file %s: %w", t.file, err)
+	}
+	if err = tmp.Close(); err != nil {
+		return fmt.Errorf("could not close tmp file: %w", err)
+	}
+	if err := os.Rename(tmp.Name(), t.file); err != nil {
+		return fmt.Errorf("could not move tmp file to final location: %w", err)
 	}
 	t.checksum = sha1.Sum(buffer.Bytes())
 	return nil

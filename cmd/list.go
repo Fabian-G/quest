@@ -8,7 +8,6 @@ import (
 
 	"github.com/Fabian-G/quest/config"
 	"github.com/Fabian-G/quest/qprojection"
-	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/Fabian-G/quest/view"
@@ -51,11 +50,11 @@ func (v *viewCommand) command() *cobra.Command {
 	listCmd.Flags().StringSliceVarP(&v.projection, "projection", "p", strings.Split(v.def.DefaultProjection, ","), "TODO")
 	listCmd.Flags().StringVarP(&v.sortOrder, "sort", "s", v.def.DefaultSortOrder, "TODO")
 	listCmd.Flags().StringSliceVarP(&v.clean, "clean", "c", v.def.DefaultClean, "TODO")
-	listCmd.Flags().StringArrayVarP(&v.qqlSearch, "qql", "q", nil, "TODO")
-	listCmd.Flags().StringArrayVarP(&v.rngSearch, "range", "r", nil, "TODO")
-	listCmd.Flags().StringArrayVarP(&v.stringSearch, "word", "w", nil, "TODO")
+	registerSelectionFlags(listCmd, &v.qqlSearch, &v.rngSearch, &v.stringSearch)
 
 	listCmd.AddCommand(newAddCommand(v.def).command())
+	listCmd.AddCommand(newCompleteCommand(v.def).command())
+	listCmd.AddCommand(newRemoveCommand(v.def).command())
 
 	return listCmd
 }
@@ -128,43 +127,4 @@ func cleanAttributes(list *todotxt.List, clean []string) (proj []todotxt.Project
 		}
 	}
 	return
-}
-
-func parseTaskSelection(defaultQuery string, guess, qqlSearch, rngSearch, stringSearch []string) (qselect.Func, error) {
-	selectors := make([]qselect.Func, 0)
-	q, err := qselect.CompileQQL(defaultQuery)
-	if err != nil {
-		return nil, fmt.Errorf("config file contains invalid query: %w", err)
-	}
-	selectors = append(selectors, q)
-	for _, arg := range guess {
-		q, err := qselect.CompileQuery(arg)
-		if err != nil {
-			return nil, fmt.Errorf("could not compile query %s. Try using -q,-r or -s explicitly instead of positional args: %w", arg, err)
-		}
-		selectors = append(selectors, q)
-	}
-	for _, f := range qqlSearch {
-		q, err := qselect.CompileQQL(f)
-		if err != nil {
-			return nil, fmt.Errorf("could not compile FOL query %s: %w", f, err)
-		}
-		selectors = append(selectors, q)
-	}
-	for _, r := range rngSearch {
-		q, err := qselect.CompileRange(r)
-		if err != nil {
-			return nil, fmt.Errorf("could not compile range query %s: %w", r, err)
-		}
-		selectors = append(selectors, q)
-	}
-	for _, s := range stringSearch {
-		q, err := qselect.CompileWordSearch(s)
-		if err != nil {
-			return nil, fmt.Errorf("could not compile string search query %s: %w", s, err)
-		}
-		selectors = append(selectors, q)
-	}
-
-	return qselect.And(selectors...), nil
 }
