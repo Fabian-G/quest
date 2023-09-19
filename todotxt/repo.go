@@ -10,14 +10,12 @@ import (
 	"log"
 	"os"
 	"path"
-	"regexp"
 	"slices"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
 )
 
-var backupName = regexp.MustCompile(".quest.([0-9]+).bak")
 var ErrOLocked = errors.New("the file was changed since the last time we read it")
 
 type ReadFunc func() (*List, error)
