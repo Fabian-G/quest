@@ -57,6 +57,9 @@ func (t *Repo) Save(l *List) error {
 }
 
 func (t *Repo) handleOptimisticLocking() error {
+	if t.checksum == [20]byte{} {
+		return nil // This is a save without a prior read, so we don't need locking
+	}
 	currentData, err := t.load()
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil
@@ -76,7 +79,7 @@ func (t *Repo) write(l *List) error {
 		return fmt.Errorf("backup failed: %w", err)
 	}
 
-	file, err := os.OpenFile(t.file, os.O_WRONLY|os.O_CREATE, 0644)
+	file, err := os.OpenFile(t.file, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("could not open txt file %s for writing: %w", t.file, err)
 	}
