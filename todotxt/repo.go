@@ -9,12 +9,15 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path"
+	"regexp"
 	"slices"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
 )
 
+var backupName = regexp.MustCompile(".quest.([0-9]+).bak")
 var ErrOLocked = errors.New("the file was changed since the last time we read it")
 
 type ReadFunc func() (*List, error)
@@ -30,6 +33,7 @@ type Repo struct {
 	Decoder      *Decoder
 	DefaultHooks []HookBuilder
 	DefaultOrder func(*Item, *Item) int
+	Keep         int
 }
 
 func NewRepo(dest string) *Repo {
@@ -67,6 +71,11 @@ func (t *Repo) handleOptimisticLocking() error {
 }
 
 func (t *Repo) write(l *List) error {
+	err := t.backup()
+	if err != nil {
+		return fmt.Errorf("backup failed: %w", err)
+	}
+
 	file, err := os.OpenFile(t.file, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return fmt.Errorf("could not open txt file %s for writing: %w", t.file, err)
@@ -79,6 +88,30 @@ func (t *Repo) write(l *List) error {
 		return fmt.Errorf("could not write txt file %s: %w", t.file, err)
 	}
 	t.checksum = sha1.Sum(buffer.Bytes())
+	return nil
+}
+
+func (t *Repo) backup() error {
+	if t.Keep <= 0 {
+		return nil
+	}
+	if err := os.Remove(path.Join(path.Dir(t.file), fmt.Sprintf(".quest.%d.bak", t.Keep-1))); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	for i := t.Keep - 2; i >= 0; i-- {
+		origin := path.Join(path.Dir(t.file), fmt.Sprintf(".quest.%d.bak", i))
+		dest := path.Join(path.Dir(t.file), fmt.Sprintf(".quest.%d.bak", i+1))
+		if err := os.Rename(origin, dest); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+	}
+	data, err := os.ReadFile(t.file)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(path.Join(path.Dir(t.file), ".quest.0.bak"), data, 0644); err != nil {
+		return err
+	}
 	return nil
 }
 

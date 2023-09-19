@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Fabian-G/quest/config"
 	"github.com/Fabian-G/quest/todotxt"
@@ -45,5 +46,8 @@ func loadList(cmd *cobra.Command, args []string) error {
 func saveList(cmd *cobra.Command, args []string) error {
 	repo := cmd.Context().Value(diKey).(*config.Di).TodoTxtRepo()
 	list := cmd.Context().Value(listKey).(*todotxt.List)
-	return repo.Save(list)
+	if err := repo.Save(list); err != nil {
+		return fmt.Errorf("could not save todo file: %w", err)
+	}
+	return nil
 }

@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	TodoFile = "todo-file"
-	IdxOrder = "index-order"
+	TodoFile    = "todo-file"
+	IdxOrder    = "index-order"
+	KeepBackups = "backup"
 )
 
 func init() {
@@ -37,6 +38,7 @@ func init() {
 	viper.AddConfigPath("$HOME/.quest/")
 	viper.SetDefault(IdxOrder, "+done,-creation,+description")
 	viper.SetDefault(TodoFile, path.Join(dataHome, "quest/todo.txt"))
+	viper.SetDefault(KeepBackups, 5)
 
 	if err := viper.ReadInConfig(); err != nil {
 		var notFound viper.ConfigFileNotFoundError

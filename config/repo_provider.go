@@ -12,6 +12,7 @@ import (
 func buildTodoTxtRepo() *todotxt.Repo {
 	repo := todotxt.NewRepo(viper.GetString(TodoFile))
 	repo.DefaultHooks = hooks()
+	repo.Keep = viper.GetInt(KeepBackups)
 	defOrder, err := qsort.CompileSortFunc(viper.GetString(IdxOrder), TagTypes())
 	if err != nil {
 		log.Fatal(err)
