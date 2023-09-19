@@ -37,13 +37,14 @@ func newViewCommand(def config.ViewDef) *viewCommand {
 
 func (v *viewCommand) command() *cobra.Command {
 	var listCmd = &cobra.Command{
-		Use:     v.def.Name,
-		Short:   "TODO",
-		GroupID: "query",
-		Long:    `TODO `,
-		Example: "TODO",
-		PreRunE: steps(initDI, loadList),
-		RunE:    v.list,
+		Use:               v.def.Name,
+		Short:             "TODO",
+		GroupID:           "query",
+		Long:              `TODO `,
+		Example:           "TODO",
+		PersistentPreRunE: steps(ensureTodoFileExits),
+		PreRunE:           steps(initDI, loadList),
+		RunE:              v.list,
 	}
 
 	listCmd.Flags().StringVarP(&v.output, "output", "o", v.def.DefaultOutputMode, "TODO")
