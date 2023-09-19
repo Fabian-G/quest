@@ -9,6 +9,14 @@ import (
 
 type Tags map[string][]string
 
+func (t Tags) Keys() []string {
+	keys := make([]string, 0, len(t))
+	for key := range t {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
 // MatcherForTag returns a regular expression that matches a tag with the supplied key.
 // To access the value consult submatch 1
 //

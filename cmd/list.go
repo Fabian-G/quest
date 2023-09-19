@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	"os"
 	"slices"
 	"strings"
 
@@ -96,7 +96,7 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	case config.JsonOutput:
-		log.Fatal("Not implemented")
+		todotxt.DefaultJsonEncoder.Encode(os.Stdout, selection)
 	case config.ListOutput:
 		l, _ := listView.Update(view.RefreshList())
 		fmt.Println(l.View())
