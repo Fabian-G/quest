@@ -13,6 +13,7 @@ func Root(di *config.Di) *cobra.Command {
 	defaultView := di.DefaultViewDef()
 	rootCmd := newViewCommand(defaultView).command()
 	rootCmd.PersistentPreRunE = cmdutil.Steps(cmdutil.EnsureTodoFileExits, cmdutil.RegisterMacros)
+	rootCmd.SilenceUsage = true
 	rootCmd.PersistentFlags().StringP("file", "f", "", "the todo.txt file")
 	di.Config().BindPFlag(config.TodoFile, rootCmd.PersistentFlags().Lookup("file"))
 	rootCmd.PersistentFlags().BoolP("interactive", "i", true, "set to false to make list commands non-interactive")

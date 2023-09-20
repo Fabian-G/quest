@@ -14,6 +14,7 @@ type removeCommand struct {
 	qql     []string
 	rng     []string
 	str     []string
+	all     bool
 }
 
 func newRemoveCommand(def config.ViewDef) *removeCommand {
@@ -34,6 +35,7 @@ func (r *removeCommand) command() *cobra.Command {
 		RunE:     r.remove,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
+	removeCommand.Flags().BoolVarP(&r.all, "all", "a", false, "TODO")
 	cmdutil.RegisterSelectionFlags(removeCommand, &r.qql, &r.rng, &r.str)
 	return removeCommand
 }
@@ -45,9 +47,12 @@ func (r *removeCommand) remove(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	selection := selector.Filter(list)
-	confirmedSelection, err := cmdutil.ConfirmSelection(selection)
-	if err != nil {
-		return err
+	var confirmedSelection []*todotxt.Item = selection
+	if !r.all {
+		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, t := range confirmedSelection {

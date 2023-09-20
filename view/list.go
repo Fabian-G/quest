@@ -74,7 +74,7 @@ func (l List) Init() tea.Cmd {
 func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.String() == "ctrl+c" {
+		if msg.String() == "ctrl+c" || msg.String() == "q" {
 			return l, tea.Quit
 		}
 	case refreshListMsg:
@@ -125,6 +125,7 @@ func (l List) renderDetails(writer io.StringWriter) {
 		}
 	}
 	writer.WriteString(strings.Join(lines, "\n"))
+	writer.WriteString("\n")
 }
 
 func (l List) refreshTable() List {

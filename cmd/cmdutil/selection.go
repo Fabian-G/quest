@@ -1,10 +1,13 @@
 package cmdutil
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/Fabian-G/quest/view"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 
@@ -54,6 +57,17 @@ func ParseTaskSelection(defaultQuery string, guess, qqlSearch, rngSearch, string
 }
 
 func ConfirmSelection(selection []*todotxt.Item) ([]*todotxt.Item, error) {
-	fmt.Println("TODO: Fancy user confirmation dialog")
-	return selection, nil
+	if len(selection) <= 1 {
+		return selection, nil
+	}
+	selctionView := view.NewSelection(selection)
+	programme := tea.NewProgram(selctionView)
+	finalModal, err := programme.Run()
+	if err != nil {
+		return nil, err
+	}
+	if finalModal.(view.Selection).Cancelled {
+		return nil, errors.New("operation cancelled by user")
+	}
+	return finalModal.(view.Selection).Selection(), nil
 }

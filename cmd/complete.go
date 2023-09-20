@@ -19,6 +19,7 @@ type completeCommand struct {
 	qql     []string
 	rng     []string
 	str     []string
+	all     bool
 }
 
 func newCompleteCommand(def config.ViewDef) *completeCommand {
@@ -39,6 +40,7 @@ func (c *completeCommand) command() *cobra.Command {
 		RunE:     c.complete,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
+	completeCmd.Flags().BoolVarP(&c.all, "all", "a", false, "TODO")
 	cmdutil.RegisterSelectionFlags(completeCmd, &c.qql, &c.rng, &c.str)
 	return completeCmd
 }
@@ -50,9 +52,12 @@ func (c *completeCommand) complete(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	selection := qselect.And(notDoneFunc, selector).Filter(list)
-	confirmedSelection, err := cmdutil.ConfirmSelection(selection)
-	if err != nil {
-		return err
+	var confirmedSelection []*todotxt.Item = selection
+	if !c.all {
+		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, t := range confirmedSelection {
