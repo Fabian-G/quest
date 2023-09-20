@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/config"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
@@ -34,22 +35,22 @@ func (c *completeCommand) command() *cobra.Command {
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
-		PreRunE:  steps(loadList),
+		PreRunE:  cmdutil.Steps(cmdutil.LoadList),
 		RunE:     c.complete,
-		PostRunE: steps(saveList),
+		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
-	registerSelectionFlags(completeCmd, &c.qql, &c.rng, &c.str)
+	cmdutil.RegisterSelectionFlags(completeCmd, &c.qql, &c.rng, &c.str)
 	return completeCmd
 }
 
 func (c *completeCommand) complete(cmd *cobra.Command, args []string) error {
-	list := cmd.Context().Value(listKey).(*todotxt.List)
-	selector, err := parseTaskSelection(c.viewDef.DefaultQuery, args, c.qql, c.rng, c.str)
+	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
+	selector, err := cmdutil.ParseTaskSelection(c.viewDef.DefaultQuery, args, c.qql, c.rng, c.str)
 	if err != nil {
 		return err
 	}
 	selection := qselect.And(notDoneFunc, selector).Filter(list)
-	confirmedSelection, err := confirmSelection(selection)
+	confirmedSelection, err := cmdutil.ConfirmSelection(selection)
 	if err != nil {
 		return err
 	}

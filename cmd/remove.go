@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/config"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
@@ -29,22 +30,22 @@ func (r *removeCommand) command() *cobra.Command {
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
-		PreRunE:  steps(loadList),
+		PreRunE:  cmdutil.Steps(cmdutil.LoadList),
 		RunE:     r.remove,
-		PostRunE: steps(saveList),
+		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
-	registerSelectionFlags(removeCommand, &r.qql, &r.rng, &r.str)
+	cmdutil.RegisterSelectionFlags(removeCommand, &r.qql, &r.rng, &r.str)
 	return removeCommand
 }
 
 func (r *removeCommand) remove(cmd *cobra.Command, args []string) error {
-	list := cmd.Context().Value(listKey).(*todotxt.List)
-	selector, err := parseTaskSelection(r.viewDef.DefaultQuery, args, r.qql, r.rng, r.str)
+	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
+	selector, err := cmdutil.ParseTaskSelection(r.viewDef.DefaultQuery, args, r.qql, r.rng, r.str)
 	if err != nil {
 		return err
 	}
 	selection := selector.Filter(list)
-	confirmedSelection, err := confirmSelection(selection)
+	confirmedSelection, err := cmdutil.ConfirmSelection(selection)
 	if err != nil {
 		return err
 	}

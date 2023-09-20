@@ -1,4 +1,4 @@
-package cmd
+package cmdutil
 
 import (
 	"fmt"
@@ -8,13 +8,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerSelectionFlags(cmd *cobra.Command, qql *[]string, rng *[]string, str *[]string) {
+func RegisterSelectionFlags(cmd *cobra.Command, qql *[]string, rng *[]string, str *[]string) {
 	cmd.Flags().StringArrayVarP(qql, "qql", "q", nil, "TODO")
 	cmd.Flags().StringArrayVarP(rng, "range", "r", nil, "TODO")
 	cmd.Flags().StringArrayVarP(str, "word", "w", nil, "TODO")
 }
 
-func parseTaskSelection(defaultQuery string, guess, qqlSearch, rngSearch, stringSearch []string) (qselect.Func, error) {
+func ParseTaskSelection(defaultQuery string, guess, qqlSearch, rngSearch, stringSearch []string) (qselect.Func, error) {
 	selectors := make([]qselect.Func, 0)
 	q, err := qselect.CompileQQL(defaultQuery)
 	if err != nil {
@@ -53,7 +53,7 @@ func parseTaskSelection(defaultQuery string, guess, qqlSearch, rngSearch, string
 	return qselect.And(selectors...), nil
 }
 
-func confirmSelection(selection []*todotxt.Item) ([]*todotxt.Item, error) {
+func ConfirmSelection(selection []*todotxt.Item) ([]*todotxt.Item, error) {
 	fmt.Println("TODO: Fancy user confirmation dialog")
 	return selection, nil
 }

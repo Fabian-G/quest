@@ -1,4 +1,4 @@
-package cmd
+package cmdutil
 
 import (
 	"context"
@@ -14,14 +14,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type ctxKey string
+type CtxKey string
 
 var (
-	diKey   ctxKey = "DI"
-	listKey ctxKey = "list"
+	DiKey   CtxKey = "DI"
+	ListKey CtxKey = "list"
 )
 
-func steps(steps ...func(*cobra.Command, []string) error) func(*cobra.Command, []string) error {
+func Steps(steps ...func(*cobra.Command, []string) error) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		for _, f := range steps {
 			if err := f(cmd, args); err != nil {
@@ -32,27 +32,27 @@ func steps(steps ...func(*cobra.Command, []string) error) func(*cobra.Command, [
 	}
 }
 
-func loadList(cmd *cobra.Command, args []string) error {
-	repo := cmd.Context().Value(diKey).(*config.Di).TodoTxtRepo()
+func LoadList(cmd *cobra.Command, args []string) error {
+	repo := cmd.Context().Value(DiKey).(*config.Di).TodoTxtRepo()
 	list, err := repo.Read()
 	if err != nil {
 		return err
 	}
-	cmd.SetContext(context.WithValue(cmd.Context(), listKey, list))
+	cmd.SetContext(context.WithValue(cmd.Context(), ListKey, list))
 	return nil
 }
 
-func saveList(cmd *cobra.Command, args []string) error {
-	repo := cmd.Context().Value(diKey).(*config.Di).TodoTxtRepo()
-	list := cmd.Context().Value(listKey).(*todotxt.List)
+func SaveList(cmd *cobra.Command, args []string) error {
+	repo := cmd.Context().Value(DiKey).(*config.Di).TodoTxtRepo()
+	list := cmd.Context().Value(ListKey).(*todotxt.List)
 	if err := repo.Save(list); err != nil {
 		return fmt.Errorf("could not save todo file: %w", err)
 	}
 	return nil
 }
 
-func ensureTodoFileExits(cmd *cobra.Command, args []string) error {
-	v := cmd.Context().Value(diKey).(*config.Di).Config()
+func EnsureTodoFileExits(cmd *cobra.Command, args []string) error {
+	v := cmd.Context().Value(DiKey).(*config.Di).Config()
 	file := v.GetString(config.TodoFile)
 	stat, err := os.Stat(file)
 	switch {
@@ -71,8 +71,8 @@ func ensureTodoFileExits(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func registerMacros(cmd *cobra.Command, args []string) error {
-	di := cmd.Context().Value(diKey).(*config.Di)
+func RegisterMacros(cmd *cobra.Command, args []string) error {
+	di := cmd.Context().Value(DiKey).(*config.Di)
 	for _, macro := range di.MacroDefs() {
 		err := qselect.RegisterMacro(macro.Name, macro.Query, macro.InTypes, macro.ResultType, macro.InjectIt)
 		if err != nil {

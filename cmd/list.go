@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/config"
 	"github.com/Fabian-G/quest/qprojection"
 	"github.com/Fabian-G/quest/qsort"
@@ -41,7 +42,7 @@ func (v *viewCommand) command() *cobra.Command {
 		GroupID: "query",
 		Long:    `TODO `,
 		Example: "TODO",
-		PreRunE: steps(loadList),
+		PreRunE: cmdutil.Steps(cmdutil.LoadList),
 		RunE:    v.list,
 	}
 
@@ -49,7 +50,7 @@ func (v *viewCommand) command() *cobra.Command {
 	listCmd.Flags().StringSliceVarP(&v.projection, "projection", "p", strings.Split(v.def.DefaultProjection, ","), "TODO")
 	listCmd.Flags().StringVarP(&v.sortOrder, "sort", "s", v.def.DefaultSortOrder, "TODO")
 	listCmd.Flags().StringSliceVarP(&v.clean, "clean", "c", v.def.DefaultClean, "TODO")
-	registerSelectionFlags(listCmd, &v.qqlSearch, &v.rngSearch, &v.stringSearch)
+	cmdutil.RegisterSelectionFlags(listCmd, &v.qqlSearch, &v.rngSearch, &v.stringSearch)
 
 	listCmd.AddCommand(newAddCommand(v.def).command())
 	listCmd.AddCommand(newCompleteCommand(v.def).command())
@@ -59,9 +60,9 @@ func (v *viewCommand) command() *cobra.Command {
 }
 
 func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
-	di := cmd.Context().Value(diKey).(*config.Di)
-	list := cmd.Context().Value(listKey).(*todotxt.List)
-	query, err := parseTaskSelection(v.def.DefaultQuery, args, v.qqlSearch, v.rngSearch, v.stringSearch)
+	di := cmd.Context().Value(cmdutil.DiKey).(*config.Di)
+	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
+	query, err := cmdutil.ParseTaskSelection(v.def.DefaultQuery, args, v.qqlSearch, v.rngSearch, v.stringSearch)
 	if err != nil {
 		return fmt.Errorf("invalid query specified: %w", err)
 	}

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/config"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
@@ -29,16 +30,16 @@ func (a *addCommand) command() *cobra.Command {
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
-		PreRunE:  steps(loadList),
+		PreRunE:  cmdutil.Steps(cmdutil.LoadList),
 		RunE:     a.add,
-		PostRunE: steps(saveList),
+		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
 
 	return addCmd
 }
 
 func (a *addCommand) add(cmd *cobra.Command, args []string) error {
-	list := cmd.Context().Value(listKey).(*todotxt.List)
+	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
 	description := strings.TrimSpace(strings.Join(args, " "))
 	if len(description) == 0 {
 		return errors.New("can not add item with empty description")

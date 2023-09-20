@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -12,7 +13,7 @@ import (
 func Root(di *config.Di) *cobra.Command {
 	defaultView := di.DefaultViewDef()
 	rootCmd := newViewCommand(defaultView).command()
-	rootCmd.PersistentPreRunE = steps(ensureTodoFileExits, registerMacros)
+	rootCmd.PersistentPreRunE = cmdutil.Steps(cmdutil.EnsureTodoFileExits, cmdutil.RegisterMacros)
 	rootCmd.PersistentFlags().StringP("file", "f", "", "overrides the todo txt file location")
 	viper.BindPFlag(config.TodoFile, rootCmd.PersistentFlags().Lookup("file"))
 	rootCmd.AddGroup(&cobra.Group{
@@ -28,7 +29,7 @@ func Root(di *config.Di) *cobra.Command {
 	return rootCmd
 }
 func Execute(di *config.Di) {
-	ctx := context.WithValue(context.Background(), diKey, di)
+	ctx := context.WithValue(context.Background(), cmdutil.DiKey, di)
 	err := Root(di).ExecuteContext(ctx)
 	if err != nil {
 		os.Exit(1)
