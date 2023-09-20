@@ -24,9 +24,9 @@ func Test_dueDateRecurrence(t *testing.T) {
 		today           string
 	}{
 		"day absolute recurrence": {
-			dueDate:         "2023-08-01",
+			dueDate:         "2023-02-27",
 			recurrence:      "3d",
-			expectedDueDate: "2023-08-04",
+			expectedDueDate: "2023-03-02",
 		},
 		"day absolute recurrence (alternate unit)": {
 			dueDate:         "2023-08-01",
@@ -46,22 +46,27 @@ func Test_dueDateRecurrence(t *testing.T) {
 		"month absolute recurrence": {
 			dueDate:         "2023-08-01",
 			recurrence:      "3m",
-			expectedDueDate: "2023-10-30",
+			expectedDueDate: "2023-11-01",
 		},
 		"month absolute recurrence (alternate unit)": {
 			dueDate:         "2023-08-01",
 			recurrence:      "3months",
-			expectedDueDate: "2023-10-30",
+			expectedDueDate: "2023-11-01",
+		},
+		"month recurrence over year boundary": {
+			dueDate:         "2023-08-01",
+			recurrence:      "6months",
+			expectedDueDate: "2024-02-01",
 		},
 		"year absolute recurrence": {
 			dueDate:         "2023-08-01",
 			recurrence:      "3y",
-			expectedDueDate: "2026-07-31",
+			expectedDueDate: "2026-08-01",
 		},
 		"year absolute recurrence (alternate unit)": {
 			dueDate:         "2023-08-01",
 			recurrence:      "3years",
-			expectedDueDate: "2026-07-31",
+			expectedDueDate: "2026-08-01",
 		},
 		"day relative recurrence": {
 			dueDate:         "2023-08-01",
@@ -129,22 +134,22 @@ func Test_thresholdDateRecurrence(t *testing.T) {
 		"month absolute recurrence": {
 			tDate:         "2023-08-01",
 			recurrence:    "3m",
-			expectedTDate: "2023-10-30",
+			expectedTDate: "2023-11-01",
 		},
 		"month absolute recurrence (alternate unit)": {
 			tDate:         "2023-08-01",
 			recurrence:    "3months",
-			expectedTDate: "2023-10-30",
+			expectedTDate: "2023-11-01",
 		},
 		"year absolute recurrence": {
 			tDate:         "2023-08-01",
 			recurrence:    "3y",
-			expectedTDate: "2026-07-31",
+			expectedTDate: "2026-08-01",
 		},
 		"year absolute recurrence (alternate unit)": {
 			tDate:         "2023-08-01",
 			recurrence:    "3years",
-			expectedTDate: "2026-07-31",
+			expectedTDate: "2026-08-01",
 		},
 		"day relative recurrence": {
 			tDate:         "2023-08-01",

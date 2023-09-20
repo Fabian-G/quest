@@ -3,8 +3,6 @@ package hook
 import (
 	"errors"
 	"fmt"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,7 +15,7 @@ type recurrenceParams struct {
 	base      *todotxt.Item
 	due       time.Time
 	threshold time.Time
-	duration  time.Duration
+	duration  duration
 	relative  bool
 }
 
@@ -94,7 +92,7 @@ func (r Recurrence) spawnRelative(params recurrenceParams) error {
 
 	switch {
 	case params.threshold != zeroTime && params.due != zeroTime:
-		newThreshold := completionDate.Add(params.duration)
+		newThreshold := params.duration.addTo(completionDate)
 		err := newItem.SetTag(r.tags.Threshold, newThreshold.Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new threshold date when trying to spawn new recurrent task")
@@ -105,13 +103,13 @@ func (r Recurrence) spawnRelative(params recurrenceParams) error {
 			return fmt.Errorf("failed to set new due date when trying to spawn new recurrent task")
 		}
 	case params.threshold != zeroTime:
-		newThreshold := completionDate.Add(params.duration)
+		newThreshold := params.duration.addTo(completionDate)
 		err := newItem.SetTag(r.tags.Threshold, newThreshold.Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new threshold date when trying to spawn new recurrent task")
 		}
 	case params.due != zeroTime:
-		newDue := completionDate.Add(params.duration)
+		newDue := params.duration.addTo(completionDate)
 		err := newItem.SetTag(r.tags.Due, newDue.Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new due date when trying to spawn new recurrent task")
@@ -132,13 +130,13 @@ func (r Recurrence) spawnAbsolute(params recurrenceParams) error {
 	}
 	var zeroTime = time.Time{}
 	if params.due != zeroTime {
-		err := newItem.SetTag(r.tags.Due, params.due.Add(params.duration).Format(time.DateOnly))
+		err := newItem.SetTag(r.tags.Due, params.duration.addTo(params.due).Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new due date when trying to spawn new recurrent task")
 		}
 	}
 	if params.threshold != zeroTime {
-		err := newItem.SetTag(r.tags.Threshold, params.threshold.Add(params.duration).Format(time.DateOnly))
+		err := newItem.SetTag(r.tags.Threshold, params.duration.addTo(params.threshold).Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new threshold date when trying to spawn new recurrent task")
 		}
@@ -182,7 +180,7 @@ func (r Recurrence) parseRecurrenceParams(current *todotxt.Item) (recurrencePara
 	if err != nil {
 		return params, fmt.Errorf("could not parse duration %s: %w", rec, err)
 	}
-	params.duration = duration.Abs().Round(24 * time.Hour)
+	params.duration = duration.abs()
 	return params, nil
 }
 
@@ -191,47 +189,4 @@ func (r Recurrence) now() time.Time {
 		return r.nowFunc()
 	}
 	return time.Now()
-}
-
-var numRegex = regexp.MustCompile("[0-9]+")
-
-var unitMap = map[string]time.Duration{
-	"d":      24 * time.Hour,
-	"days":   24 * time.Hour,
-	"w":      7 * 24 * time.Hour,
-	"weeks":  7 * 24 * time.Hour,
-	"m":      30 * 24 * time.Hour,
-	"months": 30 * 24 * time.Hour,
-	"y":      365 * 24 * time.Hour,
-	"years":  365 * 24 * time.Hour,
-}
-
-func parseDuration(duration string) (time.Duration, error) {
-	switch duration {
-	case "daily", "d":
-		return 24 * time.Hour, nil
-	case "weekly", "w":
-		return 7 * 24 * time.Hour, nil
-	case "monthly", "m":
-		return 30 * 24 * time.Hour, nil
-	case "yearly", "y":
-		return 365 * 24 * time.Hour, nil
-	default:
-		valueIdx := numRegex.FindStringIndex(duration)
-		if valueIdx == nil {
-			return 0, errors.New("missing value in duration expression")
-		}
-		if valueIdx[1] == len(duration) {
-			return 0, errors.New("missing unit")
-		}
-		unit, ok := unitMap[duration[valueIdx[1]:]]
-		if !ok {
-			return 0, fmt.Errorf("unknown unit %s", duration[valueIdx[1]:])
-		}
-		value, err := strconv.Atoi(duration[valueIdx[0]:valueIdx[1]])
-		if err != nil {
-			return 0, err
-		}
-		return time.Duration(value) * unit, nil
-	}
 }
