@@ -40,19 +40,19 @@ type AddDef struct {
 	Suffix string
 }
 
-func DefaultViewDef() ViewDef {
-	defView := viper.Sub("default-view")
+func buildDefaultViewDef(v *viper.Viper) ViewDef {
+	defView := v.Sub("default-view")
 	if defView == nil {
 		return fallbackListViewDef
 	}
 	return getViewDef(defView)
 }
 
-func GetViewDefs() []ViewDef {
-	views := viper.Get("view").([]any)
+func buildViewDefs(v *viper.Viper) []ViewDef {
+	views := v.Get("view").([]any)
 	defs := make([]ViewDef, 0, len(views))
 	for idx := range views {
-		defs = append(defs, getViewDef(viper.Sub(fmt.Sprintf("view.%d", idx))))
+		defs = append(defs, getViewDef(v.Sub(fmt.Sprintf("view.%d", idx))))
 	}
 	return defs
 }

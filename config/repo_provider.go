@@ -4,16 +4,17 @@ import (
 	"log"
 
 	"github.com/Fabian-G/quest/hook"
+	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/viper"
 )
 
-func buildTodoTxtRepo() *todotxt.Repo {
-	repo := todotxt.NewRepo(viper.GetString(TodoFile))
-	repo.DefaultHooks = hooks()
-	repo.Keep = viper.GetInt(KeepBackups)
-	defOrder, err := qsort.CompileSortFunc(viper.GetString(IdxOrder), TagTypes())
+func buildTodoTxtRepo(v *viper.Viper, tagTypes map[string]qselect.DType) *todotxt.Repo {
+	repo := todotxt.NewRepo(v.GetString(TodoFile))
+	repo.DefaultHooks = hooks(v)
+	repo.Keep = v.GetInt(KeepBackups)
+	defOrder, err := qsort.CompileSortFunc(v.GetString(IdxOrder), tagTypes)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -21,16 +22,16 @@ func buildTodoTxtRepo() *todotxt.Repo {
 	return repo
 }
 
-func hooks() []todotxt.HookBuilder {
+func hooks(v *viper.Viper) []todotxt.HookBuilder {
 	hooks := make([]todotxt.HookBuilder, 0)
-	if recTag := viper.GetString("recurrence.rec-tag"); recTag != "" {
-		viper.SetDefault("recurrence.due-tag", "due")
-		viper.SetDefault("recurrence.threshold-tag", "t")
+	if recTag := v.GetString("recurrence.rec-tag"); recTag != "" {
+		v.SetDefault("recurrence.due-tag", "due")
+		v.SetDefault("recurrence.threshold-tag", "t")
 		hooks = append(hooks, func(l *todotxt.List) todotxt.Hook {
 			return hook.NewRecurrence(l, hook.RecurrenceTags{
-				Rec:       viper.GetString("recurrence.rec-tag"),
-				Due:       viper.GetString("recurrence.due-tag"),
-				Threshold: viper.GetString("recurrence.threshold-tag"),
+				Rec:       v.GetString("recurrence.rec-tag"),
+				Due:       v.GetString("recurrence.due-tag"),
+				Threshold: v.GetString("recurrence.threshold-tag"),
 			})
 		})
 	}

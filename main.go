@@ -1,10 +1,10 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
 package main
 
-import "github.com/Fabian-G/quest/cmd"
+import (
+	"github.com/Fabian-G/quest/cmd"
+	"github.com/Fabian-G/quest/config"
+)
 
 func main() {
-	cmd.Execute()
+	cmd.Execute(&config.Di{})
 }

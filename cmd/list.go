@@ -36,14 +36,13 @@ func newViewCommand(def config.ViewDef) *viewCommand {
 
 func (v *viewCommand) command() *cobra.Command {
 	var listCmd = &cobra.Command{
-		Use:               v.def.Name,
-		Short:             "TODO",
-		GroupID:           "query",
-		Long:              `TODO `,
-		Example:           "TODO",
-		PersistentPreRunE: steps(ensureTodoFileExits),
-		PreRunE:           steps(initDI, loadList),
-		RunE:              v.list,
+		Use:     v.def.Name,
+		Short:   "TODO",
+		GroupID: "query",
+		Long:    `TODO `,
+		Example: "TODO",
+		PreRunE: steps(loadList),
+		RunE:    v.list,
 	}
 
 	listCmd.Flags().StringVarP(&v.output, "output", "o", v.def.DefaultOutputMode, "TODO")
@@ -60,6 +59,7 @@ func (v *viewCommand) command() *cobra.Command {
 }
 
 func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
+	di := cmd.Context().Value(diKey).(*config.Di)
 	list := cmd.Context().Value(listKey).(*todotxt.List)
 	query, err := parseTaskSelection(v.def.DefaultQuery, args, v.qqlSearch, v.rngSearch, v.stringSearch)
 	if err != nil {
@@ -71,7 +71,7 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	sortFunc, err := qsort.CompileSortFunc(v.sortOrder, config.TagTypes())
+	sortFunc, err := qsort.CompileSortFunc(v.sortOrder, di.TagTypes())
 	if err != nil {
 		return err
 	}

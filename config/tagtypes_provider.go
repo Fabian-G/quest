@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-func TagTypes() map[string]qselect.DType {
-	typeDefsConfig := viper.GetStringMapString("tag.types")
+func buildTagTypes(v *viper.Viper) map[string]qselect.DType {
+	typeDefsConfig := v.GetStringMapString("tag.types")
 	typeDefs := make(map[string]qselect.DType)
 
 	for key, value := range typeDefsConfig {

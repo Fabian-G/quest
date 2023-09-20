@@ -9,9 +9,9 @@ import (
 	"path"
 
 	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 type ctxKey string
@@ -30,12 +30,6 @@ func steps(steps ...func(*cobra.Command, []string) error) func(*cobra.Command, [
 		}
 		return nil
 	}
-}
-
-func initDI(cmd *cobra.Command, args []string) error {
-	di := &config.Di{}
-	cmd.SetContext(context.WithValue(cmd.Context(), diKey, di))
-	return nil
 }
 
 func loadList(cmd *cobra.Command, args []string) error {
@@ -58,7 +52,8 @@ func saveList(cmd *cobra.Command, args []string) error {
 }
 
 func ensureTodoFileExits(cmd *cobra.Command, args []string) error {
-	file := viper.GetString(config.TodoFile)
+	v := cmd.Context().Value(diKey).(*config.Di).Config()
+	file := v.GetString(config.TodoFile)
 	stat, err := os.Stat(file)
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
@@ -72,6 +67,17 @@ func ensureTodoFileExits(cmd *cobra.Command, args []string) error {
 		return err
 	case !stat.Mode().IsRegular():
 		return fmt.Errorf("provided file %s is not a regular file", file)
+	}
+	return nil
+}
+
+func registerMacros(cmd *cobra.Command, args []string) error {
+	di := cmd.Context().Value(diKey).(*config.Di)
+	for _, macro := range di.MacroDefs() {
+		err := qselect.RegisterMacro(macro.Name, macro.Query, macro.InTypes, macro.ResultType, macro.InjectIt)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

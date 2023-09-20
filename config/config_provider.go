@@ -10,13 +10,16 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Key = string
+
 const (
-	TodoFile    = "todo-file"
-	IdxOrder    = "index-order"
-	KeepBackups = "backup"
+	TodoFile    Key = "todo-file"
+	IdxOrder    Key = "index-order"
+	KeepBackups Key = "backup"
 )
 
-func init() {
+func buildConfig() (*viper.Viper, error) {
+	v := viper.New()
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not determine users home directory: %w", err))
@@ -32,20 +35,20 @@ func init() {
 		dataHome = path.Join(homeDir, ".local/share")
 	}
 
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath(path.Join(configHome, "quest"))
-	viper.AddConfigPath("$HOME/.quest/")
-	viper.SetDefault(IdxOrder, "+done,-creation,+description")
-	viper.SetDefault(TodoFile, path.Join(dataHome, "quest/todo.txt"))
-	viper.SetDefault(KeepBackups, 5)
+	v.SetConfigName("config")
+	v.SetConfigType("toml")
+	v.AddConfigPath(path.Join(configHome, "quest"))
+	v.AddConfigPath("$HOME/.quest/")
+	v.SetDefault(IdxOrder, "+done,-creation,+description")
+	v.SetDefault(TodoFile, path.Join(dataHome, "quest/todo.txt"))
+	v.SetDefault(KeepBackups, 5)
 
-	if err := viper.ReadInConfig(); err != nil {
+	if err := v.ReadInConfig(); err != nil {
 		var notFound viper.ConfigFileNotFoundError
 		if errors.As(err, &notFound) {
-			return
+			return v, nil
 		}
-		log.Fatal(err)
+		return nil, err
 	}
-	registerMacros()
+	return v, nil
 }

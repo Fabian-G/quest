@@ -34,7 +34,7 @@ func (c *completeCommand) command() *cobra.Command {
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
-		PreRunE:  steps(initDI, loadList),
+		PreRunE:  steps(loadList),
 		RunE:     c.complete,
 		PostRunE: steps(saveList),
 	}

@@ -29,7 +29,7 @@ func (r *removeCommand) command() *cobra.Command {
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
-		PreRunE:  steps(initDI, loadList),
+		PreRunE:  steps(loadList),
 		RunE:     r.remove,
 		PostRunE: steps(saveList),
 	}

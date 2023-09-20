@@ -29,7 +29,7 @@ func (a *addCommand) command() *cobra.Command {
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
-		PreRunE:  steps(initDI, loadList),
+		PreRunE:  steps(loadList),
 		RunE:     a.add,
 		PostRunE: steps(saveList),
 	}
