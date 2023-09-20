@@ -60,6 +60,6 @@ func (c *completeCommand) complete(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	fmt.Printf("Successfully completed %d items\n", len(confirmedSelection))
+	fmt.Fprintf(cmd.OutOrStdout(), "Successfully completed %d items\n", len(confirmedSelection))
 	return nil
 }

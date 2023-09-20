@@ -8,20 +8,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-type OutputMode = string
-
-const (
-	JsonOutput        OutputMode = "json"
-	InteractiveOutput OutputMode = "interactive"
-	ListOutput        OutputMode = "list"
-)
-
 var fallbackListViewDef = ViewDef{
 	Name:              "list",
 	DefaultQuery:      "",
 	DefaultProjection: qprojection.StarProjection,
 	DefaultSortOrder:  "+done,+creation,+description",
-	DefaultOutputMode: InteractiveOutput,
 	DefaultClean:      nil,
 }
 
@@ -30,7 +21,6 @@ type ViewDef struct {
 	DefaultQuery      string
 	DefaultProjection string
 	DefaultSortOrder  string
-	DefaultOutputMode OutputMode
 	DefaultClean      []string
 	Add               AddDef
 }
@@ -62,14 +52,12 @@ func getViewDef(subCfg *viper.Viper) ViewDef {
 	subCfg.SetDefault("query", "")
 	subCfg.SetDefault("projection", qprojection.StarProjection)
 	subCfg.SetDefault("sortOrder", "+done,-creation,+description")
-	subCfg.SetDefault("output", InteractiveOutput)
 	subCfg.SetDefault("clean", nil)
 	return ViewDef{
 		Name:              subCfg.GetString("name"),
 		DefaultQuery:      subCfg.GetString("query"),
 		DefaultProjection: subCfg.GetString("projection"),
 		DefaultSortOrder:  subCfg.GetString("sortOrder"),
-		DefaultOutputMode: subCfg.GetString("output"),
 		DefaultClean:      strings.Split(subCfg.GetString("clean"), ","),
 		Add:               getAddDef(subCfg.Sub("add")),
 	}

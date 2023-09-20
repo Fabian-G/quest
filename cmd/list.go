@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 
@@ -21,10 +20,10 @@ type viewCommand struct {
 	projection   []string
 	clean        []string
 	sortOrder    string
-	output       config.OutputMode
 	qqlSearch    []string
 	rngSearch    []string
 	stringSearch []string
+	json         bool
 }
 
 func newViewCommand(def config.ViewDef) *viewCommand {
@@ -46,10 +45,10 @@ func (v *viewCommand) command() *cobra.Command {
 		RunE:    v.list,
 	}
 
-	listCmd.Flags().StringVarP(&v.output, "output", "o", v.def.DefaultOutputMode, "TODO")
 	listCmd.Flags().StringSliceVarP(&v.projection, "projection", "p", strings.Split(v.def.DefaultProjection, ","), "TODO")
 	listCmd.Flags().StringVarP(&v.sortOrder, "sort", "s", v.def.DefaultSortOrder, "TODO")
 	listCmd.Flags().StringSliceVarP(&v.clean, "clean", "c", v.def.DefaultClean, "TODO")
+	listCmd.Flags().BoolVar(&v.json, "json", false, "TODO")
 	cmdutil.RegisterSelectionFlags(listCmd, &v.qqlSearch, &v.rngSearch, &v.stringSearch)
 
 	listCmd.AddCommand(newAddCommand(v.def).command())
@@ -68,7 +67,7 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 	}
 	selection := query.Filter(list)
 	if len(selection) == 0 {
-		fmt.Println("no matches")
+		fmt.Fprintln(cmd.OutOrStdout(), "no matches")
 		return nil
 	}
 
@@ -86,23 +85,22 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		CleanProjects: cleanProjects,
 		CleanContexts: cleanContexts,
 	}
-	listView, err := view.NewList(list, selection, v.output == config.InteractiveOutput, projectionCfg)
+	interactive := di.Config().GetBool(config.Interactive)
+	listView, err := view.NewList(list, selection, interactive, projectionCfg)
 	if err != nil {
 		return fmt.Errorf("could not create list view: %w", err)
 	}
-	switch v.output {
-	case config.InteractiveOutput:
-		programme := tea.NewProgram(listView)
+	switch {
+	case v.json:
+		todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), selection)
+	case interactive:
+		programme := tea.NewProgram(listView, tea.WithOutput(cmd.OutOrStdout()))
 		if _, err := programme.Run(); err != nil {
 			return err
 		}
-	case config.JsonOutput:
-		todotxt.DefaultJsonEncoder.Encode(os.Stdout, selection)
-	case config.ListOutput:
-		l, _ := listView.Update(view.RefreshList())
-		fmt.Println(l.View())
 	default:
-		return fmt.Errorf("unknown output mode: %s\nAvailable modes are %v", v.output, []string{config.InteractiveOutput, config.JsonOutput, config.ListOutput})
+		l, _ := listView.Update(view.RefreshList())
+		fmt.Fprintln(cmd.OutOrStdout(), l.View())
 	}
 	return nil
 }

@@ -16,6 +16,7 @@ const (
 	TodoFile    Key = "todo-file"
 	IdxOrder    Key = "index-order"
 	KeepBackups Key = "backup"
+	Interactive Key = "interactive"
 )
 
 func buildConfig() (*viper.Viper, error) {

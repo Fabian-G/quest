@@ -13,8 +13,10 @@ func Root(di *config.Di) *cobra.Command {
 	defaultView := di.DefaultViewDef()
 	rootCmd := newViewCommand(defaultView).command()
 	rootCmd.PersistentPreRunE = cmdutil.Steps(cmdutil.EnsureTodoFileExits, cmdutil.RegisterMacros)
-	rootCmd.PersistentFlags().StringP("file", "f", "", "overrides the todo txt file location")
+	rootCmd.PersistentFlags().StringP("file", "f", "", "the todo.txt file")
 	di.Config().BindPFlag(config.TodoFile, rootCmd.PersistentFlags().Lookup("file"))
+	rootCmd.PersistentFlags().BoolP("interactive", "i", true, "set to false to make list commands non-interactive")
+	di.Config().BindPFlag(config.Interactive, rootCmd.PersistentFlags().Lookup("interactive"))
 	rootCmd.AddGroup(&cobra.Group{
 		ID:    "query",
 		Title: "Query",
