@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Execute(di *config.Di) {
+func Root(di *config.Di) *cobra.Command {
 	defaultView := di.DefaultViewDef()
 	rootCmd := newViewCommand(defaultView).command()
 	rootCmd.PersistentPreRunE = steps(ensureTodoFileExits, registerMacros)
@@ -25,8 +25,11 @@ func Execute(di *config.Di) {
 		rootCmd.AddCommand(viewCommand.command())
 	}
 
+	return rootCmd
+}
+func Execute(di *config.Di) {
 	ctx := context.WithValue(context.Background(), diKey, di)
-	err := rootCmd.ExecuteContext(ctx)
+	err := Root(di).ExecuteContext(ctx)
 	if err != nil {
 		os.Exit(1)
 	}
