@@ -62,9 +62,11 @@ func EnsureTodoFileExits(cmd *cobra.Command, args []string) error {
 		if err := os.MkdirAll(path.Dir(file), 0777); err != nil {
 			return err
 		}
-		if _, err := os.Create(file); err != nil {
+		f, err := os.Create(file)
+		if err != nil {
 			return err
 		}
+		f.Close()
 	case err != nil:
 		return err
 	case !stat.Mode().IsRegular():
