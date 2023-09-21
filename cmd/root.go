@@ -12,7 +12,7 @@ import (
 func Root(di *config.Di) *cobra.Command {
 	defaultView := di.DefaultViewDef()
 	rootCmd := newViewCommand(defaultView).command()
-	rootCmd.PersistentPreRunE = cmdutil.Steps(cmdutil.EnsureTodoFileExits, cmdutil.RegisterMacros)
+	rootCmd.PersistentPreRunE = cmdutil.Steps(cmdutil.EnsureTodoFileExits, cmdutil.RegisterMacros, cmdutil.SyncConflictProtection)
 	rootCmd.SilenceUsage = true
 	rootCmd.PersistentFlags().StringP("file", "f", "", "the todo.txt file")
 	di.Config().BindPFlag(config.TodoFile, rootCmd.PersistentFlags().Lookup("file"))
