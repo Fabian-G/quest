@@ -30,6 +30,7 @@ const (
 	itemNot
 	itemString
 	itemInt
+	itemDuration
 	itemBool
 	itemAllQuant
 	itemIn
@@ -40,6 +41,8 @@ const (
 	itemColon
 	itemProjMatch
 	itemCtxMatch
+	itemPlus
+	itemMinus
 )
 
 const eof = -1
@@ -114,6 +117,10 @@ func (l *lexer) discard() {
 	l.start = l.pos
 }
 
+func (l *lexer) reset() {
+	l.pos = l.start
+}
+
 func (l *lexer) errorf(format string, args ...any) stateFunc {
 	l.item = item{
 		typ: itemErr,
@@ -159,7 +166,10 @@ func lexQuery(l *lexer) stateFunc {
 		l.discard()
 		return lexQuery
 	case r == '+':
-		return lexProjectMatcher
+		if unicode.IsLetter(l.peek()) {
+			return lexProjectMatcherOrPlus
+		}
+		return l.emit(itemPlus)
 	case r == '@':
 		return lexContextMatcher
 	case r == '!':
@@ -194,9 +204,10 @@ func lexQuery(l *lexer) stateFunc {
 		}
 		return l.emit(itemOr)
 	case r == '-':
-		if l.next() != '>' {
-			return l.errorf("expected >")
+		if l.peek() != '>' {
+			return l.emit(itemMinus)
 		}
+		l.accept(">")
 		return l.emit(itemImpl)
 	case r == ',':
 		return l.emit(itemComma)
@@ -213,7 +224,7 @@ func lexQuery(l *lexer) stateFunc {
 		return l.emit(itemColon)
 	case r == '-' || ('0' <= r && r <= '9'):
 		l.backup()
-		return lexInt
+		return lexIntOrDuration
 	case isAlphaNumeric(r):
 		l.backup()
 		return lexIdentifier
@@ -260,15 +271,17 @@ func lexIdentifier(l *lexer) stateFunc {
 	}
 }
 
-func lexProjectMatcher(l *lexer) stateFunc {
+func lexProjectMatcherOrPlus(l *lexer) stateFunc {
 	for {
 		switch r := l.next(); {
 		case isAlphaNumeric(r):
 
 		default:
 			l.backup()
-			if !l.isAtTerminator() {
-				return l.errorf("unexpected token in project matcher %#U", r)
+			if !l.isAtTerminator() || (l.pos-l.start) == 1 {
+				l.reset()
+				l.accept("+")
+				return l.emit(itemPlus)
 			}
 
 			return l.emit(itemProjMatch)
@@ -292,12 +305,15 @@ func lexContextMatcher(l *lexer) stateFunc {
 	}
 }
 
-func lexInt(l *lexer) stateFunc {
-	l.accept("-")
+func lexIntOrDuration(l *lexer) stateFunc {
 	digits := "0123456789"
 	l.acceptRun(digits)
+	duration := l.accept("dwmy")
 	if isAlphaNumeric(l.peek()) {
 		return l.errorf("Unexpected character at end of integer")
+	}
+	if duration {
+		return l.emit(itemDuration)
 	}
 	return l.emit(itemInt)
 }
@@ -321,7 +337,7 @@ Loop:
 }
 
 func isAlphaNumeric(r rune) bool {
-	return r == '-' || r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
+	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
 
 func (l *lexer) isAtTerminator() bool {
@@ -330,7 +346,7 @@ func (l *lexer) isAtTerminator() bool {
 		return true
 	}
 	switch r {
-	case eof, ',', ')', '(', ':', '{', '}', '|', '&', '-', '=':
+	case eof, ',', ')', '(', ':', '{', '}', '|', '&', '-', '+', '=':
 		return true
 	}
 	return false

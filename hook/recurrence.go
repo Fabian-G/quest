@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Fabian-G/quest/qduration"
 	"github.com/Fabian-G/quest/todotxt"
 )
 
@@ -15,7 +16,7 @@ type recurrenceParams struct {
 	base      *todotxt.Item
 	due       time.Time
 	threshold time.Time
-	duration  duration
+	duration  qduration.Duration
 	relative  bool
 }
 
@@ -92,7 +93,7 @@ func (r Recurrence) spawnRelative(params recurrenceParams) error {
 
 	switch {
 	case params.threshold != zeroTime && params.due != zeroTime:
-		newThreshold := params.duration.addTo(completionDate)
+		newThreshold := params.duration.AddTo(completionDate)
 		err := newItem.SetTag(r.tags.Threshold, newThreshold.Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new threshold date when trying to spawn new recurrent task")
@@ -103,13 +104,13 @@ func (r Recurrence) spawnRelative(params recurrenceParams) error {
 			return fmt.Errorf("failed to set new due date when trying to spawn new recurrent task")
 		}
 	case params.threshold != zeroTime:
-		newThreshold := params.duration.addTo(completionDate)
+		newThreshold := params.duration.AddTo(completionDate)
 		err := newItem.SetTag(r.tags.Threshold, newThreshold.Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new threshold date when trying to spawn new recurrent task")
 		}
 	case params.due != zeroTime:
-		newDue := params.duration.addTo(completionDate)
+		newDue := params.duration.AddTo(completionDate)
 		err := newItem.SetTag(r.tags.Due, newDue.Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new due date when trying to spawn new recurrent task")
@@ -130,13 +131,13 @@ func (r Recurrence) spawnAbsolute(params recurrenceParams) error {
 	}
 	var zeroTime = time.Time{}
 	if params.due != zeroTime {
-		err := newItem.SetTag(r.tags.Due, params.duration.addTo(params.due).Format(time.DateOnly))
+		err := newItem.SetTag(r.tags.Due, params.duration.AddTo(params.due).Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new due date when trying to spawn new recurrent task")
 		}
 	}
 	if params.threshold != zeroTime {
-		err := newItem.SetTag(r.tags.Threshold, params.duration.addTo(params.threshold).Format(time.DateOnly))
+		err := newItem.SetTag(r.tags.Threshold, params.duration.AddTo(params.threshold).Format(time.DateOnly))
 		if err != nil {
 			return fmt.Errorf("failed to set new threshold date when trying to spawn new recurrent task")
 		}
@@ -176,11 +177,11 @@ func (r Recurrence) parseRecurrenceParams(current *todotxt.Item) (recurrencePara
 		params.relative = true
 		rec = rec[1:]
 	}
-	duration, err := parseDuration(rec)
+	duration, err := qduration.Parse(rec)
 	if err != nil {
 		return params, fmt.Errorf("could not parse duration %s: %w", rec, err)
 	}
-	params.duration = duration.abs()
+	params.duration = duration.Abs()
 	return params, nil
 }
 

@@ -153,7 +153,7 @@ func (p *parser) parseNot() (node, error) {
 	}
 
 	p.next()
-	child, err := p.parseComparison()
+	child, err := p.parseNot()
 	if err != nil {
 		return nil, err
 	}
@@ -165,13 +165,13 @@ func (p *parser) parseNot() (node, error) {
 
 func (p *parser) parseComparison() (node, error) {
 	comparisons := []itemType{itemEq, itemLeq, itemLt, itemGeq, itemGt}
-	child, err := p.parsePrimary()
+	child, err := p.parseAddSub()
 	if err != nil {
 		return nil, err
 	}
 	for next := p.lookAhead(); slices.Contains(comparisons, next.typ); {
 		p.next()
-		rightChild, err := p.parsePrimary()
+		rightChild, err := p.parseAddSub()
 		if err != nil {
 			return nil, err
 		}
@@ -185,6 +185,55 @@ func (p *parser) parseComparison() (node, error) {
 	return child, nil
 }
 
+func (p *parser) parseAddSub() (node, error) {
+	child, err := p.parseSign()
+	if err != nil {
+		return nil, err
+	}
+
+	for next := p.lookAhead(); next.typ == itemPlus || next.typ == itemMinus; {
+		p.next()
+		rightChild, err := p.parseSign()
+		if err != nil {
+			return nil, err
+		}
+		switch next.typ {
+		case itemPlus:
+			child = &plus{
+				leftChild:  child,
+				rightChild: rightChild,
+			}
+		case itemMinus:
+			child = &minus{
+				leftChild:  child,
+				rightChild: rightChild,
+			}
+		}
+		next = p.lookAhead()
+	}
+	return child, nil
+}
+
+func (p *parser) parseSign() (node, error) {
+	next := p.lookAhead()
+	if next.typ != itemPlus && next.typ != itemMinus {
+		return p.parsePrimary()
+	}
+
+	p.next()
+	child, err := p.parseSign()
+	if err != nil {
+		return nil, err
+	}
+
+	if next.typ == itemPlus {
+		return child, nil
+	}
+	return &negativeSign{
+		child: child,
+	}, nil
+}
+
 func (p *parser) parsePrimary() (node, error) {
 	next := p.lookAhead()
 	switch next.typ {
@@ -196,6 +245,11 @@ func (p *parser) parsePrimary() (node, error) {
 	case itemInt:
 		p.next()
 		return &intConst{
+			val: next.val,
+		}, nil
+	case itemDuration:
+		p.next()
+		return &durationConst{
 			val: next.val,
 		}, nil
 	case itemBool:

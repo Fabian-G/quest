@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Fabian-G/quest/qduration"
 )
 
 type DType string
@@ -201,6 +203,115 @@ func (a *and) validate(knownIds idSet) (DType, error) {
 	return QBool, nil
 }
 
+type plus struct {
+	leftChild  node
+	rightChild node
+	lType      DType
+	rType      DType
+}
+
+func (p *plus) eval(alpha varMap) any {
+	switch p.lType {
+	case QInt:
+		return p.leftChild.eval(alpha).(int) + p.rightChild.eval(alpha).(int)
+	case QDate:
+		return p.rightChild.eval(alpha).(qduration.Duration).AddTo(p.leftChild.eval(alpha).(time.Time))
+	case QDuration:
+		return p.leftChild.eval(alpha).(qduration.Duration).AddTo(p.rightChild.eval(alpha).(time.Time))
+	default:
+		panic("plus validation misses a case")
+	}
+}
+
+func (p *plus) String() string {
+	return fmt.Sprintf("(%s + %s)", p.leftChild.String(), p.rightChild.String())
+}
+
+func (p *plus) validate(knownIds idSet) (DType, error) {
+	var err error
+	p.lType, err = p.leftChild.validate(knownIds)
+	if err != nil {
+		return QError, err
+	}
+	p.rType, err = p.rightChild.validate(knownIds)
+	if err != nil {
+		return QError, err
+	}
+	switch {
+	case p.lType == QInt && p.rType == QInt:
+		return QInt, nil
+	case p.lType == QDuration && p.rType == QDate || p.lType == QDate && p.rType == QDuration:
+		return QDate, nil
+	default:
+		return QError, fmt.Errorf("can not add %s and %s", p.lType, p.rType)
+	}
+}
+
+type negativeSign struct {
+	child node
+}
+
+func (n *negativeSign) eval(alpha varMap) any {
+	return -n.child.eval(alpha).(int)
+}
+
+func (n *negativeSign) String() string {
+	return fmt.Sprintf("-%s", n.child.String())
+}
+
+func (n *negativeSign) validate(knownIds idSet) (DType, error) {
+	cType, err := n.child.validate(knownIds)
+	if err != nil {
+		return QError, err
+	}
+	if cType != QInt {
+		return QError, fmt.Errorf("can not apply negative sign to %s", cType)
+	}
+	return QInt, nil
+}
+
+type minus struct {
+	leftChild  node
+	rightChild node
+	lType      DType
+	rType      DType
+}
+
+func (m *minus) eval(alpha varMap) any {
+	switch m.lType {
+	case QInt:
+		return m.leftChild.eval(alpha).(int) - m.rightChild.eval(alpha).(int)
+	case QDate:
+		return m.rightChild.eval(alpha).(qduration.Duration).SubFrom(m.leftChild.eval(alpha).(time.Time))
+	default:
+		panic("minus validation misses a case")
+	}
+}
+
+func (m *minus) String() string {
+	return fmt.Sprintf("(%s - %s)", m.leftChild.String(), m.rightChild.String())
+}
+
+func (m *minus) validate(knownIds idSet) (DType, error) {
+	var err error
+	m.lType, err = m.leftChild.validate(knownIds)
+	if err != nil {
+		return QError, err
+	}
+	m.rType, err = m.rightChild.validate(knownIds)
+	if err != nil {
+		return QError, err
+	}
+	switch {
+	case m.lType == QInt && m.rType == QInt:
+		return QInt, nil
+	case m.lType == QDate && m.rType == QDuration:
+		return QDate, nil
+	default:
+		return QError, fmt.Errorf("can not subtract %s from %s", m.rType, m.lType)
+	}
+}
+
 type comparison struct {
 	comparator itemType
 	lType      DType
@@ -228,10 +339,6 @@ func compare(op itemType, t1 DType, t2 DType, left, right any) bool {
 		v1 := left.(time.Time)
 		v2 := right.(time.Time)
 		return compareDates(op, v1, v2)
-	case QDuration:
-		v1 := left.(time.Duration)
-		v2 := right.(time.Duration)
-		return compareComparable(op, v1, v2)
 	case QInt:
 		v1 := left.(int)
 		v2 := right.(int)
@@ -414,6 +521,26 @@ func (i *intConst) validate(knownIds idSet) (DType, error) {
 		return QError, fmt.Errorf("could not parse integer constant: %s", i.val)
 	}
 	return QInt, nil
+}
+
+type durationConst struct {
+	val string
+}
+
+func (d *durationConst) eval(alpha varMap) any {
+	duration, _ := qduration.Parse(d.val)
+	return duration
+}
+
+func (d *durationConst) String() string {
+	return d.val
+}
+
+func (d *durationConst) validate(knownIds idSet) (DType, error) {
+	if _, err := qduration.Parse(d.val); err != nil {
+		return QError, fmt.Errorf("could not parse duration constant: %s", d.val)
+	}
+	return QDuration, nil
 }
 
 type boolConst struct {

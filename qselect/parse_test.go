@@ -93,6 +93,10 @@ func Test_ParseConstructTheTreeCorrectly(t *testing.T) {
 			query:               "done && +foo && !done",
 			expectedParseResult: "((done(it) && (exists p in projects(it): dotPrefix(p, \"+foo\"))) && !done(it))",
 		},
+		"plus and minus have same precedence": {
+			query:               "5+5-5+5==10",
+			expectedParseResult: "((((5 + 5) - 5) + 5) == 10)",
+		},
 	}
 
 	for name, tc := range testCases {
@@ -310,6 +314,38 @@ func Test_eval(t *testing.T) {
 			query:      `forall i in items: (exists pre in stringListTag("after"): tag(i, "id") == pre) -> done(i)`,
 			itemNumber: 1,
 			result:     false,
+		},
+		"date +": {
+			list: listFromString(t, `
+			a date due:2020-01-01
+			`),
+			query:      `dateTag("due")+1d==date(2020,01,02)`,
+			itemNumber: 0,
+			result:     true,
+		},
+		"date -": {
+			list: listFromString(t, `
+			a date due:2020-01-02
+			`),
+			query:      `dateTag("due")-1d==date(2020,01,01)`,
+			itemNumber: 0,
+			result:     true,
+		},
+		"double not": {
+			list: listFromString(t, `
+			irrelevant
+			`),
+			query:      `!!true`,
+			itemNumber: 0,
+			result:     true,
+		},
+		"minus sign": {
+			list: listFromString(t, `
+			irrelevant
+			`),
+			query:      `+3+5-4==---4+5--3`,
+			itemNumber: 0,
+			result:     true,
 		},
 	}
 

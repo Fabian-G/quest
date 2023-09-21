@@ -81,6 +81,14 @@ func Test_lexOnValidQueries(t *testing.T) {
 			query:          `"a" > "b" && "b" >= "c" && "c" < "d" && "d"<="e"`,
 			expectedTokens: []itemType{itemString, itemGt, itemString, itemAnd, itemString, itemGeq, itemString, itemAnd, itemString, itemLt, itemString, itemAnd, itemString, itemLeq, itemString},
 		},
+		"+ and - are lexed correctly": {
+			query:          `5+5-5 + foo()`,
+			expectedTokens: []itemType{itemInt, itemPlus, itemInt, itemMinus, itemInt, itemPlus, itemIdent, itemLeftParen, itemRightParen},
+		},
+		"duration": {
+			query:          `5d`,
+			expectedTokens: []itemType{itemDuration},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -134,9 +142,6 @@ func Test_lexOnInvalidQueries(t *testing.T) {
 		},
 		"Illegal or junction": {
 			query: "R(x) | P(x)",
-		},
-		"Illegal impl unction": {
-			query: "R(x) - P(x)",
 		},
 	}
 
