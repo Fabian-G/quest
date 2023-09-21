@@ -13,7 +13,8 @@ import (
 )
 
 type addCommand struct {
-	def config.AddDef
+	def  config.AddDef
+	prio string
 }
 
 func newAddCommand(def config.ViewDef) *addCommand {
@@ -35,6 +36,8 @@ func (a *addCommand) command() *cobra.Command {
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
 
+	addCmd.Flags().StringVarP(&a.prio, "priority", "p", "none", "TODO")
+
 	return addCmd
 }
 
@@ -44,9 +47,14 @@ func (a *addCommand) add(cmd *cobra.Command, args []string) error {
 	if len(description) == 0 {
 		return errors.New("can not add item with empty description")
 	}
+	prio, err := todotxt.PriorityFromString(a.prio)
+	if err != nil {
+		return fmt.Errorf("could not parse priority value %s: %w", a.prio, err)
+	}
 	newItem, err := todotxt.BuildItem(
 		todotxt.WithDescription(strings.TrimSpace(fmt.Sprintf("%s %s %s", a.def.Prefix, description, a.def.Suffix))),
 		todotxt.WithCreationDate(time.Now()),
+		todotxt.WithPriority(prio),
 	)
 	if err != nil {
 		return fmt.Errorf("could not create task: %w", err)
