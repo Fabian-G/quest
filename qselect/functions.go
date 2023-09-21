@@ -71,6 +71,22 @@ var functions = map[string]queryFunc{
 		injectIt:         true,
 		wantsContext:     false,
 	},
+	"creation": {
+		fn:               creation,
+		argTypes:         []DType{QItem, QDate},
+		resultType:       QDate,
+		trailingOptional: true,
+		injectIt:         true,
+		wantsContext:     false,
+	},
+	"completion": {
+		fn:               completion,
+		argTypes:         []DType{QItem, QDate},
+		resultType:       QDate,
+		trailingOptional: true,
+		injectIt:         true,
+		wantsContext:     false,
+	},
 	"projects": {
 		fn:               projects,
 		resultType:       QStringSlice,
@@ -180,6 +196,32 @@ func done(args []any) any {
 func description(args []any) any {
 	item := args[0].(*todotxt.Item)
 	return item.Description()
+}
+
+func creation(args []any) any {
+	item := args[0].(*todotxt.Item)
+	defaultCreation := time.Time{}
+	if len(args) == 2 {
+		defaultCreation = args[1].(time.Time)
+	}
+	creation := item.CreationDate()
+	if creation == nil {
+		return defaultCreation
+	}
+	return *creation
+}
+
+func completion(args []any) any {
+	item := args[0].(*todotxt.Item)
+	defaultCompletion := time.Time{}
+	if len(args) == 2 {
+		defaultCompletion = args[1].(time.Time)
+	}
+	completion := item.CompletionDate()
+	if completion == nil {
+		return defaultCompletion
+	}
+	return *completion
 }
 
 func projects(args []any) any {

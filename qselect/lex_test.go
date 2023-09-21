@@ -81,6 +81,10 @@ func Test_lexOnValidQueries(t *testing.T) {
 			query:          `"a" > "b" && "b" >= "c" && "c" < "d" && "d"<="e"`,
 			expectedTokens: []itemType{itemString, itemGt, itemString, itemAnd, itemString, itemGeq, itemString, itemAnd, itemString, itemLt, itemString, itemAnd, itemString, itemLeq, itemString},
 		},
+		"no space needed after before comparisons": {
+			query:          `"a">"b"&&"b">="c"&&"c"<"d"&&"d"<="e"`,
+			expectedTokens: []itemType{itemString, itemGt, itemString, itemAnd, itemString, itemGeq, itemString, itemAnd, itemString, itemLt, itemString, itemAnd, itemString, itemLeq, itemString},
+		},
 		"+ and - are lexed correctly": {
 			query:          `5+5-5 + foo()`,
 			expectedTokens: []itemType{itemInt, itemPlus, itemInt, itemMinus, itemInt, itemPlus, itemIdent, itemLeftParen, itemRightParen},
