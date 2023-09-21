@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"runtime"
 
 	"github.com/spf13/viper"
 )
@@ -17,6 +18,7 @@ const (
 	IdxOrder    Key = "index-order"
 	KeepBackups Key = "backup"
 	Interactive Key = "interactive"
+	Editor      Key = "editor"
 )
 
 func buildConfig() (*viper.Viper, error) {
@@ -43,6 +45,12 @@ func buildConfig() (*viper.Viper, error) {
 	v.SetDefault(IdxOrder, "+done,-creation,+description")
 	v.SetDefault(TodoFile, path.Join(dataHome, "quest/todo.txt"))
 	v.SetDefault(KeepBackups, 5)
+	v.BindEnv(Editor, "EDITOR")
+	if runtime.GOOS == "windows" {
+		v.SetDefault(Editor, "notepad.exe")
+	} else {
+		v.SetDefault(Editor, "nano")
+	}
 
 	if err := v.ReadInConfig(); err != nil {
 		var notFound viper.ConfigFileNotFoundError

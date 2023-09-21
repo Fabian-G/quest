@@ -59,6 +59,10 @@ func (c *completeCommand) complete(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+	if len(confirmedSelection) == 0 {
+		fmt.Fprintln(cmd.OutOrStdout(), "no matches")
+		return nil
+	}
 
 	for _, t := range confirmedSelection {
 		if err := t.Complete(); err != nil {

@@ -54,6 +54,10 @@ func (r *removeCommand) remove(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+	if len(confirmedSelection) == 0 {
+		fmt.Fprintln(cmd.OutOrStdout(), "no matches")
+		return nil
+	}
 
 	for _, t := range confirmedSelection {
 		if err := list.Remove(list.IndexOf(t)); err != nil {

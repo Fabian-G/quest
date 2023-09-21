@@ -55,6 +55,7 @@ func (v *viewCommand) command() *cobra.Command {
 	listCmd.AddCommand(newCompleteCommand(v.def).command())
 	listCmd.AddCommand(newRemoveCommand(v.def).command())
 	listCmd.AddCommand(newPrioritizeCommand(v.def).command())
+	listCmd.AddCommand(newEditCommand(v.def).command())
 
 	return listCmd
 }
