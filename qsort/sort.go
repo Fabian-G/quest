@@ -3,8 +3,11 @@ package qsort
 import (
 	"cmp"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/Fabian-G/quest/qduration"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 )
@@ -51,7 +54,7 @@ func sortFunc(sort string, tagTypes map[string]qselect.DType) (func(*todotxt.Ite
 				return nil, fmt.Errorf("when sorting by tag a tag name must be specified e.g. tag:rec")
 			}
 			tagKey := parts[1]
-			compareFuncs = append(compareFuncs, order.compareTag(tagKey))
+			compareFuncs = append(compareFuncs, order.compareTag(tagKey, tagTypes))
 		}
 	}
 	return func(first, second *todotxt.Item) int {
@@ -90,32 +93,18 @@ func (o sortOrder) comparePriority(i1 *todotxt.Item, i2 *todotxt.Item) int {
 }
 
 func (o sortOrder) compareCreation(i1 *todotxt.Item, i2 *todotxt.Item) int {
-	switch {
-	case i1.CreationDate() == nil && i2.CreationDate() != nil:
-		return -1
-	case i1.CreationDate() != nil && i2.CreationDate() == nil:
-		return 1
-	case i1.CreationDate() == nil && i2.CreationDate() == nil:
-		return 0
-	default:
-		return int(o) * i1.CreationDate().Compare(*i2.CreationDate())
-	}
+	return int(o) * compareOptionalsFunc(i1.CreationDate(), i2.CreationDate(), func(t1, t2 time.Time) int {
+		return t1.Compare(t2)
+	})
 }
 
 func (o sortOrder) compareCompletion(i1 *todotxt.Item, i2 *todotxt.Item) int {
-	switch {
-	case i1.CompletionDate() == nil && i2.CompletionDate() != nil:
-		return -1
-	case i1.CompletionDate() != nil && i2.CompletionDate() == nil:
-		return 1
-	case i1.CompletionDate() == nil && i2.CompletionDate() == nil:
-		return 0
-	default:
-		return int(o) * i1.CompletionDate().Compare(*i2.CompletionDate())
-	}
+	return int(o) * compareOptionalsFunc(i1.CompletionDate(), i2.CompletionDate(), func(t1, t2 time.Time) int {
+		return t1.Compare(t2)
+	})
 }
 
-func (o sortOrder) compareTag(tagKey string) func(*todotxt.Item, *todotxt.Item) int {
+func (o sortOrder) compareTag(tagKey string, tagTypes map[string]qselect.DType) func(*todotxt.Item, *todotxt.Item) int {
 	return func(i1, i2 *todotxt.Item) int {
 		firstTags := i1.Tags()[tagKey]
 		secondTags := i2.Tags()[tagKey]
@@ -127,8 +116,31 @@ func (o sortOrder) compareTag(tagKey string) func(*todotxt.Item, *todotxt.Item) 
 		case len(firstTags) != 0 && len(secondTags) == 0:
 			return 1
 		default:
-			// TODO Lookup proper comparison function depending on the tag type
-			return int(o) * strings.Compare(firstTags[0], secondTags[0])
+			switch tagTypes[tagKey] {
+			case qselect.QInt:
+				return int(o) * compareOptionals(
+					valueOrNil(strconv.Atoi(firstTags[0])),
+					valueOrNil(strconv.Atoi(secondTags[0])),
+				)
+			case qselect.QDuration:
+				return int(o) * compareOptionalsFunc(
+					valueOrNil(qduration.Parse(firstTags[0])),
+					valueOrNil(qduration.Parse(secondTags[0])),
+					func(d1, d2 qduration.Duration) int {
+						return cmp.Compare(d1.Days(), d2.Days())
+					},
+				)
+			case qselect.QDate:
+				return int(o) * compareOptionalsFunc(
+					valueOrNil(time.Parse(time.DateOnly, firstTags[0])),
+					valueOrNil(time.Parse(time.DateOnly, secondTags[0])),
+					func(t1, t2 time.Time) int {
+						return t1.Compare(t2)
+					},
+				)
+			default:
+				return int(o) * strings.Compare(firstTags[0], secondTags[0])
+			}
 		}
 	}
 }
@@ -136,6 +148,31 @@ func (o sortOrder) compareTag(tagKey string) func(*todotxt.Item, *todotxt.Item) 
 func (o sortOrder) compareDescription(i1 *todotxt.Item, i2 *todotxt.Item) int {
 	return int(o) * strings.Compare(i1.Description(), i2.Description())
 }
+
+func compareOptionals[T cmp.Ordered](a *T, b *T) int {
+	return compareOptionalsFunc(a, b, cmp.Compare)
+}
+
+func compareOptionalsFunc[T any](a *T, b *T, compare func(T, T) int) int {
+	switch {
+	case a == nil && b != nil:
+		return -1
+	case a != nil && b == nil:
+		return 1
+	case a == nil && b == nil:
+		return 0
+	default:
+		return compare(*a, *b)
+	}
+}
+
+func valueOrNil[T any](val T, err error) *T {
+	if err != nil {
+		return nil
+	}
+	return &val
+}
+
 func orderFactor(key string) sortOrder {
 	if strings.HasPrefix(key, "-") {
 		return desc

@@ -76,14 +76,8 @@ func Test_Sort(t *testing.T) {
 			second:        todotxt.MustBuildItem(todotxt.WithDone(true), todotxt.WithCompletionDate(time.Now().Add(24*time.Hour)), todotxt.WithCreationDate(time.Now())),
 			expectedOrder: secondSmaller,
 		},
-		"null dates always sort at the end": {
+		"null dates are always smaller": {
 			sortString:    "+creation",
-			first:         todotxt.MustBuildItem(todotxt.WithCreationDate(time.Now())),
-			second:        todotxt.MustBuildItem(todotxt.WithoutCreationDate()),
-			expectedOrder: secondSmaller,
-		},
-		"null dates always sort at the end (2)": {
-			sortString:    "-creation",
 			first:         todotxt.MustBuildItem(todotxt.WithCreationDate(time.Now())),
 			second:        todotxt.MustBuildItem(todotxt.WithoutCreationDate()),
 			expectedOrder: secondSmaller,

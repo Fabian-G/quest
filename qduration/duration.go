@@ -68,6 +68,20 @@ func (d Duration) Abs() Duration {
 	return Duration{d.span, d.unit}
 }
 
+func (d Duration) Days() int {
+	switch d.unit {
+	case Day:
+		return d.span
+	case Week:
+		return d.span * 7
+	case Month:
+		return d.span * 30
+	case Year:
+		return d.span * 365
+	}
+	return d.span
+}
+
 func Parse(durationS string) (Duration, error) {
 	var unit DurationUnit
 	for u := range unitMap {
