@@ -124,15 +124,18 @@ func (t *Repo) write(l *List) error {
 }
 
 func (t *Repo) backup() error {
+	extension := path.Ext(t.file)
+	fileName := strings.TrimSuffix(path.Base(t.file), extension)
+	nameTemplate := fmt.Sprintf(".%s.quest-backup-%%d%s", fileName, extension)
 	if t.Keep <= 0 {
 		return nil
 	}
-	if err := os.Remove(path.Join(path.Dir(t.file), fmt.Sprintf(".quest.%d.bak", t.Keep-1))); err != nil && !errors.Is(err, fs.ErrNotExist) {
+	if err := os.Remove(path.Join(path.Dir(t.file), fmt.Sprintf(nameTemplate, t.Keep-1))); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 	for i := t.Keep - 2; i >= 0; i-- {
-		origin := path.Join(path.Dir(t.file), fmt.Sprintf(".quest.%d.bak", i))
-		dest := path.Join(path.Dir(t.file), fmt.Sprintf(".quest.%d.bak", i+1))
+		origin := path.Join(path.Dir(t.file), fmt.Sprintf(nameTemplate, i))
+		dest := path.Join(path.Dir(t.file), fmt.Sprintf(nameTemplate, i+1))
 		if err := os.Rename(origin, dest); err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
@@ -141,7 +144,7 @@ func (t *Repo) backup() error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(path.Join(path.Dir(t.file), ".quest.0.bak"), data, 0644); err != nil {
+	if err := os.WriteFile(path.Join(path.Dir(t.file), fmt.Sprintf(nameTemplate, 0)), data, 0644); err != nil {
 		return err
 	}
 	return nil

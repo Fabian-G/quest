@@ -1,6 +1,7 @@
 package todotxt_test
 
 import (
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -115,32 +116,38 @@ func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 
 func Test_BackupsAreKeptAppropriately(t *testing.T) {
 	file := createTestFile(t, "original item\n")
+	extension := path.Ext(file)
+	fileName := strings.TrimSuffix(path.Base(file), extension)
+	backupName := func(n int) string {
+		return fmt.Sprintf(".%s.quest-backup-%d%s", fileName, n, extension)
+	}
+
 	repo := todotxt.NewRepo(file)
 	repo.Keep = 2
 
 	err := repo.Save(todotxt.ListOf(todotxt.MustBuildItem(todotxt.WithDescription("new item"))))
 	assert.Nil(t, err)
-	backupContent, err := os.ReadFile(path.Join(path.Dir(file), ".quest.0.bak"))
+	backupContent, err := os.ReadFile(path.Join(path.Dir(file), backupName(0)))
 	assert.Nil(t, err)
 	assert.Equal(t, "original item\n", string(backupContent))
 
 	err = repo.Save(todotxt.ListOf(todotxt.MustBuildItem(todotxt.WithDescription("another item"))))
 	assert.Nil(t, err)
-	backupContent, err = os.ReadFile(path.Join(path.Dir(file), ".quest.1.bak"))
+	backupContent, err = os.ReadFile(path.Join(path.Dir(file), backupName(1)))
 	assert.Nil(t, err)
 	assert.Equal(t, "original item\n", string(backupContent))
-	backupContent, err = os.ReadFile(path.Join(path.Dir(file), ".quest.0.bak"))
+	backupContent, err = os.ReadFile(path.Join(path.Dir(file), backupName(0)))
 	assert.Nil(t, err)
 	assert.Equal(t, "new item\n", string(backupContent))
 
 	err = repo.Save(todotxt.ListOf(todotxt.MustBuildItem(todotxt.WithDescription("a last item"))))
 	assert.Nil(t, err)
-	_, err = os.Stat(path.Join(path.Dir(file), ".quest.2.bak"))
+	_, err = os.Stat(path.Join(path.Dir(file), backupName(2)))
 	assert.ErrorIs(t, err, fs.ErrNotExist)
-	backupContent, err = os.ReadFile(path.Join(path.Dir(file), ".quest.1.bak"))
+	backupContent, err = os.ReadFile(path.Join(path.Dir(file), backupName(1)))
 	assert.Nil(t, err)
 	assert.Equal(t, "new item\n", string(backupContent))
-	backupContent, err = os.ReadFile(path.Join(path.Dir(file), ".quest.0.bak"))
+	backupContent, err = os.ReadFile(path.Join(path.Dir(file), backupName(0)))
 	assert.Nil(t, err)
 	assert.Equal(t, "another item\n", string(backupContent))
 }

@@ -19,8 +19,9 @@ import (
 type CtxKey string
 
 var (
-	DiKey   CtxKey = "DI"
-	ListKey CtxKey = "list"
+	DiKey       CtxKey = "DI"
+	ListKey     CtxKey = "list"
+	DoneListKey CtxKey = "done-list"
 )
 
 func Steps(steps ...func(*cobra.Command, []string) error) func(*cobra.Command, []string) error {
@@ -53,9 +54,26 @@ func SaveList(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func EnsureTodoFileExits(cmd *cobra.Command, args []string) error {
-	v := cmd.Context().Value(DiKey).(*config.Di).Config()
-	file := v.GetString(config.TodoFile)
+func LoadDoneList(cmd *cobra.Command, args []string) error {
+	repo := cmd.Context().Value(DiKey).(*config.Di).DoneTxtRepo()
+	list, err := repo.Read()
+	if err != nil {
+		return err
+	}
+	cmd.SetContext(context.WithValue(cmd.Context(), DoneListKey, list))
+	return nil
+}
+
+func SaveDoneList(cmd *cobra.Command, args []string) error {
+	repo := cmd.Context().Value(DiKey).(*config.Di).DoneTxtRepo()
+	list := cmd.Context().Value(DoneListKey).(*todotxt.List)
+	if err := repo.Save(list); err != nil {
+		return fmt.Errorf("could not save done file: %w", err)
+	}
+	return nil
+}
+
+func createFileIfNotExists(file string) error {
 	stat, err := os.Stat(file)
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
@@ -73,6 +91,18 @@ func EnsureTodoFileExits(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("provided file %s is not a regular file", file)
 	}
 	return nil
+}
+
+func EnsureTodoFileExits(cmd *cobra.Command, args []string) error {
+	v := cmd.Context().Value(DiKey).(*config.Di).Config()
+	file := v.GetString(config.TodoFile)
+	return createFileIfNotExists(file)
+}
+
+func EnsureDoneFileExists(cmd *cobra.Command, args []string) error {
+	v := cmd.Context().Value(DiKey).(*config.Di).Config()
+	file := v.GetString(config.DoneFile)
+	return createFileIfNotExists(file)
 }
 
 func RegisterMacros(cmd *cobra.Command, args []string) error {

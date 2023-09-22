@@ -15,6 +15,7 @@ type Key = string
 
 const (
 	TodoFile    Key = "todo-file"
+	DoneFile    Key = "done-file"
 	IdxOrder    Key = "index-order"
 	KeepBackups Key = "backup"
 	Interactive Key = "interactive"
@@ -44,6 +45,7 @@ func buildConfig() (*viper.Viper, error) {
 	v.AddConfigPath("$HOME/.quest/")
 	v.SetDefault(IdxOrder, "+done,-creation,+description")
 	v.SetDefault(TodoFile, path.Join(dataHome, "quest/todo.txt"))
+	v.SetDefault(DoneFile, path.Join(dataHome, "quest/done.txt"))
 	v.SetDefault(KeepBackups, 5)
 	v.BindEnv(Editor, "EDITOR")
 	if runtime.GOOS == "windows" {

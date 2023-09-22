@@ -22,6 +22,17 @@ func buildTodoTxtRepo(v *viper.Viper, tagTypes map[string]qselect.DType) *todotx
 	return repo
 }
 
+func buildDoneTxtRepo(v *viper.Viper, tagTypes map[string]qselect.DType) *todotxt.Repo {
+	repo := todotxt.NewRepo(v.GetString(DoneFile))
+	repo.Keep = v.GetInt(KeepBackups)
+	defOrder, err := qsort.CompileSortFunc(v.GetString(IdxOrder), tagTypes)
+	if err != nil {
+		log.Fatal(err)
+	}
+	repo.DefaultOrder = defOrder
+	return repo
+}
+
 func hooks(v *viper.Viper, tagTypes map[string]qselect.DType) []todotxt.HookBuilder {
 	hooks := make([]todotxt.HookBuilder, 0)
 	if len(tagTypes) > 0 {

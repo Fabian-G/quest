@@ -11,6 +11,7 @@ import (
 type Di struct {
 	config      *viper.Viper
 	repo        *todotxt.Repo
+	doneRepo    *todotxt.Repo
 	tagTypes    map[string]qselect.DType
 	defaultView *ViewDef
 	viewDefs    []ViewDef
@@ -22,6 +23,13 @@ func (d *Di) TodoTxtRepo() *todotxt.Repo {
 		d.repo = buildTodoTxtRepo(d.Config(), d.TagTypes())
 	}
 	return d.repo
+}
+
+func (d *Di) DoneTxtRepo() *todotxt.Repo {
+	if d.doneRepo == nil {
+		d.doneRepo = buildDoneTxtRepo(d.Config(), d.TagTypes())
+	}
+	return d.doneRepo
 }
 
 func (d *Di) Config() *viper.Viper {
