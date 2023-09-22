@@ -2,6 +2,7 @@ package qselect
 
 import (
 	"maps"
+	"math"
 	"time"
 
 	"github.com/Fabian-G/quest/todotxt"
@@ -32,7 +33,26 @@ func And(fns ...Func) Func {
 }
 
 var defaultFreeVars = idSet{
-	"it": QItem, "items": QItemSlice, "today": QDate,
+	"it":      QItem,
+	"items":   QItemSlice,
+	"today":   QDate,
+	"maxInt":  QInt,
+	"minInt":  QInt,
+	"maxDate": QDate,
+	"minDate": QDate,
+}
+
+func buildFreeVars(universe *todotxt.List, item *todotxt.Item) map[string]any {
+	alpha := make(map[string]any)
+	alpha["it"] = item
+	alpha["items"] = toAnySlice(universe.Tasks())
+	now := time.Now()
+	alpha["today"] = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	alpha["maxInt"] = math.MaxInt
+	alpha["minInt"] = math.MinInt
+	alpha["minDate"] = time.Time{}
+	alpha["maxDate"] = maxTime
+	return alpha
 }
 
 func CompileQuery(query string) (Func, error) {
@@ -53,12 +73,7 @@ func CompileQQL(query string) (Func, error) {
 		return nil, err
 	}
 	evalFunc := func(universe *todotxt.List, it *todotxt.Item) bool {
-		alpha := make(map[string]any)
-		alpha["it"] = it
-		alpha["items"] = toAnySlice(universe.Tasks())
-		now := time.Now()
-		alpha["today"] = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-		return root.eval(alpha).(bool)
+		return root.eval(buildFreeVars(universe, it)).(bool)
 	}
 	return evalFunc, nil
 }
