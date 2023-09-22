@@ -42,7 +42,11 @@ func Test_OptimisticLockingReturnsErrorOnSaveIfWrittenInTheMeantime(t *testing.T
 	assert.Nil(t, err)
 	err = repo.Save(list)
 
-	assert.ErrorIs(t, err, todotxt.ErrOLocked)
+	var oError todotxt.OLockError
+	assert.ErrorAs(t, err, &oError)
+	content, err := os.ReadFile(oError.BackupPath)
+	assert.Nil(t, err)
+	assert.Equal(t, "A todo item", string(content))
 }
 
 func Test_OptimisticLockingDoesNotReturnErrorIfFileWasNotChanged(t *testing.T) {

@@ -11,12 +11,19 @@ import (
 	"os"
 	"path"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
 )
 
-var ErrOLocked = errors.New("the file was changed since the last time we read it")
+type OLockError struct {
+	BackupPath string
+}
+
+func (o OLockError) Error() string {
+	return fmt.Sprintf("the file was changed since the last time we read it. Wrote to %s instead", o.BackupPath)
+}
 
 type ReadFunc func() (*List, error)
 
@@ -43,7 +50,7 @@ func NewRepo(dest string) *Repo {
 func (t *Repo) Save(l *List) error {
 	t.fileLock.Lock()
 	defer t.fileLock.Unlock()
-	err := t.handleOptimisticLocking()
+	err := t.handleOptimisticLocking(l)
 	if err != nil {
 		return fmt.Errorf("could not save file %s: %w", t.file, err)
 	}
@@ -54,7 +61,7 @@ func (t *Repo) Save(l *List) error {
 	return nil
 }
 
-func (t *Repo) handleOptimisticLocking() error {
+func (t *Repo) handleOptimisticLocking(l *List) error {
 	if t.checksum == [20]byte{} {
 		return nil // This is a save without a prior read, so we don't need locking
 	}
@@ -66,9 +73,28 @@ func (t *Repo) handleOptimisticLocking() error {
 		return fmt.Errorf("could not determine checksum of current state")
 	}
 	if sha1.Sum(currentData) != t.checksum {
-		return ErrOLocked
+		return fmt.Errorf("locking error: %w", t.writeToAlternativeLocation(l))
 	}
 	return nil
+}
+
+func (t *Repo) writeToAlternativeLocation(l *List) error {
+	extension := path.Ext(t.file)
+	fileName := strings.TrimSuffix(path.Base(t.file), extension)
+	tmp, err := os.CreateTemp(path.Dir(t.file), fmt.Sprintf("%s.quest-conflict.*%s", fileName, extension))
+	if err != nil {
+		return fmt.Errorf("could not write file to alternative location")
+	}
+	defer func() {
+		tmp.Close()
+	}()
+	err = t.encoder().Encode(tmp, l.Tasks())
+	if err != nil {
+		return err
+	}
+	return OLockError{
+		BackupPath: tmp.Name(),
+	}
 }
 
 func (t *Repo) write(l *List) error {
