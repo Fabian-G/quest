@@ -31,6 +31,12 @@ type Duration struct {
 	unit DurationUnit
 }
 
+func New(span int, unit DurationUnit) Duration {
+	return Duration{
+		span, unit,
+	}
+}
+
 func (d Duration) AddTo(t time.Time) time.Time {
 	switch d.unit {
 	case Day:
@@ -90,13 +96,23 @@ func Parse(durationS string) (Duration, error) {
 			durationS = strings.TrimSuffix(durationS, u)
 		}
 	}
-	var span int
+	var sign int
+	switch {
+	case strings.HasPrefix(durationS, "-"):
+		sign = -1
+		durationS = strings.TrimPrefix(durationS, "-")
+	case strings.HasPrefix(durationS, "+"):
+		durationS = strings.TrimPrefix(durationS, "+")
+		fallthrough
+	default:
+		sign = 1
+	}
 	if len(durationS) == 0 {
-		span = 0
+		return Duration{sign, unit}, nil
 	}
 	span, err := strconv.Atoi(durationS)
 	if err != nil {
 		return Duration{}, err
 	}
-	return Duration{span, unit}, nil
+	return Duration{sign * span, unit}, nil
 }
