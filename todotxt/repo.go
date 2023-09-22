@@ -81,7 +81,7 @@ func (t *Repo) handleOptimisticLocking(l *List) error {
 func (t *Repo) writeToAlternativeLocation(l *List) error {
 	extension := path.Ext(t.file)
 	fileName := strings.TrimSuffix(path.Base(t.file), extension)
-	tmp, err := os.CreateTemp(path.Dir(t.file), fmt.Sprintf("%s.quest-conflict.*%s", fileName, extension))
+	tmp, err := os.CreateTemp(path.Dir(t.file), fmt.Sprintf("%s.quest-conflict-*%s", fileName, extension))
 	if err != nil {
 		return fmt.Errorf("could not write file to alternative location")
 	}

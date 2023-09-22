@@ -88,7 +88,7 @@ func Test_DefaultFormat(t *testing.T) {
 			out := strings.Builder{}
 			err := todotxt.DefaultEncoder.Encode(&out, list.Tasks())
 			assert.Nil(t, err)
-			assert.Equal(t, tc.expectedFormat, out.String())
+			assert.Equal(t, tc.expectedFormat+"\n", out.String())
 		})
 	}
 }

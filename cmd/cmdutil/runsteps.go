@@ -97,10 +97,11 @@ func SyncConflictProtection(cmd *cobra.Command, args []string) error {
 	base := path.Base(file)
 	extension := path.Ext(file)
 	name := strings.TrimSuffix(base, extension)
-	conflictMatcher := regexp.MustCompile(fmt.Sprintf("^%s\\.sync-conflict-.*%s$", name, extension))
+	syncthingConflictMatcher := regexp.MustCompile(fmt.Sprintf("^%s\\.sync-conflict-.*%s$", name, extension))
+	questOLockConflictMatcher := regexp.MustCompile(fmt.Sprintf("^%s\\.quest-conflict-.*%s$", name, extension))
 	conflicts := make([]string, 0)
 	for _, f := range filesInDir {
-		if conflictMatcher.MatchString(path.Base(f.Name())) {
+		if syncthingConflictMatcher.MatchString(path.Base(f.Name())) || questOLockConflictMatcher.MatchString(path.Base(f.Name())) {
 			conflicts = append(conflicts, path.Join(path.Dir(file), f.Name()))
 		}
 	}

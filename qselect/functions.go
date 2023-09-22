@@ -10,6 +10,8 @@ import (
 	"github.com/Fabian-G/quest/todotxt"
 )
 
+var maxTime = time.Unix(1<<63-62135596801, 999999999)
+
 type missingItemError struct {
 	position int
 }
@@ -213,7 +215,7 @@ func creation(args []any) any {
 
 func completion(args []any) any {
 	item := args[0].(*todotxt.Item)
-	defaultCompletion := time.Time{}
+	defaultCompletion := maxTime
 	if len(args) == 2 {
 		defaultCompletion = args[1].(time.Time)
 	}

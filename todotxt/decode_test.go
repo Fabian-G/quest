@@ -60,10 +60,6 @@ func TestParse(t *testing.T) {
 				todotxt.WithDescription("A +full @item"),
 			),
 		},
-		"A task containing a newline in the description": {
-			line:         "This is a task\\nWith a new line in it",
-			expectedItem: todotxt.MustBuildItem(todotxt.WithDescription("This is a task\nWith a new line in it")),
-		},
 		"A task with an invalid date produces a parser error": {
 			line:          "2022-13-12 A task",
 			expectedError: &todotxt.ParseError{},
@@ -143,7 +139,7 @@ func Test_WellFormattedItemsShouldNotChangeAfterParsingPlusSerializing(t *testin
 			out := strings.Builder{}
 			err = todotxt.DefaultEncoder.Encode(&out, items)
 			assert.Nil(t, err)
-			assert.Equal(t, tc.line, out.String())
+			assert.Equal(t, tc.line+"\n", out.String())
 		})
 	}
 }

@@ -22,23 +22,16 @@ type Encoder struct {
 
 func (f Encoder) Encode(w io.Writer, tasks []*Item) error {
 	out := bufio.NewWriter(w)
-	for i, item := range tasks {
+	for _, item := range tasks {
 		formattedItem, err := f.encodeItem(item)
 		if err != nil {
 			return fmt.Errorf("could not marshal item: %w", err)
 		}
-		if _, err := out.WriteString(formattedItem + itemSeparator(i, len(tasks))); err != nil {
+		if _, err := out.WriteString(formattedItem + "\n"); err != nil {
 			return fmt.Errorf("could not write item %v: %w", item, err)
 		}
 	}
 	return out.Flush()
-}
-
-func itemSeparator(current, length int) string {
-	if current < length-1 {
-		return "\n"
-	}
-	return ""
 }
 
 func (e Encoder) encodeItem(i *Item) (string, error) {

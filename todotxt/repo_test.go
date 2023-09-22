@@ -46,7 +46,7 @@ func Test_OptimisticLockingReturnsErrorOnSaveIfWrittenInTheMeantime(t *testing.T
 	assert.ErrorAs(t, err, &oError)
 	content, err := os.ReadFile(oError.BackupPath)
 	assert.Nil(t, err)
-	assert.Equal(t, "A todo item", string(content))
+	assert.Equal(t, "A todo item\n", string(content))
 }
 
 func Test_OptimisticLockingDoesNotReturnErrorIfFileWasNotChanged(t *testing.T) {
@@ -78,7 +78,7 @@ func Test_SaveTruncatesTheFileCorrectly(t *testing.T) {
 
 	content, err := os.ReadFile(file)
 	assert.Nil(t, err)
-	assert.Equal(t, "short desc", string(content))
+	assert.Equal(t, "short desc\n", string(content))
 }
 
 func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
@@ -114,7 +114,7 @@ func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 }
 
 func Test_BackupsAreKeptAppropriately(t *testing.T) {
-	file := createTestFile(t, `original item`)
+	file := createTestFile(t, "original item\n")
 	repo := todotxt.NewRepo(file)
 	repo.Keep = 2
 
@@ -122,16 +122,16 @@ func Test_BackupsAreKeptAppropriately(t *testing.T) {
 	assert.Nil(t, err)
 	backupContent, err := os.ReadFile(path.Join(path.Dir(file), ".quest.0.bak"))
 	assert.Nil(t, err)
-	assert.Equal(t, "original item", string(backupContent))
+	assert.Equal(t, "original item\n", string(backupContent))
 
 	err = repo.Save(todotxt.ListOf(todotxt.MustBuildItem(todotxt.WithDescription("another item"))))
 	assert.Nil(t, err)
 	backupContent, err = os.ReadFile(path.Join(path.Dir(file), ".quest.1.bak"))
 	assert.Nil(t, err)
-	assert.Equal(t, "original item", string(backupContent))
+	assert.Equal(t, "original item\n", string(backupContent))
 	backupContent, err = os.ReadFile(path.Join(path.Dir(file), ".quest.0.bak"))
 	assert.Nil(t, err)
-	assert.Equal(t, "new item", string(backupContent))
+	assert.Equal(t, "new item\n", string(backupContent))
 
 	err = repo.Save(todotxt.ListOf(todotxt.MustBuildItem(todotxt.WithDescription("a last item"))))
 	assert.Nil(t, err)
@@ -139,10 +139,10 @@ func Test_BackupsAreKeptAppropriately(t *testing.T) {
 	assert.ErrorIs(t, err, fs.ErrNotExist)
 	backupContent, err = os.ReadFile(path.Join(path.Dir(file), ".quest.1.bak"))
 	assert.Nil(t, err)
-	assert.Equal(t, "new item", string(backupContent))
+	assert.Equal(t, "new item\n", string(backupContent))
 	backupContent, err = os.ReadFile(path.Join(path.Dir(file), ".quest.0.bak"))
 	assert.Nil(t, err)
-	assert.Equal(t, "another item", string(backupContent))
+	assert.Equal(t, "another item\n", string(backupContent))
 }
 
 func Test_NonExistingTodoFileIsCreated(t *testing.T) {
