@@ -10,16 +10,18 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-runewidth"
 )
 
 var detailsProjection = strings.Split(strings.ReplaceAll(qprojection.StarProjection, ",tags", ""), ",")
 
 type List struct {
-	list        *todotxt.List
-	selection   []*todotxt.Item
-	extractors  []qprojection.Column
-	table       table.Model
-	interactive bool
+	list           *todotxt.List
+	selection      []*todotxt.Item
+	extractors     []qprojection.Column
+	table          table.Model
+	interactive    bool
+	availableWidth int
 }
 
 type refreshListMsg struct{}
@@ -80,6 +82,7 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case refreshListMsg:
 		l = l.refreshTable()
 	case tea.WindowSizeMsg:
+		l.availableWidth = msg.Width
 		l.table.SetHeight(min(len(l.selection), msg.Height-len(detailsProjection)-3))
 	}
 	m, cmd := l.table.Update(msg)
@@ -121,7 +124,9 @@ func (l List) renderDetails(writer io.StringWriter) {
 	lines := make([]string, 0, len(columns))
 	for _, c := range columns {
 		if projection := c.Projector(selectedItem); len(projection) > 0 {
-			lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, fmt.Sprintf("%s:\t", titleStyle.Render(c.Title)), projection))
+			title := fmt.Sprintf("%s:\t", titleStyle.Render(c.Title))
+			truncated := runewidth.Truncate(projection, l.availableWidth-runewidth.StringWidth(title)-3, "...")
+			lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, title, truncated))
 		}
 	}
 	writer.WriteString(strings.Join(lines, "\n"))
