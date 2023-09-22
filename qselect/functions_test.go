@@ -5,6 +5,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/Fabian-G/quest/todotxt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -131,4 +132,19 @@ func Test_CanRegisterMacros(t *testing.T) {
 	assert.Len(t, matches, 2)
 	assert.Equal(t, list.Get(0).Description(), matches[0].Description())
 	assert.Equal(t, list.Get(3).Description(), matches[1].Description())
+}
+
+func Test_AlphaIsRestoredAfterMacroExecution(t *testing.T) {
+	RegisterMacro("testMacro", `true`, []DType{QItem}, QBool, true)
+	defer func() {
+		delete(functions, "testMacro")
+	}()
+	// if testMacro leaks arg0 into the outer scope this query will always be false if "it" is not done, even if there ist a done task
+	q, err := CompileQQL("exists arg0 in items: testMacro(it) && done(arg0)")
+	assert.Nil(t, err)
+
+	t1 := todotxt.MustBuildItem(todotxt.WithDescription("T1"), todotxt.WithDone(true))
+	t2 := todotxt.MustBuildItem(todotxt.WithDescription("T2"), todotxt.WithDone(false))
+	testList := todotxt.ListOf(t1, t2)
+	assert.True(t, q(testList, t2))
 }

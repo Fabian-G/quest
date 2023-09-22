@@ -176,7 +176,12 @@ func RegisterMacro(name, qql string, inTypes []DType, outType DType, injectIt bo
 		fn: func(args []interface{}) interface{} {
 			alpha := args[0].(map[string]any)
 			for i, arg := range args[1:] {
-				alpha[fmt.Sprintf("arg%d", i)] = arg
+				argName := fmt.Sprintf("arg%d", i)
+				before := alpha[argName]
+				defer func() {
+					alpha[argName] = before
+				}()
+				alpha[argName] = arg
 			}
 			return root.eval(alpha)
 		},
