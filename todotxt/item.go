@@ -170,6 +170,37 @@ func (i *Item) EditDescription(desc string) error {
 	})
 }
 
+func (i *Item) Apply(item *Item) error {
+	if err := item.validate(); err != nil {
+		return err
+	}
+	return i.modify(func() {
+		i.done = item.done
+		i.prio = item.prio
+		i.completionDate = item.completionDate
+		i.creationDate = item.creationDate
+		i.description = item.description
+	})
+}
+
+func (i *Item) Equals(item *Item) bool {
+	return i.done == item.done &&
+		i.prio == item.prio &&
+		i.description == item.description &&
+		optionalDatesEqual(i.completionDate, item.completionDate) &&
+		optionalDatesEqual(i.creationDate, item.creationDate)
+}
+
+func optionalDatesEqual(d1 *time.Time, d2 *time.Time) bool {
+	if d1 == d2 {
+		return true
+	}
+	if d1 == nil || d2 == nil {
+		return false
+	}
+	return d1.Compare(*d2) == 0
+}
+
 func (i *Item) String() string {
 	if out, err := DefaultEncoder.encodeItem(i); err == nil {
 		return out

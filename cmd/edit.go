@@ -62,12 +62,22 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 	defer func() {
 		os.Remove(filePath)
 	}()
-	if err = e.startEditor(cfg.GetString(config.Editor), filePath); err != nil {
-		return err
-	}
-	changes, removals, err := e.applyChanges(filePath, writtenLines, list, selection)
-	if err != nil {
-		return err
+	var changes, removals int
+	for {
+		if err = e.startEditor(cfg.GetString(config.Editor), filePath); err != nil {
+			return err
+		}
+		changes, removals, err = e.applyChanges(filePath, writtenLines, list, selection)
+		if err == nil {
+			break
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "your changes are invalid: %s\n", err)
+		fmt.Fprint(cmd.OutOrStdout(), "Retry? (Y/n) ")
+		var answer string
+		fmt.Fscanln(cmd.InOrStdin(), &answer)
+		if strings.ToLower(answer) == "n" {
+			return err
+		}
 	}
 
 	fmt.Fprintf(cmd.OutOrStdout(), "Items edited:  %d\nItems removed: %d\n", changes, removals)
@@ -75,22 +85,19 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 }
 
 func (e *editCommand) dumpDescriptionsToTempFile(items []*todotxt.Item) (string, int, error) {
-	tmpFile, err := os.CreateTemp("", "quest-edit-*.txt")
+	tmpFile, err := os.CreateTemp("", "quest-edit-*.todo.txt")
 	if err != nil {
 		return "", 0, fmt.Errorf("could not create tmp file: %w", err)
 	}
 	defer func() {
 		tmpFile.Close()
 	}()
-	var writtenLines int
 	writer := bufio.NewWriter(tmpFile)
-	for _, i := range items {
-		writer.WriteString(i.Description())
-		writer.WriteString("\n")
-		writtenLines++
+	if err = todotxt.DefaultEncoder.Encode(writer, items); err != nil {
+		return "", 0, err
 	}
 
-	return tmpFile.Name(), writtenLines, writer.Flush()
+	return tmpFile.Name(), len(items), writer.Flush()
 }
 
 func (e *editCommand) startEditor(editorCmd string, path string) error {
@@ -106,35 +113,31 @@ func (e *editCommand) applyChanges(tmpFile string, expectedLines int, list *todo
 	if err != nil {
 		return 0, 0, err
 	}
-	scanner := bufio.NewScanner(file)
-	var removedItems, changedLines, totalLines int
-	for scanner.Scan() {
-		totalLines++
-		if totalLines > len(selection) {
-			continue
-		}
-		currentItem := selection[totalLines-1]
-		line := scanner.Text()
-		if line == currentItem.Description() {
-			continue
-		}
-		if strings.TrimSpace(line) == "" {
-			removedItems++
-			err := list.Remove(list.IndexOf(currentItem))
-			if err != nil {
-				return 0, 0, err
-			}
-			continue
-		}
-		err := currentItem.EditDescription(line)
-		if err != nil {
-			return 0, 0, err
-		}
-		changedLines++
+	defer func() {
+		file.Close()
+	}()
+	changeList, err := todotxt.DefaultDecoder.Decode(file)
+	if err != nil {
+		return 0, 0, err
+	}
+	if len(changeList) != expectedLines {
+		return 0, 0, fmt.Errorf("expected %d lines, but got %d. Do not delete, add or reorder lines when editing", expectedLines, len(changeList))
 	}
 
-	if totalLines != expectedLines {
-		return 0, 0, fmt.Errorf("expected %d lines, but got %d. Do not delete, add or reorder lines when editing", expectedLines, totalLines)
+	var removedItems, changedItems int
+	for idx, item := range changeList {
+		if strings.TrimSpace(item.Description()) == "" {
+			removedItems++
+			list.Remove(list.IndexOf(selection[idx]))
+		}
+		before := *selection[idx]
+		if err := selection[idx].Apply(item); err != nil {
+			return 0, 0, err
+		}
+		if !before.Equals(selection[idx]) {
+			changedItems++
+		}
 	}
-	return changedLines, removedItems, nil
+
+	return changedItems, removedItems, nil
 }
