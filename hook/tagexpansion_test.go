@@ -152,3 +152,20 @@ func Test_DateExpansion(t *testing.T) {
 		})
 	}
 }
+
+func Test_TagExpansionsIgnoresRemovalEvents(t *testing.T) {
+	item := todotxt.MustBuildItem(
+		todotxt.WithDescription("Hello World"),
+	)
+	list := todotxt.ListOf(item)
+	list.AddHook(hook.NewTagExpansionWithNowFunc(list, map[string]qselect.DType{
+		"due": qselect.QDate,
+	}, func() time.Time {
+		return time.Date(2022, 2, 2, 0, 0, 0, 0, time.UTC)
+	}))
+
+	err := list.Remove(list.IndexOf(item))
+
+	assert.Nil(t, err)
+	assert.Equal(t, 0, list.Len())
+}

@@ -36,6 +36,9 @@ func NewTagExpansionWithNowFunc(list *todotxt.List, tags map[string]qselect.DTyp
 }
 
 func (t TagExpansion) OnMod(event todotxt.ModEvent) error {
+	if event.Current == nil {
+		return nil // We don't care about removals
+	}
 	var validationErrors []error
 	for itemTag := range event.Current.Tags() {
 		if typ, ok := t.tags[itemTag]; ok {
