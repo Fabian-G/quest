@@ -69,10 +69,6 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid query specified: %w", err)
 	}
 	selection := query.Filter(list)
-	if len(selection) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "no matches")
-		return nil
-	}
 
 	sortFunc, err := qsort.CompileSortFunc(v.sortOrder, di.TagTypes())
 	if err != nil {
@@ -88,14 +84,21 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		CleanProjects: cleanProjects,
 		CleanContexts: cleanContexts,
 	}
+
+	if v.json {
+		return todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), selection)
+	}
+
 	interactive := di.Config().GetBool(config.Interactive)
+	if len(selection) == 0 {
+		fmt.Fprintln(cmd.OutOrStdout(), "no matches")
+		return nil
+	}
 	listView, err := view.NewList(list, selection, interactive, projectionCfg)
 	if err != nil {
 		return fmt.Errorf("could not create list view: %w", err)
 	}
 	switch {
-	case v.json:
-		todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), selection)
 	case interactive:
 		programme := tea.NewProgram(listView, tea.WithOutput(cmd.OutOrStdout()))
 		if _, err := programme.Run(); err != nil {
