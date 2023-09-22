@@ -40,7 +40,7 @@ func (t TagExpansion) OnMod(event todotxt.ModEvent) error {
 	for itemTag := range event.Current.Tags() {
 		if typ, ok := t.tags[itemTag]; ok {
 			t.expandTag(typ, itemTag, event.Current)
-			validationErrors = append(validationErrors, validate(typ, event.Current.Tags()[itemTag]))
+			validationErrors = append(validationErrors, validate(typ, itemTag, event.Current.Tags()[itemTag]))
 		}
 	}
 	return errors.Join(validationErrors...)
@@ -195,28 +195,36 @@ func (t TagExpansion) OnValidate(event todotxt.ValidationEvent) error {
 	var validationErrors []error
 	for itemTag, tagValues := range event.Item.Tags() {
 		if typ, ok := t.tags[itemTag]; ok {
-			validationErrors = append(validationErrors, validate(typ, tagValues))
+			validationErrors = append(validationErrors, validate(typ, itemTag, tagValues))
 		}
 	}
 	return errors.Join(validationErrors...)
 }
 
-func validate(typ qselect.DType, values []string) error {
+func validate(typ qselect.DType, tag string, values []string) error {
 	var validationErrors []error
 	for _, v := range values {
 		switch typ {
 		case qselect.QInt:
 			_, err := strconv.Atoi(v)
-			validationErrors = append(validationErrors, err)
+			if err != nil {
+				validationErrors = append(validationErrors, fmt.Errorf("tag \"%s\" of item violates int constraint: %w", tag, err))
+			}
 		case qselect.QDate:
 			_, err := time.Parse(time.DateOnly, v)
-			validationErrors = append(validationErrors, err)
+			if err != nil {
+				validationErrors = append(validationErrors, fmt.Errorf("tag \"%s\" of item violates date constraint: %w", tag, err))
+			}
 		case qselect.QDuration:
 			_, err := qduration.Parse(v)
-			validationErrors = append(validationErrors, err)
+			if err != nil {
+				validationErrors = append(validationErrors, fmt.Errorf("tag \"%s\" of item violates duration constraint: %w", tag, err))
+			}
 		case qselect.QBool:
 			_, err := strconv.ParseBool(v)
-			validationErrors = append(validationErrors, err)
+			if err != nil {
+				validationErrors = append(validationErrors, fmt.Errorf("tag \"%s\" of item violates bool constraint: %w", tag, err))
+			}
 		default:
 			return fmt.Errorf("validation for type %s is not supported", typ)
 		}

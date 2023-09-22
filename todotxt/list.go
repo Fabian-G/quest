@@ -9,7 +9,7 @@ import (
 type ValidationError struct {
 	Base          error
 	OffendingItem *Item
-	ItemIndex     int
+	Line          int
 }
 
 func (v ValidationError) Unwrap() error {
@@ -17,7 +17,7 @@ func (v ValidationError) Unwrap() error {
 }
 
 func (v ValidationError) Error() string {
-	return fmt.Sprintf("the item with index %d is invalid: %v\n\tthe offending item was %v", v.ItemIndex, v.Base, v.OffendingItem)
+	return fmt.Sprintf("the item on line %d is invalid: %v\n\tthe offending item was \"%s\"", v.Line, v.Base, v.OffendingItem.Description())
 }
 
 type List struct {
@@ -160,13 +160,13 @@ func (l *List) AllTags() []string {
 
 func (l *List) validate() error {
 	errs := make([]error, 0)
-	for key, value := range l.idxOrder {
+	for _, value := range l.idxOrder {
 		baseErr := value.validate()
 		if baseErr != nil {
 			errs = append(errs, ValidationError{
 				Base:          baseErr,
 				OffendingItem: value,
-				ItemIndex:     key,
+				Line:          slices.Index(l.diskOrder, value) + 1,
 			})
 		}
 	}
