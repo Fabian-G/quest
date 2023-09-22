@@ -11,6 +11,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"
+	"golang.org/x/term"
 )
 
 var detailsProjection = strings.Split(strings.ReplaceAll(qprojection.StarProjection, ",tags", ""), ",")
@@ -31,10 +32,15 @@ func RefreshList() tea.Msg {
 }
 
 func NewList(list *todotxt.List, selection []*todotxt.Item, interactive bool, pCfg qprojection.Config) (List, error) {
+	width, _, err := term.GetSize(0)
+	if err != nil {
+		return List{}, err
+	}
 	l := List{
-		list:        list,
-		selection:   selection,
-		interactive: interactive,
+		list:           list,
+		selection:      selection,
+		interactive:    interactive,
+		availableWidth: width,
 	}
 
 	columnExtractors, err := qprojection.Compile(pCfg)
