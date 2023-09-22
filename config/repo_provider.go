@@ -12,7 +12,7 @@ import (
 
 func buildTodoTxtRepo(v *viper.Viper, tagTypes map[string]qselect.DType) *todotxt.Repo {
 	repo := todotxt.NewRepo(v.GetString(TodoFile))
-	repo.DefaultHooks = hooks(v)
+	repo.DefaultHooks = hooks(v, tagTypes)
 	repo.Keep = v.GetInt(KeepBackups)
 	defOrder, err := qsort.CompileSortFunc(v.GetString(IdxOrder), tagTypes)
 	if err != nil {
@@ -22,8 +22,13 @@ func buildTodoTxtRepo(v *viper.Viper, tagTypes map[string]qselect.DType) *todotx
 	return repo
 }
 
-func hooks(v *viper.Viper) []todotxt.HookBuilder {
+func hooks(v *viper.Viper, tagTypes map[string]qselect.DType) []todotxt.HookBuilder {
 	hooks := make([]todotxt.HookBuilder, 0)
+	if len(tagTypes) > 0 {
+		hooks = append(hooks, func(l *todotxt.List) todotxt.Hook {
+			return hook.NewTagExpansion(l, tagTypes)
+		})
+	}
 	if recTag := v.GetString("recurrence.rec-tag"); recTag != "" {
 		v.SetDefault("recurrence.due-tag", "due")
 		v.SetDefault("recurrence.threshold-tag", "t")

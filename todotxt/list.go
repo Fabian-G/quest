@@ -57,11 +57,12 @@ func (l *List) Add(items ...*Item) (err error) {
 		i.emitFunc = l.emit
 		l.diskOrder = append(l.diskOrder, i)
 		l.idxOrder = append(l.idxOrder, i)
-		err = i.validate()
+		// Order of events is important here, because the ModEvent may transform an invalid task into a valid one
+		err = l.emit(ModEvent{Previous: nil, Current: i})
 		if err != nil {
 			return
 		}
-		err = l.emit(ModEvent{Previous: nil, Current: i})
+		err = i.validate()
 		if err != nil {
 			return
 		}

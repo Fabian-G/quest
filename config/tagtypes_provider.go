@@ -9,7 +9,7 @@ import (
 )
 
 func buildTagTypes(v *viper.Viper) map[string]qselect.DType {
-	typeDefsConfig := v.GetStringMapString("tag.types")
+	typeDefsConfig := v.GetStringMapString("tags")
 	typeDefs := make(map[string]qselect.DType)
 
 	for key, value := range typeDefsConfig {
