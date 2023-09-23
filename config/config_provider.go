@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"runtime"
 
@@ -34,25 +35,11 @@ func buildConfig() (*viper.Viper, error) {
 		configHome = path.Join(homeDir, ".config")
 	}
 
-	dataHome := os.Getenv("XDG_DATA_HOME")
-	if len(dataHome) == 0 {
-		dataHome = path.Join(homeDir, ".local/share")
-	}
-
 	v.SetConfigName("config")
 	v.SetConfigType("toml")
 	v.AddConfigPath(path.Join(configHome, "quest"))
 	v.AddConfigPath("$HOME/.quest/")
-	v.SetDefault(IdxOrder, "+done,-creation,+description")
-	v.SetDefault(TodoFile, path.Join(dataHome, "quest/todo.txt"))
-	v.SetDefault(DoneFile, path.Join(dataHome, "quest/done.txt"))
-	v.SetDefault(KeepBackups, 5)
-	v.BindEnv(Editor, "EDITOR")
-	if runtime.GOOS == "windows" {
-		v.SetDefault(Editor, "notepad.exe")
-	} else {
-		v.SetDefault(Editor, "nano")
-	}
+	setTopLevelDefaults(v, homeDir)
 
 	if err := v.ReadInConfig(); err != nil {
 		var notFound viper.ConfigFileNotFoundError
@@ -62,4 +49,32 @@ func buildConfig() (*viper.Viper, error) {
 		return nil, err
 	}
 	return v, nil
+}
+
+func setTopLevelDefaults(v *viper.Viper, homeDir string) {
+	dataHome := os.Getenv("XDG_DATA_HOME")
+	if len(dataHome) == 0 {
+		dataHome = path.Join(homeDir, ".local/share")
+	}
+	v.SetDefault(IdxOrder, "+done,-creation,+description")
+	v.SetDefault(TodoFile, path.Join(dataHome, "quest/todo.txt"))
+	v.SetDefault(DoneFile, path.Join(dataHome, "quest/done.txt"))
+	v.SetDefault(KeepBackups, 5)
+	v.SetDefault(Editor, getDefaultEditor())
+}
+
+func getDefaultEditor() string {
+	var possibleEditors []string = []string{os.Getenv("EDITOR")}
+	switch runtime.GOOS {
+	case "windows":
+		possibleEditors = append(possibleEditors, "notepad.exe")
+	case "linux":
+		possibleEditors = append(possibleEditors, "nano", "nvim", "vim", "vi", "emacs", "ed")
+	}
+	for _, editor := range possibleEditors {
+		if p, err := exec.LookPath(editor); err == nil {
+			return p
+		}
+	}
+	return ""
 }
