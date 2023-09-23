@@ -51,6 +51,7 @@ func SaveList(cmd *cobra.Command, args []string) error {
 	if err := repo.Save(list); err != nil {
 		return fmt.Errorf("could not save todo file: %w", err)
 	}
+	repo.Close()
 	return nil
 }
 
@@ -70,6 +71,7 @@ func SaveDoneList(cmd *cobra.Command, args []string) error {
 	if err := repo.Save(list); err != nil {
 		return fmt.Errorf("could not save done file: %w", err)
 	}
+	repo.Close()
 	return nil
 }
 

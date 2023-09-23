@@ -226,8 +226,15 @@ func (t *Repo) fileWatcher() {
 			if !ok {
 				return
 			}
-			if event.Has(fsnotify.Write) {
+			if event.Has(fsnotify.Write) || event.Has(fsnotify.Chmod) {
 				t.notify()
+			}
+			if event.Has(fsnotify.Remove) {
+				// try re-adding the file. If that does not work we are lost.
+				err := t.watcher.Add(t.file)
+				if err != nil {
+					return
+				}
 			}
 		case err, ok := <-t.watcher.Errors:
 			if !ok {
@@ -249,11 +256,14 @@ func (t *Repo) notify() {
 func (t *Repo) Close() {
 	t.watchLock.Lock()
 	defer t.watchLock.Unlock()
+	if t.watcher == nil {
+		return
+	}
 	t.watcher.Close()
-	t.updateChan = nil
 	for _, c := range t.updateChan {
 		close(c)
 	}
+	t.updateChan = nil
 }
 
 func (t *Repo) encoder() *Encoder {

@@ -94,13 +94,7 @@ func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 	defer rm()
 	assert.Nil(t, err)
 
-	go func() {
-		f, err := os.OpenFile(file, os.O_RDWR, 0644)
-		assert.Nil(t, err)
-		defer f.Close()
-		io.Copy(f, strings.NewReader("Hello World"))
-	}()
-
+	go triggerChange(t, file)
 	timeout := time.After(5 * time.Second)
 	var change todotxt.ReadFunc
 	select {
@@ -112,6 +106,27 @@ func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, newList.Len())
 	assert.Equal(t, "Hello World", newList.Get(1).Description())
+
+	// Testing twice, because previously there were troubles where it worked only once
+	go triggerChange(t, file)
+	timeout = time.After(5 * time.Second)
+	select {
+	case change = <-c:
+	case <-timeout:
+		t.Fatal("file change was not detected in time (2)")
+	}
+	newList, err = change()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, newList.Len())
+	assert.Equal(t, "Hello World", newList.Get(1).Description())
+}
+
+func triggerChange(t *testing.T, file string) {
+	tmp, err := os.CreateTemp("", "quest-repo-test.*.part")
+	assert.Nil(t, err)
+	io.Copy(tmp, strings.NewReader("Hello World"))
+	err = os.Rename(tmp.Name(), file)
+	assert.Nil(t, err)
 }
 
 func Test_BackupsAreKeptAppropriately(t *testing.T) {

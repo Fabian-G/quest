@@ -3,6 +3,7 @@ package view
 import (
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/Fabian-G/quest/qprojection"
@@ -17,30 +18,32 @@ import (
 var detailsProjection = strings.Split(strings.ReplaceAll(qprojection.StarProjection, ",tags", ""), ",")
 
 type List struct {
-	list           *todotxt.List
-	selection      []*todotxt.Item
-	extractors     []qprojection.Column
-	table          table.Model
-	interactive    bool
-	availableWidth int
+	list            *todotxt.List
+	selection       []*todotxt.Item
+	extractors      []qprojection.Column
+	table           table.Model
+	interactive     bool
+	availableWidth  int
+	availableHeight int
 }
 
-type refreshListMsg struct{}
-
-func RefreshList() tea.Msg {
-	return refreshListMsg{}
+type RefreshListMsg struct {
+	List       *todotxt.List
+	Selection  []*todotxt.Item
+	Projection qprojection.Config
 }
 
 func NewList(list *todotxt.List, selection []*todotxt.Item, interactive bool, pCfg qprojection.Config) (List, error) {
-	width, _, err := term.GetSize(0)
+	width, height, err := term.GetSize(0)
 	if err != nil {
 		return List{}, err
 	}
 	l := List{
-		list:           list,
-		selection:      selection,
-		interactive:    interactive,
-		availableWidth: width,
+		list:            list,
+		selection:       selection,
+		interactive:     interactive,
+		availableWidth:  width,
+		availableHeight: height,
 	}
 
 	columnExtractors, err := qprojection.Compile(pCfg)
@@ -49,7 +52,7 @@ func NewList(list *todotxt.List, selection []*todotxt.Item, interactive bool, pC
 	}
 	l.extractors = columnExtractors
 	l.table = table.New()
-	return l.refreshTable(), nil
+	return l.refreshTable(list, selection, pCfg), nil
 }
 
 func (l List) mapToColumns() ([]table.Row, []table.Column) {
@@ -85,11 +88,12 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" || msg.String() == "q" {
 			return l, tea.Quit
 		}
-	case refreshListMsg:
-		l = l.refreshTable()
+	case RefreshListMsg:
+		l = l.refreshTable(msg.List, msg.Selection, msg.Projection)
 	case tea.WindowSizeMsg:
 		l.availableWidth = msg.Width
-		l.table.SetHeight(max(0, min(len(l.selection), msg.Height-len(detailsProjection)-3)))
+		l.availableHeight = msg.Height
+		l = l.updateSize()
 	}
 	m, cmd := l.table.Update(msg)
 	l.table = m
@@ -98,6 +102,11 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return l, tea.Quit
 	}
 	return l, cmd
+}
+
+func (l List) updateSize() List {
+	l.table.SetHeight(max(0, min(len(l.selection), l.availableHeight-len(detailsProjection)-3)))
+	return l
 }
 
 func (l List) View() string {
@@ -138,7 +147,11 @@ func (l List) renderDetails(writer io.StringWriter) {
 	writer.WriteString(strings.Join(lines, "\n") + "\n")
 }
 
-func (l List) refreshTable() List {
+func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projection qprojection.Config) List {
+	previousSelection := l.selection[l.table.Cursor()]
+	l.extractors = qprojection.MustCompile(projection)
+	l.list = list
+	l.selection = selection
 	rows, columns := l.mapToColumns()
 	l.table.SetColumns(columns)
 	l.table.SetRows(rows)
@@ -151,6 +164,15 @@ func (l List) refreshTable() List {
 		defaultStyles.Selected = lipgloss.NewStyle()
 		l.table.SetStyles(defaultStyles)
 	}
+	l = l.updateSize()
 	l.table.UpdateViewport()
+
+	positionOfPreviousSelection := slices.IndexFunc(l.selection, func(i *todotxt.Item) bool {
+		return i.Description() == previousSelection.Description()
+	})
+	if positionOfPreviousSelection == -1 {
+		positionOfPreviousSelection = min(l.table.Cursor(), len(l.selection)-1)
+	}
+	l.table.SetCursor(positionOfPreviousSelection)
 	return l
 }
