@@ -21,11 +21,10 @@ func (o *openCommand) command() *cobra.Command {
 	var openCommand = &cobra.Command{
 		Use:   "open",
 		Short: "Opens your todo file in the editor",
-		Long: `
-		Open opens your todo file in your editor.
-		Note that this is just as if you would open your todo.txt file in your editor directly, but
-		with the extra benefit that your changes will be validated afterwards.
-		However, special features like recurrence or tag expansion will not be triggered by your changes.`,
+		Long: `Open opens your todo file in your editor.
+Note that this is just as if you would open your todo.txt file in your editor directly, 
+but with the extra benefit that your changes will be validated afterwards.
+However, special features like recurrence or tag expansion will not be triggered by your changes.`,
 		Example: "quest open",
 		RunE:    o.open,
 	}
