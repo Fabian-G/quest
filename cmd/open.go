@@ -26,6 +26,7 @@ Note that this is just as if you would open your todo.txt file in your editor di
 but with the extra benefit that your changes will be validated afterwards.
 However, special features like recurrence or tag expansion will not be triggered by your changes.`,
 		Example: "quest open",
+		GroupID: "global-cmd",
 		RunE:    o.open,
 	}
 	return openCommand

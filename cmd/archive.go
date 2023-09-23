@@ -36,6 +36,7 @@ func (a *archiveCommand) command() *cobra.Command {
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
+		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList, cmdutil.LoadDoneList),
 		RunE:     a.archive,
 		PostRunE: cmdutil.Steps(cmdutil.SaveDoneList, cmdutil.SaveList),

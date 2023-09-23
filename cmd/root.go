@@ -22,11 +22,13 @@ func Root(di *config.Di) *cobra.Command {
 	rootCmd.PersistentFlags().String("config", "", "the config file to use") // This is just for the help message. Parsing happens in main.go
 	rootCmd.PersistentFlags().StringP("file", "f", "", "the todo.txt file")
 	di.Config().BindPFlag(config.TodoFile, rootCmd.PersistentFlags().Lookup("file"))
-	rootCmd.PersistentFlags().BoolP("interactive", "i", true, "set to false to make list commands non-interactive")
-	di.Config().BindPFlag(config.Interactive, rootCmd.PersistentFlags().Lookup("interactive"))
 	rootCmd.AddGroup(&cobra.Group{
-		ID:    "query",
-		Title: "Query",
+		ID:    "view",
+		Title: "Views",
+	})
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "global-cmd",
+		Title: "Global Command",
 	})
 
 	rootCmd.AddCommand(newOpenCommand().command())

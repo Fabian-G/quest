@@ -31,6 +31,7 @@ func (r *removeCommand) command() *cobra.Command {
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
+		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList),
 		RunE:     r.remove,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),

@@ -28,6 +28,7 @@ func newAddCommand(def config.ViewDef) *addCommand {
 func (a *addCommand) command() *cobra.Command {
 	var addCmd = &cobra.Command{
 		Use:      "add",
+		GroupID:  "view-cmd",
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",

@@ -89,7 +89,7 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		l = l.refreshTable()
 	case tea.WindowSizeMsg:
 		l.availableWidth = msg.Width
-		l.table.SetHeight(min(len(l.selection), msg.Height-len(detailsProjection)-3))
+		l.table.SetHeight(max(0, min(len(l.selection), msg.Height-len(detailsProjection)-3)))
 	}
 	m, cmd := l.table.Update(msg)
 	l.table = m

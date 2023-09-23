@@ -36,6 +36,7 @@ func (c *completeCommand) command() *cobra.Command {
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
+		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList),
 		RunE:     c.complete,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),

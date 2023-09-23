@@ -34,6 +34,7 @@ func (p *prioritizeCommand) command() *cobra.Command {
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
+		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList),
 		RunE:     p.prioritize,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),

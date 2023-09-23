@@ -24,6 +24,7 @@ type viewCommand struct {
 	rngSearch    []string
 	stringSearch []string
 	json         bool
+	interactive  bool
 }
 
 func newViewCommand(def config.ViewDef) *viewCommand {
@@ -38,17 +39,22 @@ func (v *viewCommand) command() *cobra.Command {
 	var listCmd = &cobra.Command{
 		Use:     v.def.Name,
 		Short:   "TODO",
-		GroupID: "query",
+		GroupID: "view",
 		Long:    `TODO `,
 		Example: "TODO",
 		PreRunE: cmdutil.Steps(cmdutil.LoadList),
 		RunE:    v.list,
 	}
+	listCmd.AddGroup(&cobra.Group{
+		ID:    "view-cmd",
+		Title: "View Commands",
+	})
 
 	listCmd.Flags().StringSliceVarP(&v.projection, "projection", "p", strings.Split(v.def.DefaultProjection, ","), "TODO")
 	listCmd.Flags().StringVarP(&v.sortOrder, "sort", "s", v.def.DefaultSortOrder, "TODO")
 	listCmd.Flags().StringSliceVarP(&v.clean, "clean", "c", v.def.DefaultClean, "TODO")
 	listCmd.Flags().BoolVar(&v.json, "json", false, "TODO")
+	listCmd.Flags().BoolVarP(&v.interactive, "interactive", "i", v.def.Interactive, "set to false to make the list non-interactive")
 	cmdutil.RegisterSelectionFlags(listCmd, &v.qqlSearch, &v.rngSearch, &v.stringSearch)
 
 	listCmd.AddCommand(newAddCommand(v.def).command())
@@ -89,17 +95,16 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), selection)
 	}
 
-	interactive := di.Config().GetBool(config.Interactive)
 	if len(selection) == 0 {
 		fmt.Fprintln(cmd.OutOrStdout(), "no matches")
 		return nil
 	}
-	listView, err := view.NewList(list, selection, interactive, projectionCfg)
+	listView, err := view.NewList(list, selection, v.interactive, projectionCfg)
 	if err != nil {
 		return fmt.Errorf("could not create list view: %w", err)
 	}
 	switch {
-	case interactive || len(selection) == 1:
+	case v.interactive || len(selection) == 1:
 		programme := tea.NewProgram(listView, tea.WithOutput(cmd.OutOrStdout()))
 		if _, err := programme.Run(); err != nil {
 			return err

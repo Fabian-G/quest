@@ -33,6 +33,7 @@ func (e *editCommand) command() *cobra.Command {
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
+		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList),
 		RunE:     e.edit,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),

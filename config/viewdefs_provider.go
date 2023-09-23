@@ -23,6 +23,7 @@ type ViewDef struct {
 	DefaultProjection string
 	DefaultSortOrder  string
 	DefaultClean      []string
+	Interactive       bool
 	Add               AddDef
 }
 
@@ -36,7 +37,7 @@ func buildDefaultViewDef(v *viper.Viper) ViewDef {
 	if defView == nil {
 		return fallbackListViewDef
 	}
-	return getViewDef(defView)
+	return getViewDef(v, defView)
 }
 
 func buildViewDefs(v *viper.Viper) []ViewDef {
@@ -46,17 +47,18 @@ func buildViewDefs(v *viper.Viper) []ViewDef {
 	}
 	defs := make([]ViewDef, 0, len(views))
 	for idx := range views {
-		defs = append(defs, getViewDef(v.Sub(fmt.Sprintf("view.%d", idx))))
+		defs = append(defs, getViewDef(v, v.Sub(fmt.Sprintf("view.%d", idx))))
 	}
 	return defs
 }
 
-func getViewDef(subCfg *viper.Viper) ViewDef {
+func getViewDef(parent *viper.Viper, subCfg *viper.Viper) ViewDef {
 	subCfg.SetDefault("name", "")
 	subCfg.SetDefault("query", "")
 	subCfg.SetDefault("projection", qprojection.StarProjection)
 	subCfg.SetDefault("sortOrder", "+done,-creation,+description")
 	subCfg.SetDefault("clean", nil)
+	subCfg.SetDefault("interactive", parent.Get(Interactive))
 	return ViewDef{
 		Name:              subCfg.GetString("name"),
 		DefaultQuery:      subCfg.GetString("query"),
@@ -64,6 +66,7 @@ func getViewDef(subCfg *viper.Viper) ViewDef {
 		DefaultSortOrder:  subCfg.GetString("sortOrder"),
 		DefaultClean:      strings.Split(subCfg.GetString("clean"), ","),
 		Add:               getAddDef(subCfg.Sub("add")),
+		Interactive:       subCfg.GetBool("interactive"),
 	}
 }
 
