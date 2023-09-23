@@ -82,13 +82,11 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	cleanProjects, cleanContexts, cleanTags := cleanAttributes(list, v.clean)
-	projectionCfg := qprojection.Config{
-		ColumnNames:   v.projection,
-		List:          list,
-		CleanTags:     cleanTags,
-		CleanProjects: cleanProjects,
-		CleanContexts: cleanContexts,
+	projector := qprojection.Projector{
+		Clean: v.clean,
+	}
+	if err := projector.Verify(v.projection, list); err != nil {
+		return fmt.Errorf("invalid projection: %w", err)
 	}
 
 	selection := query.Filter(list)
@@ -98,30 +96,30 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), selection)
 	}
 
-	listView, err := view.NewList(list, selection, v.interactive, projectionCfg)
+	listView, err := view.NewList(projector, v.interactive)
 	if err != nil {
 		return fmt.Errorf("could not create list view: %w", err)
 	}
+	model, _ := listView.Update(view.RefreshListMsg{
+		List:       list,
+		Selection:  selection,
+		Projection: v.projection,
+	})
 	switch {
 	case v.interactive:
-		programme := tea.NewProgram(listView, tea.WithOutput(cmd.OutOrStdout()))
-		end := startAutoUpdate(repo, programme, projectionCfg, query, sortFunc)
+		programme := tea.NewProgram(model, tea.WithOutput(cmd.OutOrStdout()))
+		end := startAutoUpdate(repo, programme, v.projection, query, sortFunc)
 		defer end()
 		if _, err := programme.Run(); err != nil {
 			return err
 		}
 	default:
-		l, _ := listView.Update(view.RefreshListMsg{
-			List:       list,
-			Selection:  selection,
-			Projection: projectionCfg,
-		})
-		fmt.Fprint(cmd.OutOrStdout(), l.View())
+		fmt.Fprint(cmd.OutOrStdout(), model.View())
 	}
 	return nil
 }
 
-func startAutoUpdate(repo *todotxt.Repo, prog *tea.Program, projectionCfg qprojection.Config, query qselect.Func, sort func(*todotxt.Item, *todotxt.Item) int) func() {
+func startAutoUpdate(repo *todotxt.Repo, prog *tea.Program, projection []string, query qselect.Func, sort func(*todotxt.Item, *todotxt.Item) int) func() {
 	news, end, err := repo.Watch()
 	if err != nil {
 		// Watching is not possible for whatever reason, but we ignore it to not interrupt the user
@@ -134,37 +132,13 @@ func startAutoUpdate(repo *todotxt.Repo, prog *tea.Program, projectionCfg qproje
 				continue
 			}
 			selection := query.Filter(newList)
-			projectionCfg.List = newList
 			slices.SortStableFunc(selection, sort)
 			prog.Send(view.RefreshListMsg{
 				List:       newList,
 				Selection:  selection,
-				Projection: projectionCfg,
+				Projection: projection,
 			})
 		}
 	}()
 	return end
-}
-
-func cleanAttributes(list *todotxt.List, clean []string) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {
-	for _, c := range clean {
-		c := strings.TrimSpace(c)
-		switch {
-		case c == "+ALL":
-			proj = append(proj, list.AllProjects()...)
-		case c == "@ALL":
-			ctx = append(ctx, list.AllContexts()...)
-		case c == "ALL":
-			tags = append(tags, list.AllTags()...)
-		case strings.HasPrefix(c, "@"):
-			ctx = append(ctx, todotxt.Context(c[1:]))
-		case strings.HasPrefix(c, "+"):
-			proj = append(proj, todotxt.Project(c[1:]))
-		case len(c) == 0:
-			continue
-		default:
-			tags = append(tags, c)
-		}
-	}
-	return
 }

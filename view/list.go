@@ -20,7 +20,8 @@ var detailsProjection = strings.Split(strings.ReplaceAll(qprojection.StarProject
 type List struct {
 	list            *todotxt.List
 	selection       []*todotxt.Item
-	extractors      []qprojection.Column
+	projection      []string
+	projector       qprojection.Projector
 	table           table.Model
 	interactive     bool
 	availableWidth  int
@@ -30,47 +31,44 @@ type List struct {
 type RefreshListMsg struct {
 	List       *todotxt.List
 	Selection  []*todotxt.Item
-	Projection qprojection.Config
+	Projection []string
 }
 
-func NewList(list *todotxt.List, selection []*todotxt.Item, interactive bool, pCfg qprojection.Config) (List, error) {
+func NewList(proj qprojection.Projector, interactive bool) (List, error) {
 	width, height, err := term.GetSize(0)
 	if err != nil {
 		return List{}, err
 	}
 	l := List{
-		list:            list,
-		selection:       selection,
+		projector:       proj,
 		interactive:     interactive,
 		availableWidth:  width,
 		availableHeight: height,
 	}
 
-	columnExtractors, err := qprojection.Compile(pCfg)
-	if err != nil {
-		return List{}, fmt.Errorf("invalid projection %v: %w", pCfg.ColumnNames, err)
-	}
-	l.extractors = columnExtractors
 	l.table = table.New()
-	return l.refreshTable(list, selection, pCfg), nil
+	return l, nil
 }
 
 func (l List) mapToColumns() ([]table.Row, []table.Column) {
-	columns := make([]table.Column, 0, len(l.extractors))
-	rows := make([]table.Row, len(l.selection))
-	for _, c := range l.extractors {
+	headings, data := l.projector.MustProject(l.projection, l.list) // It is the callers job to verify the projection
+	if len(headings) == 0 || len(data) == 0 {
+		return nil, nil
+	}
+	columns := make([]table.Column, 0, len(headings))
+	rows := make([]table.Row, len(data))
+	for i, h := range headings {
 		maxWidth := 0
-		values := make([]string, 0, len(l.extractors))
-		for _, i := range l.selection {
-			val := c.Projector(i)
-			values = append(values, val)
-			maxWidth = max(maxWidth, len(val))
+		values := make([]string, 0, len(data))
+		for _, val := range data {
+			values = append(values, val[i])
+			maxWidth = max(maxWidth, len(val[i]))
 		}
 		if maxWidth == 0 {
 			continue
 		}
 
-		columns = append(columns, table.Column{Title: c.Title, Width: max(maxWidth, len(c.Title))})
+		columns = append(columns, table.Column{Title: h, Width: max(maxWidth, len(h))})
 		for i, v := range values {
 			rows[i] = append(rows[i], v)
 		}
@@ -124,32 +122,28 @@ func (l List) renderDetails(writer io.StringWriter) {
 	if selectedItem == nil {
 		return
 	}
-	detailsProjectionConfig := qprojection.Config{
-		ColumnNames: detailsProjection,
-		List:        l.list,
-	}
-	columns := qprojection.MustCompile(detailsProjectionConfig)
+	headings, data := l.projector.MustProjectItem(detailsProjection, l.list, selectedItem)
 	var maxTitleWidth int
-	for _, c := range columns {
-		maxTitleWidth = max(maxTitleWidth, len(c.Title))
+	for _, c := range headings {
+		maxTitleWidth = max(maxTitleWidth, len(c))
 	}
 	titleStyle := lipgloss.NewStyle().Width(maxTitleWidth).Align(lipgloss.Left)
-	lines := make([]string, 0, len(columns))
-	for _, c := range columns {
-		if projection := c.Projector(selectedItem); len(projection) > 0 {
-			title := fmt.Sprintf("%s:\t", titleStyle.Render(c.Title))
-			truncated := runewidth.Truncate(projection, l.availableWidth-runewidth.StringWidth(title)-3, "...")
+	lines := make([]string, 0, len(data))
+	for i, c := range headings {
+		if len(data[i]) > 0 {
+			title := fmt.Sprintf("%s:\t", titleStyle.Render(c))
+			truncated := runewidth.Truncate(data[i], l.availableWidth-runewidth.StringWidth(title)-3, "...")
 			lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, title, truncated))
 		}
 	}
 	writer.WriteString(strings.Join(lines, "\n") + "\n")
 }
 
-func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projection qprojection.Config) List {
+func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projection []string) List {
 	previous := l.itemAtCursor()
-	l.extractors = qprojection.MustCompile(projection)
 	l.list = list
 	l.selection = selection
+	l.projection = projection
 	rows, columns := l.mapToColumns()
 	l.table.SetRows(nil)
 	l.table.SetColumns(nil)

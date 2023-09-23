@@ -19,12 +19,12 @@ type matcher interface {
 	fmt.Stringer
 }
 
-type Func func(*todotxt.Item) string
+type exFunc func(Projector, *todotxt.List, *todotxt.Item) string
 
 type columnDef struct {
 	matcher   matcher
-	name      func(Config, string) string
-	extractor func(Config, string) Func
+	name      func(string) string
+	extractor func(string) exFunc
 }
 
 var columns = []columnDef{
@@ -39,15 +39,6 @@ var columns = []columnDef{
 	descriptionColumn,
 }
 
-func findColumn(ctx Config, key string) (Column, error) {
-	for _, cDef := range columns {
-		if cDef.matcher.match(key) {
-			return Column{cDef.name(ctx, key), cDef.extractor(ctx, key)}, nil
-		}
-	}
-	return Column{}, fmt.Errorf("column %s not found. Available columns are: %v", key, availableColumns())
-}
-
 func availableColumns() []string {
 	availableColumns := make([]string, 0, len(columns))
 	for _, c := range columns {
@@ -58,12 +49,12 @@ func availableColumns() []string {
 
 var tagColumn = columnDef{
 	matcher: regexMatch("tag:.+"),
-	name: func(cfg Config, key string) string {
+	name: func(key string) string {
 		return strings.Split(key, ":")[1]
 	},
-	extractor: func(cfg Config, key string) Func {
+	extractor: func(key string) exFunc {
 		tagKey := strings.Split(key, ":")[1]
-		return func(i *todotxt.Item) string {
+		return func(p Projector, l *todotxt.List, i *todotxt.Item) string {
 			tagValues := i.Tags()[tagKey]
 			return strings.Join(tagValues, ",")
 		}
@@ -73,8 +64,8 @@ var tagColumn = columnDef{
 var doneColumn = columnDef{
 	matcher: staticMatch("done"),
 	name:    staticName("Done"),
-	extractor: staticColumn(func(i *todotxt.Item) string {
-		if i.Done() {
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+		if item.Done() {
 			return "x"
 		}
 		return ""
@@ -84,16 +75,16 @@ var doneColumn = columnDef{
 var priorityColumn = columnDef{
 	matcher: staticMatch("priority"),
 	name:    staticName("Priority"),
-	extractor: staticColumn(func(i *todotxt.Item) string {
-		return i.Priority().String()
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+		return item.Priority().String()
 	}),
 }
 
 var creationColumn = columnDef{
 	matcher: staticMatch("creation"),
 	name:    staticName("Created On"),
-	extractor: staticColumn(func(i *todotxt.Item) string {
-		date := i.CreationDate()
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+		date := item.CreationDate()
 		if date == nil {
 			return ""
 		}
@@ -104,8 +95,8 @@ var creationColumn = columnDef{
 var completionColumn = columnDef{
 	matcher: staticMatch("completion"),
 	name:    staticName("Completed On"),
-	extractor: staticColumn(func(i *todotxt.Item) string {
-		date := i.CompletionDate()
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+		date := item.CompletionDate()
 		if date == nil {
 			return ""
 		}
@@ -116,8 +107,8 @@ var completionColumn = columnDef{
 var projectsColumn = columnDef{
 	matcher: staticMatch("projects"),
 	name:    staticName("Projects"),
-	extractor: staticColumn(func(i *todotxt.Item) string {
-		projects := i.Projects()
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+		projects := item.Projects()
 		projectStrings := make([]string, 0, len(projects))
 		for _, p := range projects {
 			projectStrings = append(projectStrings, p.String())
@@ -129,8 +120,8 @@ var projectsColumn = columnDef{
 var contextsColumn = columnDef{
 	matcher: staticMatch("contexts"),
 	name:    staticName("Contexts"),
-	extractor: staticColumn(func(i *todotxt.Item) string {
-		contexts := i.Contexts()
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+		contexts := item.Contexts()
 		contextStrings := make([]string, 0, len(contexts))
 		for _, p := range contexts {
 			contextStrings = append(contextStrings, p.String())
@@ -142,9 +133,9 @@ var contextsColumn = columnDef{
 var idxColumn = columnDef{
 	matcher: staticMatch("idx"),
 	name:    staticName("Idx"),
-	extractor: func(cfg Config, key string) Func {
-		return func(i *todotxt.Item) string {
-			return strconv.Itoa(cfg.List.IndexOf(i))
+	extractor: func(key string) exFunc {
+		return func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+			return strconv.Itoa(list.IndexOf(item))
 		}
 	},
 }
@@ -152,7 +143,7 @@ var idxColumn = columnDef{
 var descriptionColumn = columnDef{
 	matcher: regexMatch("description(\\([0-9]+\\))?"),
 	name:    staticName("Description"),
-	extractor: func(cfg Config, key string) Func {
+	extractor: func(key string) exFunc {
 		key = strings.TrimPrefix(key, "description")
 		var width = math.MaxInt
 		if len(key) > 0 {
@@ -162,8 +153,8 @@ var descriptionColumn = columnDef{
 				panic(err) // can not happen, because matcher ensures that there is a valid number
 			}
 		}
-		return func(item *todotxt.Item) string {
-			return runewidth.Truncate(item.CleanDescription(cfg.CleanProjects, cfg.CleanContexts, cfg.CleanTags), width, "...")
+		return func(p Projector, l *todotxt.List, item *todotxt.Item) string {
+			return runewidth.Truncate(item.CleanDescription(p.expandClean(l)), width, "...")
 		}
 	},
 }
@@ -177,14 +168,14 @@ func staticMatch(columnKey string) matcher {
 	return staticMatcher{columnKey}
 }
 
-func staticColumn(f Func) func(Config, string) Func {
-	return func(cfg Config, s string) Func {
+func staticColumn(f exFunc) func(string) exFunc {
+	return func(key string) exFunc {
 		return f
 	}
 }
 
-func staticName(columnKey string) func(Config, string) string {
-	return func(cfg Config, s string) string {
+func staticName(columnKey string) func(string) string {
+	return func(s string) string {
 		return columnKey
 	}
 }
