@@ -89,6 +89,9 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return l, tea.Quit
 		}
 	case RefreshListMsg:
+		if len(msg.Selection) == 0 {
+			return l, tea.Quit
+		}
 		l = l.refreshTable(msg.List, msg.Selection, msg.Projection)
 	case tea.WindowSizeMsg:
 		l.availableWidth = msg.Width
