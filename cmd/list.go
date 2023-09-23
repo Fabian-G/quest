@@ -98,16 +98,12 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), selection)
 	}
 
-	if len(selection) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "no matches")
-		return nil
-	}
 	listView, err := view.NewList(list, selection, v.interactive, projectionCfg)
 	if err != nil {
 		return fmt.Errorf("could not create list view: %w", err)
 	}
 	switch {
-	case v.interactive || len(selection) == 1:
+	case v.interactive:
 		programme := tea.NewProgram(listView, tea.WithOutput(cmd.OutOrStdout()))
 		end := startAutoUpdate(repo, programme, projectionCfg, query, sortFunc)
 		defer end()
@@ -120,7 +116,7 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 			Selection:  selection,
 			Projection: projectionCfg,
 		})
-		fmt.Fprintln(cmd.OutOrStdout(), l.View())
+		fmt.Fprint(cmd.OutOrStdout(), l.View())
 	}
 	return nil
 }

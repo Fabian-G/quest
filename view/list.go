@@ -89,9 +89,6 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return l, tea.Quit
 		}
 	case RefreshListMsg:
-		if len(msg.Selection) == 0 {
-			return l, tea.Quit
-		}
 		l = l.refreshTable(msg.List, msg.Selection, msg.Projection)
 	case tea.WindowSizeMsg:
 		l.availableWidth = msg.Width
@@ -101,7 +98,7 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m, cmd := l.table.Update(msg)
 	l.table = m
 
-	if !l.interactive || len(l.selection) <= 1 {
+	if !l.interactive {
 		return l, tea.Quit
 	}
 	return l, cmd
@@ -113,6 +110,9 @@ func (l List) updateSize() List {
 }
 
 func (l List) View() string {
+	if len(l.selection) == 0 {
+		return "no matches"
+	}
 	builder := strings.Builder{}
 	switch {
 	case len(l.selection) <= 1:
@@ -128,7 +128,10 @@ func (l List) View() string {
 }
 
 func (l List) renderDetails(writer io.StringWriter) {
-	selectedItem := l.selection[l.table.Cursor()]
+	selectedItem := l.itemAtCursor()
+	if selectedItem == nil {
+		return
+	}
 	detailsProjectionConfig := qprojection.Config{
 		ColumnNames: detailsProjection,
 		List:        l.list,
@@ -151,7 +154,7 @@ func (l List) renderDetails(writer io.StringWriter) {
 }
 
 func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projection qprojection.Config) List {
-	previousSelection := l.selection[l.table.Cursor()]
+	previous := l.itemAtCursor()
 	l.extractors = qprojection.MustCompile(projection)
 	l.list = list
 	l.selection = selection
@@ -171,13 +174,27 @@ func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projec
 	}
 	l = l.updateSize()
 	l.table.UpdateViewport()
-
-	positionOfPreviousSelection := slices.IndexFunc(l.selection, func(i *todotxt.Item) bool {
-		return i.Description() == previousSelection.Description()
-	})
-	if positionOfPreviousSelection == -1 {
-		positionOfPreviousSelection = min(l.table.Cursor(), len(l.selection)-1)
-	}
-	l.table.SetCursor(positionOfPreviousSelection)
+	l.moveCursorToItem(previous)
 	return l
+}
+
+func (l List) itemAtCursor() *todotxt.Item {
+	if 0 <= l.table.Cursor() && l.table.Cursor() < len(l.selection) {
+		return l.selection[l.table.Cursor()]
+	}
+	return nil
+}
+
+func (l List) moveCursorToItem(target *todotxt.Item) {
+	var positioOfItem = -1
+	if target != nil {
+		positioOfItem = slices.IndexFunc(l.selection, func(i *todotxt.Item) bool {
+			return i.Description() == target.Description()
+		})
+	}
+	if positioOfItem == -1 {
+		l.table.SetCursor(min(l.table.Cursor(), max(0, len(l.selection)-1)))
+		return
+	}
+	l.table.SetCursor(positioOfItem)
 }

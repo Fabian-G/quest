@@ -72,6 +72,7 @@ func setTopLevelDefaults(v *viper.Viper, homeDir string) {
 	v.SetDefault(Macros, []any{})
 	v.SetDefault(Views, []any{})
 	v.SetDefault(Tags, make(map[string]string))
+	v.SetDefault(Interactive, false)
 }
 
 func getDefaultEditor() string {
