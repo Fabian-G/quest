@@ -153,6 +153,8 @@ func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projec
 	l.list = list
 	l.selection = selection
 	rows, columns := l.mapToColumns()
+	l.table.SetRows(nil)
+	l.table.SetColumns(nil)
 	l.table.SetColumns(columns)
 	l.table.SetRows(rows)
 	if l.interactive {
