@@ -91,7 +91,7 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		l.availableWidth = msg.Width
 		l.availableHeight = msg.Height
-		l.updateSize()
+		l = l.updateSize()
 	}
 	m, cmd := l.table.Update(msg)
 	l.table = m
@@ -99,8 +99,10 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return l, cmd
 }
 
-func (l List) updateSize() {
+func (l List) updateSize() List {
 	l.table.SetHeight(max(0, min(len(l.selection), l.availableHeight-len(detailsProjection)-3)))
+	l.table.UpdateViewport()
+	return l
 }
 
 func (l List) View() string {
@@ -151,6 +153,7 @@ func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projec
 	l.table.SetRows(rows)
 	if l.interactive {
 		l.updateSize()
+		l.moveCursorToItem(previous)
 		l.table.Focus()
 		l.table.SetStyles(table.DefaultStyles())
 	} else {
@@ -159,8 +162,6 @@ func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projec
 		defaultStyles.Selected = lipgloss.NewStyle()
 		l.table.SetStyles(defaultStyles)
 	}
-	l.table.UpdateViewport()
-	l.moveCursorToItem(previous)
 	return l
 }
 
