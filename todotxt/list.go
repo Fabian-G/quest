@@ -87,23 +87,26 @@ func (l *List) Remove(idx int) error {
 	}
 	itemToRemove.emitFunc = nil
 
-	diskIdx := slices.Index(l.diskOrder, l.idxOrder[idx])
+	diskIdx := slices.Index(l.diskOrder, l.idxOrder[idx-1])
 	l.diskOrder[diskIdx] = nil
-	l.idxOrder[idx] = nil
+	l.idxOrder[idx-1] = nil
 	err := l.emit(ModEvent{Previous: itemToRemove, Current: nil})
 	if err != nil {
 		l.diskOrder[diskIdx] = itemToRemove
-		l.idxOrder[idx] = itemToRemove
+		l.idxOrder[idx-1] = itemToRemove
 	}
 	return err
 }
 
+// Get returns the item with the specified idx. The idx is 1-based (see IndexOf)
 func (l *List) Get(idx int) *Item {
-	return l.idxOrder[idx]
+	return l.idxOrder[idx-1]
 }
 
+// IndexOf returns the index of the according to the IdxOrderFunc
+// The index is 1 bases so that (depending on the IdxOrderFunc) the index corresponds to the line number
 func (l *List) IndexOf(i *Item) int {
-	return slices.Index(l.idxOrder, i)
+	return slices.Index(l.idxOrder, i) + 1
 }
 
 func (l *List) Len() int {

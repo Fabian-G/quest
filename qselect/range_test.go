@@ -10,7 +10,6 @@ import (
 
 func Test_Range(t *testing.T) {
 	testList := todotxt.ListOf(
-		todotxt.MustBuildItem(todotxt.WithDescription("T0")),
 		todotxt.MustBuildItem(todotxt.WithDescription("T1")),
 		todotxt.MustBuildItem(todotxt.WithDescription("T2")),
 		todotxt.MustBuildItem(todotxt.WithDescription("T3")),
@@ -47,7 +46,7 @@ func Test_Range(t *testing.T) {
 		},
 		"open ranges": {
 			rng:             "-4,8-",
-			expectedMatches: []string{"T0", "T1", "T2", "T3", "T4", "T8", "T9"},
+			expectedMatches: []string{"T1", "T2", "T3", "T4", "T8", "T9"},
 		},
 	}
 

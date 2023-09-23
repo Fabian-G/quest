@@ -28,9 +28,9 @@ func Test_ItemsAreOrderedCorrectly(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, 3, list.Len())
-	assert.Equal(t, "item 3", list.Get(0).Description())
-	assert.Equal(t, "item 2", list.Get(1).Description())
-	assert.Equal(t, "item 1", list.Get(2).Description())
+	assert.Equal(t, "item 3", list.Get(1).Description())
+	assert.Equal(t, "item 2", list.Get(2).Description())
+	assert.Equal(t, "item 1", list.Get(3).Description())
 }
 
 func Test_OptimisticLockingReturnsErrorOnSaveIfWrittenInTheMeantime(t *testing.T) {
@@ -111,7 +111,7 @@ func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 	newList, err := change()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, newList.Len())
-	assert.Equal(t, "Hello World", newList.Get(0).Description())
+	assert.Equal(t, "Hello World", newList.Get(1).Description())
 }
 
 func Test_BackupsAreKeptAppropriately(t *testing.T) {
@@ -162,7 +162,7 @@ func Test_NonExistingTodoFileIsCreated(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, 1, list.Len())
-	assert.Equal(t, "Hello World", list.Get(0).Description())
+	assert.Equal(t, "Hello World", list.Get(1).Description())
 }
 
 func createTestFile(t *testing.T, content string) string {

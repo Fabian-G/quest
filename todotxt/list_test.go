@@ -32,7 +32,7 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World")),
 			),
 			op: func(l *todotxt.List) {
-				l.Remove(0)
+				l.Remove(1)
 			},
 			previousMatcher: func(t *testing.T, previous *todotxt.Item) {
 				assert.Equal(t, "Hello World", previous.Description())
@@ -46,7 +46,7 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World")),
 			),
 			op: func(l *todotxt.List) {
-				l.Get(0).Complete()
+				l.Get(1).Complete()
 			},
 			previousMatcher: func(t *testing.T, i *todotxt.Item) {
 				assert.Equal(t, "Hello World", i.Description())
@@ -61,7 +61,7 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World"), todotxt.WithDone(true)),
 			),
 			op: func(l *todotxt.List) {
-				l.Get(0).MarkUndone()
+				l.Get(1).MarkUndone()
 			},
 			previousMatcher: func(t *testing.T, i *todotxt.Item) {
 				assert.Equal(t, "Hello World", i.Description())
@@ -76,7 +76,7 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World")),
 			),
 			op: func(l *todotxt.List) {
-				l.Get(0).EditDescription("This is a description change")
+				l.Get(1).EditDescription("This is a description change")
 			},
 			previousMatcher: func(t *testing.T, i *todotxt.Item) {
 				assert.Equal(t, "Hello World", i.Description())
@@ -90,7 +90,7 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World")),
 			),
 			op: func(l *todotxt.List) {
-				l.Get(0).PrioritizeAs(todotxt.PrioB)
+				l.Get(1).PrioritizeAs(todotxt.PrioB)
 			},
 			previousMatcher: func(t *testing.T, i *todotxt.Item) {
 				assert.Equal(t, todotxt.PrioNone, i.Priority())
@@ -128,18 +128,18 @@ func Test_ModificationsMadeInTheHookGetThroughToTheList(t *testing.T) {
 	})
 	list.AddHook(undoer)
 
-	list.Get(0).Complete()
-	list.Get(0).EditDescription("Foo")
-	list.Get(0).PrioritizeAs(todotxt.PrioA)
+	list.Get(1).Complete()
+	list.Get(1).EditDescription("Foo")
+	list.Get(1).PrioritizeAs(todotxt.PrioA)
 
-	assert.Equal(t, "Hello World That change sucked That change sucked That change sucked", list.Get(0).Description())
-	assert.False(t, list.Get(0).Done())
+	assert.Equal(t, "Hello World That change sucked That change sucked That change sucked", list.Get(1).Description())
+	assert.False(t, list.Get(1).Done())
 }
 
 func TestList_Remove(t *testing.T) {
 	list := todotxt.ListOf(todotxt.MustBuildItem(todotxt.WithDescription("Hello World")))
 
-	err := list.Remove(0)
+	err := list.Remove(1)
 
 	assert.Nil(t, err)
 	assert.Equal(t, 0, list.Len())
@@ -157,5 +157,5 @@ func TestList_Add(t *testing.T) {
 	err := list.Add(newItem)
 
 	assert.Nil(t, err)
-	assert.Equal(t, 1, list.IndexOf(newItem))
+	assert.Equal(t, 2, list.IndexOf(newItem))
 }

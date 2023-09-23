@@ -120,7 +120,7 @@ func Test_eval(t *testing.T) {
 			A not done item
 			x a done item
 			`),
-			itemNumber: 0,
+			itemNumber: 1,
 			query:      "done(it)",
 			result:     false,
 		},
@@ -129,7 +129,7 @@ func Test_eval(t *testing.T) {
 			A not done item
 			x a done item
 			`),
-			itemNumber: 1,
+			itemNumber: 2,
 			query:      "done(it)",
 			result:     true,
 		},
@@ -138,7 +138,7 @@ func Test_eval(t *testing.T) {
 			x an item with the +newKitchen Project
 			an item without the newKitchen Project
 			`),
-			itemNumber: 0,
+			itemNumber: 1,
 			query:      `exists p in projects(it): p == "+newKitchen"`,
 			result:     true,
 		},
@@ -147,7 +147,7 @@ func Test_eval(t *testing.T) {
 			x an item with the +newKitchen Project
 			an item without the newKitchen Project
 			`),
-			itemNumber: 1,
+			itemNumber: 2,
 			query:      `exists p in projects(it): p == "+newKitchen"`,
 			result:     false,
 		},
@@ -229,7 +229,7 @@ func Test_eval(t *testing.T) {
 			`),
 			query:      `+foo`,
 			result:     true,
-			itemNumber: 0,
+			itemNumber: 1,
 		},
 		"project matcher matches project prefixes (false)": {
 			list: listFromString(t, `
@@ -237,7 +237,7 @@ func Test_eval(t *testing.T) {
 			`),
 			query:      `+foo`,
 			result:     false,
-			itemNumber: 0,
+			itemNumber: 1,
 		},
 		"context matcher matches context prefixes": {
 			list: listFromString(t, `
@@ -245,7 +245,7 @@ func Test_eval(t *testing.T) {
 			`),
 			query:      `+foo`,
 			result:     true,
-			itemNumber: 0,
+			itemNumber: 1,
 		},
 		"context matcher matches context prefixes (false)": {
 			list: listFromString(t, `
@@ -253,7 +253,7 @@ func Test_eval(t *testing.T) {
 			`),
 			query:      `@foo`,
 			result:     false,
-			itemNumber: 0,
+			itemNumber: 1,
 		},
 		"project matcher does not match prefix without dot": {
 			list: listFromString(t, `
@@ -261,7 +261,7 @@ func Test_eval(t *testing.T) {
 			`),
 			query:      `+fo`,
 			result:     false,
-			itemNumber: 0,
+			itemNumber: 1,
 		},
 		"empty query matches everything": {
 			list: listFromString(t, `
@@ -269,7 +269,7 @@ func Test_eval(t *testing.T) {
 			`),
 			query:      ``,
 			result:     true,
-			itemNumber: 0,
+			itemNumber: 1,
 		},
 		"date after": {
 			list: listFromString(t, `
@@ -312,7 +312,7 @@ func Test_eval(t *testing.T) {
 			a blocked task after:pre
 			`),
 			query:      `forall i in items: (exists pre in stringListTag("after"): tag(i, "id") == pre) -> done(i)`,
-			itemNumber: 1,
+			itemNumber: 2,
 			result:     false,
 		},
 		"date +": {
@@ -320,7 +320,7 @@ func Test_eval(t *testing.T) {
 			a date due:2020-01-01
 			`),
 			query:      `dateTag("due")+1d==date(2020,01,02)`,
-			itemNumber: 0,
+			itemNumber: 1,
 			result:     true,
 		},
 		"date -": {
@@ -328,7 +328,7 @@ func Test_eval(t *testing.T) {
 			a date due:2020-01-02
 			`),
 			query:      `dateTag("due")-1d==date(2020,01,01)`,
-			itemNumber: 0,
+			itemNumber: 1,
 			result:     true,
 		},
 		"double not": {
@@ -336,7 +336,7 @@ func Test_eval(t *testing.T) {
 			irrelevant
 			`),
 			query:      `!!true`,
-			itemNumber: 0,
+			itemNumber: 1,
 			result:     true,
 		},
 		"minus sign": {
@@ -344,13 +344,16 @@ func Test_eval(t *testing.T) {
 			irrelevant
 			`),
 			query:      `+3+5-4==---4+5--3`,
-			itemNumber: 0,
+			itemNumber: 1,
 			result:     true,
 		},
 	}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
+			if tc.itemNumber == 0 {
+				tc.itemNumber = 1
+			}
 			queryFn, err := CompileQQL(tc.query)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.result, queryFn(tc.list, tc.list.Get(tc.itemNumber)))

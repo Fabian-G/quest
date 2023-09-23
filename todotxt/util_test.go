@@ -24,7 +24,8 @@ func AssertItemEqual(t *testing.T, expected *Item, actual *Item) {
 
 func AssertListEqual(t *testing.T, expected *List, actual *List) {
 	assert.Equal(t, expected.Len(), actual.Len())
+	actualTasks := actual.Tasks()
 	for i, task := range expected.Tasks() {
-		AssertItemEqual(t, task, actual.Get(i))
+		AssertItemEqual(t, task, actualTasks[i])
 	}
 }
