@@ -51,7 +51,7 @@ func NewList(proj qprojection.Projector, interactive bool) (List, error) {
 }
 
 func (l List) mapToColumns() ([]table.Row, []table.Column) {
-	headings, data := l.projector.MustProject(l.projection, l.list) // It is the callers job to verify the projection
+	headings, data := l.projector.MustProject(l.projection, l.list, l.selection) // It is the callers job to verify the projection
 	if len(headings) == 0 || len(data) == 0 {
 		return nil, nil
 	}
@@ -124,7 +124,7 @@ func (l List) renderDetails(writer io.StringWriter) {
 	if selectedItem == nil {
 		return
 	}
-	headings, data := l.projector.MustProjectItem(detailsProjection, l.list, selectedItem)
+	headings, data := l.projector.MustProject(detailsProjection, l.list, []*todotxt.Item{selectedItem})
 	var maxTitleWidth int
 	for _, c := range headings {
 		maxTitleWidth = max(maxTitleWidth, len(c))
@@ -132,9 +132,9 @@ func (l List) renderDetails(writer io.StringWriter) {
 	titleStyle := lipgloss.NewStyle().Width(maxTitleWidth).Align(lipgloss.Left)
 	lines := make([]string, 0, len(data))
 	for i, c := range headings {
-		if len(data[i]) > 0 {
+		if len(data[0][i]) > 0 {
 			title := fmt.Sprintf("%s:\t", titleStyle.Render(c))
-			truncated := runewidth.Truncate(data[i], l.availableWidth-runewidth.StringWidth(title)-3, "...")
+			truncated := runewidth.Truncate(data[0][i], l.availableWidth-runewidth.StringWidth(title)-3, "...")
 			lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, title, truncated))
 		}
 	}
@@ -152,8 +152,8 @@ func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projec
 	l.table.SetColumns(columns)
 	l.table.SetRows(rows)
 	if l.interactive {
-		l.updateSize()
-		l.moveCursorToItem(previous)
+		l = l.updateSize()
+		l = l.moveCursorToItem(previous)
 		l.table.Focus()
 		l.table.SetStyles(table.DefaultStyles())
 	} else {
@@ -172,16 +172,17 @@ func (l List) itemAtCursor() *todotxt.Item {
 	return nil
 }
 
-func (l List) moveCursorToItem(target *todotxt.Item) {
-	var positioOfItem = -1
+func (l List) moveCursorToItem(target *todotxt.Item) List {
+	var positionOfItem = -1
 	if target != nil {
-		positioOfItem = slices.IndexFunc(l.selection, func(i *todotxt.Item) bool {
+		positionOfItem = slices.IndexFunc(l.selection, func(i *todotxt.Item) bool {
 			return i.Description() == target.Description()
 		})
 	}
-	if positioOfItem == -1 {
+	if positionOfItem == -1 {
 		l.table.SetCursor(min(l.table.Cursor(), max(0, len(l.selection)-1)))
-		return
+		return l
 	}
-	l.table.SetCursor(positioOfItem)
+	l.table.SetCursor(positionOfItem)
+	return l
 }

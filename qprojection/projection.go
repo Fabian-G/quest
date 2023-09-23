@@ -22,8 +22,8 @@ func (p Projector) Verify(projection []string, list *todotxt.List) error {
 	return nil
 }
 
-func (p Projector) MustProject(projection []string, list *todotxt.List) ([]string, [][]string) {
-	header, data, err := p.Project(projection, list)
+func (p Projector) MustProject(projection []string, list *todotxt.List, selection []*todotxt.Item) ([]string, [][]string) {
+	header, data, err := p.Project(projection, list, selection)
 	if err != nil {
 		panic(err)
 	}
@@ -31,34 +31,16 @@ func (p Projector) MustProject(projection []string, list *todotxt.List) ([]strin
 	return header, data
 }
 
-func (p Projector) Project(projection []string, list *todotxt.List) ([]string, [][]string, error) {
+func (p Projector) Project(projection []string, list *todotxt.List, selection []*todotxt.Item) ([]string, [][]string, error) {
 	headers, extractors, err := p.compile(projection, list)
 	if err != nil {
 		return nil, nil, err
 	}
-	tasks := list.Tasks()
-	data := make([][]string, 0, len(tasks))
-	for _, i := range tasks {
+	data := make([][]string, 0, len(selection))
+	for _, i := range selection {
 		data = append(data, p.projectItem(list, i, extractors))
 	}
 	return headers, data, nil
-}
-
-func (p Projector) MustProjectItem(projection []string, list *todotxt.List, item *todotxt.Item) ([]string, []string) {
-	header, data, err := p.ProjectItem(projection, list, item)
-	if err != nil {
-		panic(err)
-	}
-
-	return header, data
-}
-
-func (p Projector) ProjectItem(projection []string, list *todotxt.List, item *todotxt.Item) ([]string, []string, error) {
-	headers, extractors, err := p.compile(projection, list)
-	if err != nil {
-		return nil, nil, err
-	}
-	return headers, p.projectItem(list, item, extractors), nil
 }
 
 func (p Projector) compile(projection []string, list *todotxt.List) ([]string, []exFunc, error) {
