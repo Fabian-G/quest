@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/Fabian-G/quest/qprojection"
@@ -39,7 +40,10 @@ func buildDefaultViewDef(v *viper.Viper) ViewDef {
 }
 
 func buildViewDefs(v *viper.Viper) []ViewDef {
-	views := v.Get("view").([]any)
+	views, ok := v.Get(Views).([]any)
+	if !ok {
+		log.Fatal("error in config: expected view to be a list")
+	}
 	defs := make([]ViewDef, 0, len(views))
 	for idx := range views {
 		defs = append(defs, getViewDef(v.Sub(fmt.Sprintf("view.%d", idx))))

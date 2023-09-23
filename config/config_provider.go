@@ -21,9 +21,12 @@ const (
 	Interactive Key = "interactive"
 	Editor      Key = "editor"
 	UnknownTags Key = "unknown-tags"
+	Views       Key = "view"
+	Macros      Key = "macro"
+	Tags        Key = "tags"
 )
 
-func buildConfig() (*viper.Viper, error) {
+func buildConfig(file string) (*viper.Viper, error) {
 	v := viper.New()
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -35,10 +38,14 @@ func buildConfig() (*viper.Viper, error) {
 		configHome = path.Join(homeDir, ".config")
 	}
 
-	v.SetConfigName("config")
 	v.SetConfigType("toml")
-	v.AddConfigPath(path.Join(configHome, "quest"))
-	v.AddConfigPath("$HOME/.quest/")
+	if file != "" {
+		v.SetConfigFile(file)
+	} else {
+		v.SetConfigName("config")
+		v.AddConfigPath(path.Join(configHome, "quest"))
+		v.AddConfigPath("$HOME/.quest/")
+	}
 	setTopLevelDefaults(v, homeDir)
 
 	if err := v.ReadInConfig(); err != nil {
@@ -62,6 +69,9 @@ func setTopLevelDefaults(v *viper.Viper, homeDir string) {
 	v.SetDefault(KeepBackups, 5)
 	v.SetDefault(Editor, getDefaultEditor())
 	v.SetDefault(UnknownTags, true)
+	v.SetDefault(Macros, []any{})
+	v.SetDefault(Views, []any{})
+	v.SetDefault(Tags, make(map[string]string))
 }
 
 func getDefaultEditor() string {

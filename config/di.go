@@ -9,6 +9,7 @@ import (
 )
 
 type Di struct {
+	ConfigFile  string
 	config      *viper.Viper
 	repo        *todotxt.Repo
 	doneRepo    *todotxt.Repo
@@ -35,7 +36,7 @@ func (d *Di) DoneTxtRepo() *todotxt.Repo {
 func (d *Di) Config() *viper.Viper {
 	if d.config == nil {
 		var err error
-		if d.config, err = buildConfig(); err != nil {
+		if d.config, err = buildConfig(d.ConfigFile); err != nil {
 			log.Fatal(err)
 		}
 	}

@@ -16,7 +16,7 @@ type MacroDef struct {
 }
 
 func buildMacroDefs(v *viper.Viper) []MacroDef {
-	macros := v.Get("macro").([]any)
+	macros := v.Get(Macros).([]any)
 	defs := make([]MacroDef, 0, len(macros))
 	for m := range macros {
 		setMacroDefaults(v, m)
