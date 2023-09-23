@@ -106,7 +106,7 @@ func (l List) updateSize() List {
 
 func (l List) View() string {
 	if len(l.selection) == 0 {
-		return "no matches"
+		return "no matches\n"
 	}
 	builder := strings.Builder{}
 	builder.WriteString(l.table.View())
