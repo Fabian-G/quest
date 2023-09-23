@@ -99,7 +99,7 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not create list view: %w", err)
 	}
 	switch {
-	case interactive:
+	case interactive || len(selection) == 1:
 		programme := tea.NewProgram(listView, tea.WithOutput(cmd.OutOrStdout()))
 		if _, err := programme.Run(); err != nil {
 			return err

@@ -135,8 +135,7 @@ func (l List) renderDetails(writer io.StringWriter) {
 			lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, title, truncated))
 		}
 	}
-	writer.WriteString(strings.Join(lines, "\n"))
-	writer.WriteString("\n")
+	writer.WriteString(strings.Join(lines, "\n") + "\n")
 }
 
 func (l List) refreshTable() List {
