@@ -93,20 +93,16 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		l.availableWidth = msg.Width
 		l.availableHeight = msg.Height
-		l = l.updateSize()
+		l.updateSize()
 	}
 	m, cmd := l.table.Update(msg)
 	l.table = m
 
-	if !l.interactive {
-		return l, tea.Quit
-	}
 	return l, cmd
 }
 
-func (l List) updateSize() List {
+func (l List) updateSize() {
 	l.table.SetHeight(max(0, min(len(l.selection), l.availableHeight-len(detailsProjection)-3)))
-	return l
 }
 
 func (l List) View() string {
@@ -114,15 +110,11 @@ func (l List) View() string {
 		return "no matches"
 	}
 	builder := strings.Builder{}
-	switch {
-	case len(l.selection) <= 1:
+	builder.WriteString(l.table.View())
+	builder.WriteString("\n")
+	if l.interactive {
+		builder.WriteString("\n")
 		l.renderDetails(&builder)
-	case l.interactive:
-		builder.WriteString(l.table.View())
-		builder.WriteString("\n\n")
-		l.renderDetails(&builder)
-	default:
-		builder.WriteString(l.table.View())
 	}
 	return builder.String()
 }
@@ -164,6 +156,7 @@ func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projec
 	l.table.SetColumns(columns)
 	l.table.SetRows(rows)
 	if l.interactive {
+		l.updateSize()
 		l.table.Focus()
 		l.table.SetStyles(table.DefaultStyles())
 	} else {
@@ -172,7 +165,6 @@ func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projec
 		defaultStyles.Selected = lipgloss.NewStyle()
 		l.table.SetStyles(defaultStyles)
 	}
-	l = l.updateSize()
 	l.table.UpdateViewport()
 	l.moveCursorToItem(previous)
 	return l
