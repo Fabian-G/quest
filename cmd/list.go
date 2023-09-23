@@ -116,8 +116,9 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		}
 	default:
 		l, _ := listView.Update(view.RefreshListMsg{
-			List:      list,
-			Selection: selection,
+			List:       list,
+			Selection:  selection,
+			Projection: projectionCfg,
 		})
 		fmt.Fprintln(cmd.OutOrStdout(), l.View())
 	}
