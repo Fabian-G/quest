@@ -94,7 +94,7 @@ func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 	assert.Nil(t, err)
 
 	go triggerChange(t, file)
-	timeout := time.After(15 * time.Second)
+	timeout := time.After(5 * time.Second)
 	var change todotxt.ReadFunc
 	select {
 	case change = <-c:
@@ -108,7 +108,7 @@ func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 
 	// Testing twice, because previously there were troubles where it worked only once
 	go triggerChange(t, file)
-	timeout = time.After(15 * time.Second)
+	timeout = time.After(5 * time.Second)
 	select {
 	case change = <-c:
 	case <-timeout:
