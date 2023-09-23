@@ -29,6 +29,7 @@ func Root(di *config.Di) *cobra.Command {
 		Title: "Query",
 	})
 
+	rootCmd.AddCommand(newOpenCommand().command())
 	for _, def := range di.ViewDefs() {
 		viewCommand := newViewCommand(def)
 		rootCmd.AddCommand(viewCommand.command())

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
@@ -61,7 +60,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 	}
 	defer os.Remove(filePath)
 	for {
-		if err = e.startEditor(cfg.GetString(config.Editor), filePath); err != nil {
+		if err = cmdutil.StartEditor(cfg.GetString(config.Editor), filePath); err != nil {
 			return err
 		}
 		changes, removals, err := e.applyChanges(filePath, writtenLines, list, selection)
@@ -69,18 +68,10 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(cmd.OutOrStdout(), "Items edited:  %d\nItems removed: %d\n", changes, removals)
 			return nil
 		}
-		if !askRetry(cmd, err) {
+		if !cmdutil.AskRetry(cmd, err) {
 			return err
 		}
 	}
-}
-
-func askRetry(cmd *cobra.Command, err error) bool {
-	fmt.Fprintf(cmd.OutOrStdout(), "your changes are invalid: %s\n", err)
-	fmt.Fprint(cmd.OutOrStdout(), "Retry? (Y/n) ")
-	var answer string
-	fmt.Fscanln(cmd.InOrStdin(), &answer)
-	return strings.ToLower(answer) != "n"
 }
 
 func (e *editCommand) dumpDescriptionsToTempFile(items []*todotxt.Item) (string, int, error) {
@@ -97,17 +88,6 @@ func (e *editCommand) dumpDescriptionsToTempFile(items []*todotxt.Item) (string,
 	}
 
 	return tmpFile.Name(), len(items), writer.Flush()
-}
-
-func (e *editCommand) startEditor(editorCmd string, path string) error {
-	cmd := exec.Command(editorCmd, path)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("editor command failed: %w", err)
-	}
-	return nil
 }
 
 func (e *editCommand) applyChanges(tmpFile string, expectedLines int, list *todotxt.List, selection []*todotxt.Item) (int, int, error) {
