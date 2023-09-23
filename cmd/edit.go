@@ -131,6 +131,7 @@ func (e *editCommand) applyChanges(tmpFile string, expectedLines int, list *todo
 		if strings.TrimSpace(item.Description()) == "" {
 			removedItems++
 			list.Remove(list.IndexOf(selection[idx]))
+			continue
 		}
 		before := *selection[idx]
 		if err := selection[idx].Apply(item); err != nil {
