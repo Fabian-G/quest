@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 
 	"github.com/spf13/viper"
 )
@@ -21,6 +20,7 @@ const (
 	KeepBackups Key = "backup"
 	Interactive Key = "interactive"
 	Editor      Key = "editor"
+	UnknownTags Key = "unknown-tags"
 )
 
 func buildConfig() (*viper.Viper, error) {
@@ -61,16 +61,11 @@ func setTopLevelDefaults(v *viper.Viper, homeDir string) {
 	v.SetDefault(DoneFile, path.Join(dataHome, "quest/done.txt"))
 	v.SetDefault(KeepBackups, 5)
 	v.SetDefault(Editor, getDefaultEditor())
+	v.SetDefault(UnknownTags, true)
 }
 
 func getDefaultEditor() string {
-	var possibleEditors []string = []string{os.Getenv("EDITOR")}
-	switch runtime.GOOS {
-	case "windows":
-		possibleEditors = append(possibleEditors, "notepad.exe")
-	case "linux":
-		possibleEditors = append(possibleEditors, "nano", "nvim", "vim", "vi", "emacs", "ed")
-	}
+	var possibleEditors []string = []string{os.Getenv("EDITOR"), "nano", "nvim", "vim", "vi", "emacs", "notepad.exe"}
 	for _, editor := range possibleEditors {
 		if p, err := exec.LookPath(editor); err == nil {
 			return p

@@ -15,23 +15,26 @@ import (
 )
 
 type TagExpansion struct {
-	list    *todotxt.List
-	tags    map[string]qselect.DType
-	nowFunc func() time.Time
+	list       *todotxt.List
+	tags       map[string]qselect.DType
+	unkownTags bool
+	nowFunc    func() time.Time
 }
 
-func NewTagExpansion(list *todotxt.List, tags map[string]qselect.DType) todotxt.Hook {
+func NewTagExpansion(list *todotxt.List, unknownTags bool, tags map[string]qselect.DType) todotxt.Hook {
 	return &TagExpansion{
-		list: list,
-		tags: tags,
+		list:       list,
+		tags:       tags,
+		unkownTags: unknownTags,
 	}
 }
 
-func NewTagExpansionWithNowFunc(list *todotxt.List, tags map[string]qselect.DType, now func() time.Time) todotxt.Hook {
+func NewTagExpansionWithNowFunc(list *todotxt.List, unknownTags bool, tags map[string]qselect.DType, now func() time.Time) todotxt.Hook {
 	return &TagExpansion{
-		list:    list,
-		tags:    tags,
-		nowFunc: now,
+		list:       list,
+		tags:       tags,
+		unkownTags: unknownTags,
+		nowFunc:    now,
 	}
 }
 
@@ -39,14 +42,12 @@ func (t TagExpansion) OnMod(event todotxt.ModEvent) error {
 	if event.Current == nil {
 		return nil // We don't care about removals
 	}
-	var validationErrors []error
 	for itemTag := range event.Current.Tags() {
 		if typ, ok := t.tags[itemTag]; ok {
 			t.expandTag(typ, itemTag, event.Current)
-			validationErrors = append(validationErrors, validate(typ, itemTag, event.Current.Tags()[itemTag]))
 		}
 	}
-	return errors.Join(validationErrors...)
+	return t.validateItem(event.Current)
 }
 
 func (t TagExpansion) expandTag(typ qselect.DType, tag string, i *todotxt.Item) {
@@ -195,16 +196,22 @@ func (t TagExpansion) projectMinValue(projects []todotxt.Project, tag string) in
 }
 
 func (t TagExpansion) OnValidate(event todotxt.ValidationEvent) error {
+	return t.validateItem(event.Item)
+}
+
+func (t TagExpansion) validateItem(item *todotxt.Item) error {
 	var validationErrors []error
-	for itemTag, tagValues := range event.Item.Tags() {
+	for itemTag, tagValues := range item.Tags() {
 		if typ, ok := t.tags[itemTag]; ok {
-			validationErrors = append(validationErrors, validate(typ, itemTag, tagValues))
+			validationErrors = append(validationErrors, validateTag(typ, itemTag, tagValues))
+		} else if !t.unkownTags {
+			validationErrors = append(validationErrors, fmt.Errorf("encountered unknown tag %s", itemTag))
 		}
 	}
 	return errors.Join(validationErrors...)
 }
 
-func validate(typ qselect.DType, tag string, values []string) error {
+func validateTag(typ qselect.DType, tag string, values []string) error {
 	var validationErrors []error
 	for _, v := range values {
 		switch typ {
@@ -228,6 +235,8 @@ func validate(typ qselect.DType, tag string, values []string) error {
 			if err != nil {
 				validationErrors = append(validationErrors, fmt.Errorf("tag \"%s\" of item violates bool constraint: %w", tag, err))
 			}
+		case qselect.QString:
+			// String can be anythin
 		default:
 			return fmt.Errorf("validation for type %s is not supported", typ)
 		}

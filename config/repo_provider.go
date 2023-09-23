@@ -37,7 +37,7 @@ func hooks(v *viper.Viper, tagTypes map[string]qselect.DType) []todotxt.HookBuil
 	hooks := make([]todotxt.HookBuilder, 0)
 	if len(tagTypes) > 0 {
 		hooks = append(hooks, func(l *todotxt.List) todotxt.Hook {
-			return hook.NewTagExpansion(l, tagTypes)
+			return hook.NewTagExpansion(l, v.GetBool(UnknownTags), tagTypes)
 		})
 	}
 	if recTag := v.GetString("recurrence.rec-tag"); recTag != "" {

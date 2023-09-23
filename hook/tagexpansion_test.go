@@ -89,7 +89,7 @@ func Test_IntExpansion(t *testing.T) {
 				todotxt.WithDescription("Hello World"),
 			)
 			list := todotxt.ListOf(append(tc.otherTasksInList, item)...)
-			list.AddHook(hook.NewTagExpansion(list, map[string]qselect.DType{
+			list.AddHook(hook.NewTagExpansion(list, false, map[string]qselect.DType{
 				"i": qselect.QInt,
 			}))
 
@@ -131,6 +131,10 @@ func Test_DateExpansion(t *testing.T) {
 			description:       "hello due:today-1d world",
 			expectedExpansion: "hello due:2022-02-01 world",
 		},
+		"unknown tags are allowed": {
+			description:       "an unknown:tag should work",
+			expectedExpansion: "an unknown:tag should work",
+		},
 	}
 
 	for name, tc := range testCases {
@@ -139,7 +143,7 @@ func Test_DateExpansion(t *testing.T) {
 				todotxt.WithDescription("Hello World"),
 			)
 			list := todotxt.ListOf(append(tc.otherTasksInList, item)...)
-			list.AddHook(hook.NewTagExpansionWithNowFunc(list, map[string]qselect.DType{
+			list.AddHook(hook.NewTagExpansionWithNowFunc(list, true, map[string]qselect.DType{
 				"due": qselect.QDate,
 			}, func() time.Time {
 				return time.Date(2022, 2, 2, 0, 0, 0, 0, time.UTC)
@@ -158,7 +162,7 @@ func Test_TagExpansionsIgnoresRemovalEvents(t *testing.T) {
 		todotxt.WithDescription("Hello World"),
 	)
 	list := todotxt.ListOf(item)
-	list.AddHook(hook.NewTagExpansionWithNowFunc(list, map[string]qselect.DType{
+	list.AddHook(hook.NewTagExpansionWithNowFunc(list, false, map[string]qselect.DType{
 		"due": qselect.QDate,
 	}, func() time.Time {
 		return time.Date(2022, 2, 2, 0, 0, 0, 0, time.UTC)
@@ -168,4 +172,37 @@ func Test_TagExpansionsIgnoresRemovalEvents(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, 0, list.Len())
+}
+
+func Test_TagExpansionsError(t *testing.T) {
+	testCases := map[string]struct {
+		description string
+	}{
+		"unkown tags": {
+			description: "hello unknown:tag abc",
+		},
+		"wrong expansion": {
+			description: "a wrong int someint:expansion",
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			item := todotxt.MustBuildItem(
+				todotxt.WithDescription("Hello World"),
+			)
+			list := todotxt.ListOf(item)
+			list.AddHook(hook.NewTagExpansionWithNowFunc(list, false, map[string]qselect.DType{
+				"due":     qselect.QDate,
+				"someInt": qselect.QInt,
+			}, func() time.Time {
+				return time.Date(2022, 2, 2, 0, 0, 0, 0, time.UTC)
+			}))
+
+			err := item.EditDescription(tc.description)
+
+			assert.Error(t, err)
+		})
+	}
+
 }
