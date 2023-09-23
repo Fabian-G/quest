@@ -101,7 +101,6 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (l List) updateSize() List {
 	l.table.SetHeight(max(0, min(len(l.selection), l.availableHeight-len(detailsProjection)-3)))
-	l.table.UpdateViewport()
 	return l
 }
 
