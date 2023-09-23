@@ -3,6 +3,7 @@ package todotxt_test
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"strings"
@@ -153,6 +154,17 @@ func Test_BackupsAreKeptAppropriately(t *testing.T) {
 	backupContent, err = os.ReadFile(path.Join(path.Dir(file), backupName(0)))
 	assert.Nil(t, err)
 	assert.Equal(t, "new item\n", string(backupContent))
+
+	err = repo.Save(todotxt.ListOf(todotxt.MustBuildItem(todotxt.WithDescription("a last item"))))
+	assert.Nil(t, err)
+	_, err = os.Stat(path.Join(path.Dir(file), backupName(2)))
+	assert.ErrorIs(t, err, fs.ErrNotExist)
+	backupContent, err = os.ReadFile(path.Join(path.Dir(file), backupName(1)))
+	assert.Nil(t, err)
+	assert.Equal(t, "new item\n", string(backupContent))
+	backupContent, err = os.ReadFile(path.Join(path.Dir(file), backupName(0)))
+	assert.Nil(t, err)
+	assert.Equal(t, "another item\n", string(backupContent))
 }
 
 func Test_NonExistingTodoFileIsCreated(t *testing.T) {
