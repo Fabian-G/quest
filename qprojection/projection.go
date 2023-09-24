@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Fabian-G/quest/qscore"
 	"github.com/Fabian-G/quest/todotxt"
 )
 
 type Projector struct {
-	Clean []string
+	Clean     []string
+	ScoreCalc qscore.Calculator
 }
 
 func (p Projector) Verify(projection []string, list *todotxt.List) error {

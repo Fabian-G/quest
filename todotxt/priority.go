@@ -1,7 +1,7 @@
 package todotxt
 
 import (
-	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -53,7 +53,7 @@ func PriorityFromString(prio string) (Priority, error) {
 	prio = strings.TrimLeft(prio, "(")
 	prio = strings.TrimRight(prio, ")")
 	if len(prio) != 1 || prio[0] < "A"[0] || prio[0] > "Z"[0] {
-		return 0, errors.New("priority value out of range (A-Z or NONE)")
+		return 0, fmt.Errorf("priority value \"%s\" out of range (A-Z or NONE)", prio)
 	}
 	idx := byte(PrioA) - (byte(prio[0]) - "A"[0])
 	return Priority(idx), nil

@@ -83,7 +83,8 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 	}
 
 	projector := qprojection.Projector{
-		Clean: v.clean,
+		Clean:     v.clean,
+		ScoreCalc: di.QuestScoreCalculator(),
 	}
 	if err := projector.Verify(v.projection, list); err != nil {
 		return fmt.Errorf("invalid projection: %w", err)

@@ -37,6 +37,7 @@ var columns = []columnDef{
 	projectsColumn,
 	contextsColumn,
 	descriptionColumn,
+	questScoreColumn,
 }
 
 func availableColumns() []string {
@@ -157,6 +158,24 @@ var descriptionColumn = columnDef{
 			return runewidth.Truncate(item.CleanDescription(p.expandClean(l)), width, "...")
 		}
 	},
+}
+
+var questScoreColumn = columnDef{
+	matcher: staticMatch("score"),
+	name:    staticName("Score"),
+	extractor: staticColumn(func(p Projector, l *todotxt.List, i *todotxt.Item) string {
+		result := p.ScoreCalc.ScoreOf(i)
+		score := fmt.Sprintf("%.1f", result.Score)
+		urgentFlag := "U"
+		importantFlag := "I"
+		if !result.IsImportant() {
+			importantFlag = " "
+		}
+		if !result.IsUrgent() {
+			urgentFlag = " "
+		}
+		return fmt.Sprintf("%s %s%s", score, urgentFlag, importantFlag)
+	}),
 }
 
 func regexMatch(columnRegex string) matcher {

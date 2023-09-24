@@ -82,6 +82,20 @@ func Test_Calculator(t *testing.T) {
 				Importance: 1,
 			},
 		},
+		"item has urgency in the middle": {
+			item: todotxt.MustBuildItem(todotxt.WithDescription(dueDateInDays(testCalculator.UrgencyBegin/2, "Hello World"))),
+			expectedScore: qscore.Score{
+				Urgency:    5.5,
+				Importance: 0,
+			},
+		},
+		"item has importance in the middle": {
+			item: todotxt.MustBuildItem(todotxt.WithDescription("Hello World"), todotxt.WithPriority(todotxt.PrioC)),
+			expectedScore: qscore.Score{
+				Urgency:    0,
+				Importance: 5.5,
+			},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -90,6 +104,45 @@ func Test_Calculator(t *testing.T) {
 			assertApproximatelyEqual(t, tc.expectedScore, score)
 		})
 	}
+}
+
+func Test_ScoreIsMarkedUrgentAppropriately(t *testing.T) {
+	testScore := qscore.Score{
+		Urgency: 10,
+	}
+
+	assert.True(t, testScore.IsUrgent())
+	testScore = qscore.Score{
+		Urgency: 0,
+	}
+
+	assert.False(t, testScore.IsUrgent())
+}
+func Test_ScoreIsMarkedImportantAppropriately(t *testing.T) {
+	testScore := qscore.Score{
+		Importance: 10,
+	}
+
+	assert.True(t, testScore.IsImportant())
+	testScore = qscore.Score{
+		Importance: 0,
+	}
+
+	assert.False(t, testScore.IsImportant())
+}
+
+func Test_PrioritiesAreConsideredImportantAccordingToABCDEMethod(t *testing.T) {
+	item := todotxt.MustBuildItem(todotxt.WithDescription("test"), todotxt.WithPriority(todotxt.PrioC))
+	assert.True(t, testCalculator.ScoreOf(item).IsImportant())
+	item.PrioritizeAs(todotxt.PrioD)
+	assert.False(t, testCalculator.ScoreOf(item).IsImportant())
+}
+
+func Test_AnAlmostDueTaskShouldYieldAHightUrgency(t *testing.T) {
+	item := todotxt.MustBuildItem(todotxt.WithDescription(dueDateInDays(1, "Hello World")))
+	score := testCalculator.ScoreOf(item)
+	assert.GreaterOrEqual(t, score.Urgency, float32(9))
+	assert.True(t, score.IsUrgent())
 }
 
 func assertApproximatelyEqual(t *testing.T, expected qscore.Score, actual qscore.Score) {

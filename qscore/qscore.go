@@ -7,10 +7,23 @@ import (
 	"github.com/Fabian-G/quest/todotxt"
 )
 
+const (
+	urgencyThreshold    = 3 / 5.0 * 10
+	importanceThreshold = 3/5.0*10 - 1
+)
+
 type Score struct {
 	Score      float32
 	Urgency    float32
 	Importance float32
+}
+
+func (s Score) IsUrgent() bool {
+	return s.Urgency >= urgencyThreshold
+}
+
+func (s Score) IsImportant() bool {
+	return s.Importance >= importanceThreshold
 }
 
 type Calculator struct {
@@ -65,7 +78,7 @@ func (c Calculator) urgency(item *todotxt.Item) float32 {
 
 	maxUrgency := float32(10.0)
 	minUrgency := float32(1.0)
-	return maxUrgency + (days-float32(c.UrgencyBegin))*(maxUrgency-minUrgency)/float32(c.UrgencyBegin)
+	return maxUrgency + days*(minUrgency-maxUrgency)/float32(c.UrgencyBegin)
 }
 
 func (c Calculator) score(urgency, importance float32) float32 {
