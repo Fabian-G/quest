@@ -178,7 +178,7 @@ func Test_TagExpansionsError(t *testing.T) {
 	testCases := map[string]struct {
 		description string
 	}{
-		"unkown tags": {
+		"unknown tags": {
 			description: "hello unknown:tag abc",
 		},
 		"wrong expansion": {

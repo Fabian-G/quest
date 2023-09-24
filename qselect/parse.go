@@ -279,35 +279,38 @@ func (p *parser) parsePrimary() (node, error) {
 	case itemExistQuant:
 		return p.parseExp()
 	case itemIdent:
-		p.next()
-		fCallTest := p.lookAhead()
-		if fCallTest.typ == itemLeftParen {
-			args, err := p.parseArgs()
-			if err != nil {
-				return nil, err
-			}
-			return &call{
-				name: next.val,
-				args: args,
-				fn:   functions[next.val],
-			}, nil
-		} else if fn, ok := functions[next.val]; ok { // This is really a function call without args
-			return &call{
-				name: next.val,
-				fn:   fn,
-				args: &args{},
-				ifBound: &identifier{ // Except if this id is bound by a quantifier. In that cas treat it as an identifier
-					name: next.val,
-				},
-			}, nil
-		}
-		return &identifier{
-			name: next.val,
-		}, nil
-
+		return p.parseIdentifierOrCall()
 	default:
 		return nil, fmt.Errorf("unexpected token: \"%s\" at position %d", next.val, next.pos)
 	}
+}
+
+func (p *parser) parseIdentifierOrCall() (node, error) {
+	next := p.next()
+	fCallTest := p.lookAhead()
+	if fCallTest.typ == itemLeftParen {
+		args, err := p.parseArgs()
+		if err != nil {
+			return nil, err
+		}
+		return &call{
+			name: next.val,
+			args: args,
+			fn:   functions[next.val],
+		}, nil
+	} else if fn, ok := functions[next.val]; ok { // This is really a function call without args
+		return &call{
+			name: next.val,
+			fn:   fn,
+			args: &args{},
+			ifBound: &identifier{ // Except if this id is bound by a quantifier. In that cas treat it as an identifier
+				name: next.val,
+			},
+		}, nil
+	}
+	return &identifier{
+		name: next.val,
+	}, nil
 }
 
 func (p *parser) parseArgs() (*args, error) {
