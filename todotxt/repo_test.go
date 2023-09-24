@@ -120,7 +120,7 @@ func Test_BackupsAreKeptAppropriately(t *testing.T) {
 	extension := path.Ext(file)
 	fileName := strings.TrimSuffix(path.Base(file), extension)
 	backupName := func(n int) string {
-		return fmt.Sprintf(".%s.quest-backup-%d%s", fileName, n, extension)
+		return fmt.Sprintf(".%s.quest-backup-%d%s.bak", fileName, n, extension)
 	}
 
 	repo := todotxt.NewRepo(file)

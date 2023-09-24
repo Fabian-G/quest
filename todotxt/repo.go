@@ -126,7 +126,7 @@ func (t *Repo) write(l *List) error {
 func (t *Repo) backup() error {
 	extension := path.Ext(t.file)
 	fileName := strings.TrimSuffix(path.Base(t.file), extension)
-	nameTemplate := fmt.Sprintf(".%s.quest-backup-%%d%s", fileName, extension)
+	nameTemplate := fmt.Sprintf(".%s.quest-backup-%%d%s.bak", fileName, extension)
 	if t.Keep <= 0 {
 		return nil
 	}
