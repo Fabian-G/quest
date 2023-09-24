@@ -3,20 +3,22 @@ package config
 import (
 	"log"
 
+	"github.com/Fabian-G/quest/qscore"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/viper"
 )
 
 type Di struct {
-	ConfigFile  string
-	config      *viper.Viper
-	repo        *todotxt.Repo
-	doneRepo    *todotxt.Repo
-	tagTypes    map[string]qselect.DType
-	defaultView *ViewDef
-	viewDefs    []ViewDef
-	macros      []MacroDef
+	ConfigFile           string
+	config               *viper.Viper
+	repo                 *todotxt.Repo
+	doneRepo             *todotxt.Repo
+	tagTypes             map[string]qselect.DType
+	defaultView          *ViewDef
+	viewDefs             []ViewDef
+	macros               []MacroDef
+	questScoreCalculator *qscore.Calculator
 }
 
 func (d *Di) TodoTxtRepo() *todotxt.Repo {
@@ -70,4 +72,12 @@ func (d *Di) MacroDefs() []MacroDef {
 		d.macros = buildMacroDefs(d.Config())
 	}
 	return d.macros
+}
+
+func (d *Di) QuestScoreCalculator() qscore.Calculator {
+	if d.questScoreCalculator == nil {
+		calc := buildScoreCalculator(d.Config())
+		d.questScoreCalculator = &calc
+	}
+	return *d.questScoreCalculator
 }

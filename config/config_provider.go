@@ -24,6 +24,7 @@ const (
 	Views       Key = "view"
 	Macros      Key = "macro"
 	Tags        Key = "tags"
+	QuestScore  Key = "quest-score"
 )
 
 func buildConfig(file string) (*viper.Viper, error) {
@@ -73,6 +74,9 @@ func setTopLevelDefaults(v *viper.Viper, homeDir string) {
 	v.SetDefault(Views, []any{})
 	v.SetDefault(Tags, make(map[string]string))
 	v.SetDefault(Interactive, false)
+	v.SetDefault(QuestScore+".urgency-tag", "due")
+	v.SetDefault(QuestScore+".urgency-begin", 90)
+	v.SetDefault(QuestScore+".min-priority", "E")
 }
 
 func getDefaultEditor() string {
