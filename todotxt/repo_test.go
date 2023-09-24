@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,9 +19,9 @@ func Test_ItemsAreOrderedCorrectly(t *testing.T) {
 	item 3
 	item 2`)
 	repo := todotxt.NewRepo(file)
-	s, err := qsort.CompileSortFunc("+done,-description", nil)
-	assert.Nil(t, err)
-	repo.DefaultOrder = s
+	repo.DefaultOrder = func(i1, i2 *todotxt.Item) int {
+		return -1 * strings.Compare(i1.Description(), i2.Description())
+	}
 
 	list, err := repo.Read()
 

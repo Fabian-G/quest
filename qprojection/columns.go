@@ -165,7 +165,12 @@ var questScoreColumn = columnDef{
 	name:    staticName("Score"),
 	extractor: staticColumn(func(p Projector, l *todotxt.List, i *todotxt.Item) string {
 		result := p.ScoreCalc.ScoreOf(i)
-		score := fmt.Sprintf("%.1f", result.Score)
+		var score string
+		if result.Score >= 10 {
+			score = fmt.Sprintf("%.0f.", result.Score)
+		} else {
+			score = fmt.Sprintf("%.1f", result.Score)
+		}
 		urgentFlag := "U"
 		importantFlag := "I"
 		if !result.IsImportant() {

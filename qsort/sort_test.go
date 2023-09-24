@@ -134,7 +134,7 @@ func Test_Sort(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			cmpFunc, err := qsort.CompileSortFunc(tc.sortString, nil)
+			cmpFunc, err := qsort.Compiler{}.CompileSortFunc(tc.sortString)
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expectedOrder, cmpFunc(tc.first, tc.second))
 		})

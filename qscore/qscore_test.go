@@ -131,6 +131,11 @@ func Test_ScoreIsMarkedImportantAppropriately(t *testing.T) {
 	assert.False(t, testScore.IsImportant())
 }
 
+func Test_EmptyCalculatorReturnsZeroValue(t *testing.T) {
+	item := todotxt.MustBuildItem(todotxt.WithPriority(todotxt.PrioA), todotxt.WithDescription("Test due:1990-09-09"))
+	assert.Equal(t, qscore.Score{}, qscore.Calculator{}.ScoreOf(item))
+}
+
 func Test_PrioritiesAreConsideredImportantAccordingToABCDEMethod(t *testing.T) {
 	item := todotxt.MustBuildItem(todotxt.WithDescription("test"), todotxt.WithPriority(todotxt.PrioC))
 	assert.True(t, testCalculator.ScoreOf(item).IsImportant())

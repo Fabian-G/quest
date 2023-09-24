@@ -5,6 +5,7 @@ import (
 
 	"github.com/Fabian-G/quest/qscore"
 	"github.com/Fabian-G/quest/qselect"
+	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/viper"
 )
@@ -19,18 +20,19 @@ type Di struct {
 	viewDefs             []ViewDef
 	macros               []MacroDef
 	questScoreCalculator *qscore.Calculator
+	sortCompiler         *qsort.Compiler
 }
 
 func (d *Di) TodoTxtRepo() *todotxt.Repo {
 	if d.repo == nil {
-		d.repo = buildTodoTxtRepo(d.Config(), d.TagTypes())
+		d.repo = buildTodoTxtRepo(d.Config(), d.SortCompiler(), d.TagTypes())
 	}
 	return d.repo
 }
 
 func (d *Di) DoneTxtRepo() *todotxt.Repo {
 	if d.doneRepo == nil {
-		d.doneRepo = buildDoneTxtRepo(d.Config(), d.TagTypes())
+		d.doneRepo = buildDoneTxtRepo(d.Config(), d.SortCompiler())
 	}
 	return d.doneRepo
 }
@@ -80,4 +82,11 @@ func (d *Di) QuestScoreCalculator() qscore.Calculator {
 		d.questScoreCalculator = &calc
 	}
 	return *d.questScoreCalculator
+}
+func (d *Di) SortCompiler() qsort.Compiler {
+	if d.sortCompiler == nil {
+		sort := buildSortCompiler(d.TagTypes(), d.QuestScoreCalculator())
+		d.sortCompiler = &sort
+	}
+	return *d.sortCompiler
 }

@@ -77,7 +77,11 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid query specified: %w", err)
 	}
 
-	sortFunc, err := qsort.CompileSortFunc(v.sortOrder, di.TagTypes())
+	sortCompiler := qsort.Compiler{
+		TagTypes:        di.TagTypes(),
+		ScoreCalculator: di.QuestScoreCalculator(),
+	}
+	sortFunc, err := sortCompiler.CompileSortFunc(v.sortOrder)
 	if err != nil {
 		return err
 	}

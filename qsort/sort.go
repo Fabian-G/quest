@@ -8,22 +8,17 @@ import (
 	"time"
 
 	"github.com/Fabian-G/quest/qduration"
+	"github.com/Fabian-G/quest/qscore"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 )
 
-func CompileSortFunc(sort string, tagTypes map[string]qselect.DType) (func(*todotxt.Item, *todotxt.Item) int, error) {
-	return sortFunc(sort, tagTypes)
+type Compiler struct {
+	TagTypes        map[string]qselect.DType
+	ScoreCalculator qscore.Calculator
 }
 
-type sortOrder int
-
-const (
-	asc  = 1
-	desc = -1
-)
-
-func sortFunc(sort string, tagTypes map[string]qselect.DType) (func(*todotxt.Item, *todotxt.Item) int, error) {
+func (c Compiler) CompileSortFunc(sort string) (func(*todotxt.Item, *todotxt.Item) int, error) {
 	sortingKeys := strings.Split(sort, ",")
 	compareFuncs := make([]func(*todotxt.Item, *todotxt.Item) int, 0, len(sortingKeys))
 
@@ -45,6 +40,8 @@ func sortFunc(sort string, tagTypes map[string]qselect.DType) (func(*todotxt.Ite
 			compareFuncs = append(compareFuncs, order.comparePriority)
 		case "description":
 			compareFuncs = append(compareFuncs, order.compareDescription)
+		case "score":
+			compareFuncs = append(compareFuncs, order.compareScores(c.ScoreCalculator))
 		default:
 			if !strings.HasPrefix(key, "tag:") {
 				return nil, fmt.Errorf("unknown sort key %s", key)
@@ -54,7 +51,7 @@ func sortFunc(sort string, tagTypes map[string]qselect.DType) (func(*todotxt.Ite
 				return nil, fmt.Errorf("when sorting by tag a tag name must be specified e.g. tag:rec")
 			}
 			tagKey := parts[1]
-			compareFuncs = append(compareFuncs, order.compareTag(tagKey, tagTypes))
+			compareFuncs = append(compareFuncs, order.compareTag(tagKey, c.TagTypes))
 		}
 	}
 	return func(first, second *todotxt.Item) int {
@@ -67,6 +64,13 @@ func sortFunc(sort string, tagTypes map[string]qselect.DType) (func(*todotxt.Ite
 		return 0
 	}, nil
 }
+
+type sortOrder int
+
+const (
+	asc  = 1
+	desc = -1
+)
 
 func (o sortOrder) compareDone(i1 *todotxt.Item, i2 *todotxt.Item) int {
 	switch {
@@ -140,6 +144,14 @@ func (o sortOrder) compareTag(tagKey string, tagTypes map[string]qselect.DType) 
 
 func (o sortOrder) compareDescription(i1 *todotxt.Item, i2 *todotxt.Item) int {
 	return int(o) * strings.Compare(i1.Description(), i2.Description())
+}
+
+func (o sortOrder) compareScores(calc qscore.Calculator) func(*todotxt.Item, *todotxt.Item) int {
+	return func(i1, i2 *todotxt.Item) int {
+		score1 := calc.ScoreOf(i1)
+		score2 := calc.ScoreOf(i2)
+		return int(o) * cmp.Compare(score1.Score, score2.Score)
+	}
 }
 
 func compareOptionals[T cmp.Ordered](a *T, b *T) int {

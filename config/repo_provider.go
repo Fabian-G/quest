@@ -10,11 +10,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-func buildTodoTxtRepo(v *viper.Viper, tagTypes map[string]qselect.DType) *todotxt.Repo {
+func buildTodoTxtRepo(v *viper.Viper, sortCompiler qsort.Compiler, tagTypes map[string]qselect.DType) *todotxt.Repo {
 	repo := todotxt.NewRepo(v.GetString(TodoFile))
 	repo.DefaultHooks = hooks(v, tagTypes)
 	repo.Keep = v.GetInt(KeepBackups)
-	defOrder, err := qsort.CompileSortFunc(v.GetString(IdxOrder), tagTypes)
+	defOrder, err := sortCompiler.CompileSortFunc(v.GetString(IdxOrder))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,10 +22,10 @@ func buildTodoTxtRepo(v *viper.Viper, tagTypes map[string]qselect.DType) *todotx
 	return repo
 }
 
-func buildDoneTxtRepo(v *viper.Viper, tagTypes map[string]qselect.DType) *todotxt.Repo {
+func buildDoneTxtRepo(v *viper.Viper, sortCompiler qsort.Compiler) *todotxt.Repo {
 	repo := todotxt.NewRepo(v.GetString(DoneFile))
 	repo.Keep = v.GetInt(KeepBackups)
-	defOrder, err := qsort.CompileSortFunc(v.GetString(IdxOrder), tagTypes)
+	defOrder, err := sortCompiler.CompileSortFunc(v.GetString(IdxOrder))
 	if err != nil {
 		log.Fatal(err)
 	}

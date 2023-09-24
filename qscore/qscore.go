@@ -47,7 +47,7 @@ func (c Calculator) ScoreOf(item *todotxt.Item) Score {
 
 func (c Calculator) importance(item *todotxt.Item) float32 {
 	priority := item.Priority()
-	if priority == todotxt.PrioNone {
+	if priority == todotxt.PrioNone || c.MinPriority == todotxt.PrioNone {
 		return 0
 	}
 	if priority <= c.MinPriority {
