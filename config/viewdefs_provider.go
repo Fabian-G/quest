@@ -56,14 +56,14 @@ func getViewDef(parent *viper.Viper, subCfg *viper.Viper) ViewDef {
 	subCfg.SetDefault("name", "")
 	subCfg.SetDefault("query", "")
 	subCfg.SetDefault("projection", qprojection.StarProjection)
-	subCfg.SetDefault("sortOrder", "+done,-creation,+description")
+	subCfg.SetDefault("sort", "+done,-creation,+description")
 	subCfg.SetDefault("clean", nil)
 	subCfg.SetDefault("interactive", parent.Get(Interactive))
 	return ViewDef{
 		Name:              subCfg.GetString("name"),
 		DefaultQuery:      subCfg.GetString("query"),
 		DefaultProjection: subCfg.GetString("projection"),
-		DefaultSortOrder:  subCfg.GetString("sortOrder"),
+		DefaultSortOrder:  subCfg.GetString("sort"),
 		DefaultClean:      strings.Split(subCfg.GetString("clean"), ","),
 		Add:               getAddDef(subCfg.Sub("add")),
 		Interactive:       subCfg.GetBool("interactive"),
