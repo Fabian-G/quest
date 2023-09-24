@@ -173,9 +173,8 @@ func (r Recurrence) parseRecurrenceParams(current *todotxt.Item) (recurrencePara
 		params.threshold = thresholdDate
 	}
 
-	if strings.HasPrefix(rec, "+") {
+	if !strings.HasPrefix(rec, "+") {
 		params.relative = true
-		rec = rec[1:]
 	}
 	duration, err := qduration.Parse(rec)
 	if err != nil {
