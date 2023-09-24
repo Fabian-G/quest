@@ -82,14 +82,7 @@ func (o sortOrder) compareDone(i1 *todotxt.Item, i2 *todotxt.Item) int {
 func (o sortOrder) comparePriority(i1 *todotxt.Item, i2 *todotxt.Item) int {
 	prio1 := i1.Priority()
 	prio2 := i2.Priority()
-	switch {
-	case prio1 == todotxt.PrioNone:
-		return int(o) * -1
-	case prio2 == todotxt.PrioNone:
-		return int(o) * 1
-	default:
-		return int(o) * -cmp.Compare(prio1, prio2)
-	}
+	return int(o) * cmp.Compare(prio1, prio2)
 }
 
 func (o sortOrder) compareCreation(i1 *todotxt.Item, i2 *todotxt.Item) int {

@@ -32,6 +32,7 @@ func TestPriority_FromString(t *testing.T) {
 	}{
 		{"A", todotxt.PrioA, "(A)"},
 		{"Z", todotxt.PrioZ, "(Z)"},
+		{"None", todotxt.PrioNone, "none"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
