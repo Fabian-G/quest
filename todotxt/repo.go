@@ -22,7 +22,10 @@ type OLockError struct {
 }
 
 func (o OLockError) Error() string {
-	return fmt.Sprintf("the file was changed since the last time we read it. Wrote to %s instead", o.BackupPath)
+	if o.BackupPath != "" {
+		return fmt.Sprintf("the file was changed since the last time we read it. Wrote to %s instead", o.BackupPath)
+	}
+	return "file was changed since the last time we read it"
 }
 
 type ReadFunc func() (*List, error)
@@ -62,6 +65,13 @@ func (t *Repo) Save(l *List) error {
 }
 
 func (t *Repo) handleOptimisticLocking(l *List) error {
+	if err := t.checkOLockError(); err != nil {
+		return fmt.Errorf("locking error: %w", t.writeToAlternativeLocation(l))
+	}
+	return nil
+}
+
+func (t *Repo) checkOLockError() error {
 	if t.checksum == [20]byte{} {
 		return nil // This is a save without a prior read, so we don't need locking
 	}
@@ -73,7 +83,7 @@ func (t *Repo) handleOptimisticLocking(l *List) error {
 		return fmt.Errorf("could not determine checksum of current state")
 	}
 	if sha1.Sum(currentData) != t.checksum {
-		return fmt.Errorf("locking error: %w", t.writeToAlternativeLocation(l))
+		return OLockError{}
 	}
 	return nil
 }
@@ -183,6 +193,18 @@ func (t *Repo) load() ([]byte, error) {
 		return nil, fmt.Errorf("could not read txt file %s: %w", t.file, err)
 	}
 	return rawData, nil
+}
+
+func (t *Repo) Rollback(list *List) error {
+	if err := t.checkOLockError(); err != nil {
+		return err
+	}
+	oldList, err := t.Read()
+	if err != nil {
+		return err
+	}
+	list.copyFrom(oldList)
+	return list.validate()
 }
 
 // Watch watches watches for file changes.

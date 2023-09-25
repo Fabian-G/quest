@@ -184,6 +184,15 @@ func (l *List) validate() error {
 	return errors.Join(errs...)
 }
 
+func (l *List) copyFrom(other *List) {
+	l.diskOrder = other.diskOrder
+	l.idxOrder = other.idxOrder
+	l.IdxOrderFunc = other.IdxOrderFunc
+	for _, i := range l.diskOrder {
+		i.emitFunc = l.emit
+	}
+}
+
 func (l *List) emit(me Event) error {
 	if l.hooksDisabled {
 		return nil

@@ -3,7 +3,9 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
+	"path"
 	"slices"
 	"strconv"
 
@@ -48,6 +50,7 @@ func (e *editCommand) command() *cobra.Command {
 
 func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 	di := cmd.Context().Value(cmdutil.DiKey).(*config.Di)
+	repo := di.TodoTxtRepo()
 	cfg := di.Config()
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
 	selector, err := cmdutil.ParseTaskSelection(e.viewDef.DefaultQuery, args, e.qql, e.rng, e.str)
@@ -86,7 +89,32 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 		if !cmdutil.AskRetry(cmd, err) {
 			return err
 		}
+		if err := repo.Rollback(list); err != nil {
+			return e.handleRollbackFailure(path.Dir(cfg.GetString(config.TodoFile)), filePath, err)
+		}
+		selection = selector.Filter(list)
+		slices.SortStableFunc(selection, sortFunc)
 	}
+}
+
+func (e *editCommand) handleRollbackFailure(backupDir string, changeFilePath string, base error) error {
+	fmt.Printf("retry not possible: %s\n", base)
+	changeFile, err := os.Open(changeFilePath)
+	if err != nil {
+		return fmt.Errorf("could not save backup of changes: %w", err)
+	}
+	defer changeFile.Close()
+	changeBackup, err := os.CreateTemp(backupDir, "quest-edit-*.todo.txt")
+	if err != nil {
+		return fmt.Errorf("could not save backup of changes: %w", err)
+	}
+	defer changeBackup.Close()
+	_, err = io.Copy(changeBackup, changeFile)
+	if err != nil {
+		return fmt.Errorf("could not save backup of changes: %w", err)
+	}
+	fmt.Printf("a copy of your changes has been saved at %s, but you have to apply them manually", changeBackup.Name())
+	return err
 }
 
 func (e *editCommand) dumpDescriptionsToTempFile(list *todotxt.List, items []*todotxt.Item) (string, error) {
@@ -123,7 +151,7 @@ func (e *editCommand) applyChanges(tmpFile string, list *todotxt.List, selection
 		return 0, 0, 0, err
 	}
 
-	changedItems, addedItems, err := mapToIds(changeList)
+	changedItems, addedItems, err := mapToIds(changeList, len(selection))
 	if err != nil {
 		return 0, 0, 0, err
 	}
@@ -138,13 +166,13 @@ func (e *editCommand) applyChanges(tmpFile string, list *todotxt.List, selection
 
 	deletedItems := make([]*todotxt.Item, len(selection)) // what remains in this list after the loop will be deleted
 	copy(deletedItems, selection)
-	for id, item := range changedItems {
-		deletedItems[id] = nil
-		if item.Equals(selection[id]) {
+	for _, item := range changedItems {
+		deletedItems[item.id] = nil
+		if item.item.Equals(selection[item.id]) {
 			continue
 		}
 		changed++
-		if err := selection[id].Apply(item); err != nil {
+		if err := selection[item.id].Apply(item.item); err != nil {
 			return 0, 0, 0, err
 		}
 	}
@@ -196,8 +224,13 @@ func clearObjectIdTag(list *todotxt.List, items []*todotxt.Item) error {
 	})
 }
 
-func mapToIds(items []*todotxt.Item) (map[int]*todotxt.Item, []*todotxt.Item, error) {
-	idMap := make(map[int]*todotxt.Item)
+type itemWithId struct {
+	id   int
+	item *todotxt.Item
+}
+
+func mapToIds(items []*todotxt.Item, maxId int) ([]itemWithId, []*todotxt.Item, error) {
+	idMap := make([]itemWithId, 0) // slice instead of map, because we must retain the order
 	noId := make([]*todotxt.Item, 0)
 	for _, item := range items {
 		id, err := getEditId(item)
@@ -206,10 +239,10 @@ func mapToIds(items []*todotxt.Item) (map[int]*todotxt.Item, []*todotxt.Item, er
 		}
 		if id == -1 {
 			noId = append(noId, item)
-		} else if _, ok := idMap[id]; ok {
+		} else if slices.ContainsFunc(idMap, func(iwi itemWithId) bool { return iwi.id == id }) {
 			return nil, nil, fmt.Errorf("encountered duplicate id %d. Do not change the %s tag", id, config.InternalEditTag)
 		} else {
-			idMap[id] = item
+			idMap = append(idMap, itemWithId{id: id, item: item})
 
 			item.SetTag(config.InternalEditTag, "")
 		}
