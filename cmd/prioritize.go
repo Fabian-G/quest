@@ -72,6 +72,6 @@ func (p *prioritizeCommand) prioritize(cmd *cobra.Command, args []string) error 
 			return err
 		}
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "Successfully prioritized %d items as %s\n", len(confirmedSelection), priority.String())
+	cmdutil.PrintSuccessMessage(fmt.Sprintf("Prioritized as %s", priority.String()), confirmedSelection)
 	return nil
 }

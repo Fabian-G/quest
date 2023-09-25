@@ -74,6 +74,7 @@ func (a *archiveCommand) archive(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "Successfully archived %d items\n", len(confirmedSelection))
+
+	cmdutil.PrintSuccessMessage("Archived", confirmedSelection)
 	return nil
 }

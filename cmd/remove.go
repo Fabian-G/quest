@@ -65,6 +65,6 @@ func (r *removeCommand) remove(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "Successfully removed %d items\n", len(confirmedSelection))
+	cmdutil.PrintSuccessMessage("Removed", confirmedSelection)
 	return nil
 }

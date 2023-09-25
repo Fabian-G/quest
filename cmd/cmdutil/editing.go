@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
 )
 
@@ -26,4 +27,15 @@ func StartEditor(editorCmd string, path string) error {
 		return fmt.Errorf("editor command failed: %w", err)
 	}
 	return nil
+}
+
+func PrintSuccessMessage(operation string, selection []*todotxt.Item) {
+	switch len(selection) {
+	case 0:
+		fmt.Println("nothing to do")
+	case 1:
+		fmt.Printf("%s item: %s\n", operation, selection[0].Description())
+	default:
+		fmt.Printf("%s %d items\n", operation, len(selection))
+	}
 }
