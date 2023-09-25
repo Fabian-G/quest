@@ -57,8 +57,6 @@ func buildConfig(file string) (*viper.Viper, error) {
 		return nil, err
 	}
 
-	v.Set(TodoFile, os.ExpandEnv(v.GetString(TodoFile)))
-	v.Set(DoneFile, os.ExpandEnv(v.GetString(DoneFile)))
 	return v, nil
 }
 

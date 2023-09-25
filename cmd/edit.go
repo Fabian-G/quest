@@ -4,19 +4,22 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
 )
 
 type editCommand struct {
-	viewDef config.ViewDef
-	qql     []string
-	rng     []string
-	str     []string
+	viewDef   config.ViewDef
+	qql       []string
+	rng       []string
+	str       []string
+	sortOrder string
 }
 
 func newEditCommand(def config.ViewDef) *editCommand {
@@ -39,11 +42,13 @@ func (e *editCommand) command() *cobra.Command {
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
 	cmdutil.RegisterSelectionFlags(editCommand, &e.qql, &e.rng, &e.str)
+	editCommand.Flags().StringVarP(&e.sortOrder, "sort", "s", e.viewDef.DefaultSortOrder, "TODO")
 	return editCommand
 }
 
 func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
-	cfg := cmd.Context().Value(cmdutil.DiKey).(*config.Di).Config()
+	di := cmd.Context().Value(cmdutil.DiKey).(*config.Di)
+	cfg := di.Config()
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
 	selector, err := cmdutil.ParseTaskSelection(e.viewDef.DefaultQuery, args, e.qql, e.rng, e.str)
 	if err != nil {
@@ -54,6 +59,15 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(cmd.OutOrStdout(), "no matches")
 		return nil
 	}
+	sortCompiler := qsort.Compiler{
+		TagTypes:        di.TagTypes(),
+		ScoreCalculator: di.QuestScoreCalculator(),
+	}
+	sortFunc, err := sortCompiler.CompileSortFunc(e.sortOrder)
+	if err != nil {
+		return err
+	}
+	slices.SortStableFunc(selection, sortFunc)
 
 	filePath, writtenLines, err := e.dumpDescriptionsToTempFile(selection)
 	if err != nil {

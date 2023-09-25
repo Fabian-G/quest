@@ -97,12 +97,14 @@ func createFileIfNotExists(file string) error {
 
 func EnsureTodoFileExits(cmd *cobra.Command, args []string) error {
 	v := cmd.Context().Value(DiKey).(*config.Di).Config()
+	v.Set(config.TodoFile, os.ExpandEnv(v.GetString(config.TodoFile)))
 	file := v.GetString(config.TodoFile)
 	return createFileIfNotExists(file)
 }
 
 func EnsureDoneFileExists(cmd *cobra.Command, args []string) error {
 	v := cmd.Context().Value(DiKey).(*config.Di).Config()
+	v.Set(config.DoneFile, os.ExpandEnv(v.GetString(config.DoneFile)))
 	file := v.GetString(config.DoneFile)
 	return createFileIfNotExists(file)
 }
