@@ -14,6 +14,23 @@ import (
 	"github.com/Fabian-G/quest/todotxt"
 )
 
+var weekdayLookup = map[string]time.Weekday{
+	"monday":    time.Monday,
+	"tuesday":   time.Tuesday,
+	"wednesday": time.Wednesday,
+	"thursday":  time.Thursday,
+	"friday":    time.Friday,
+	"saturday":  time.Saturday,
+	"sunday":    time.Sunday,
+	"mon":       time.Monday,
+	"tue":       time.Tuesday,
+	"wed":       time.Wednesday,
+	"thu":       time.Thursday,
+	"fri":       time.Friday,
+	"sat":       time.Saturday,
+	"sun":       time.Sunday,
+}
+
 type TagExpansion struct {
 	list       *todotxt.List
 	tags       map[string]qselect.DType
@@ -66,13 +83,23 @@ func (t TagExpansion) expandDate(v string) string {
 		return v
 	}
 	var base time.Time
-	var remainingValue string = v
+	var remainingValue string = strings.ToLower(v)
+	possibleBase := t.guessBase(remainingValue)
 	switch {
-	case strings.HasPrefix(v, "today"):
-		remainingValue = strings.TrimPrefix(v, "today")
+	case t.isWeekday(possibleBase):
+		remainingValue = strings.TrimPrefix(remainingValue, possibleBase)
+		base = t.findNext(weekdayLookup[possibleBase])
+	case possibleBase == "tomorrow":
+		base = t.today().Add(24 * time.Hour)
+		remainingValue = strings.TrimPrefix(remainingValue, possibleBase)
+	case possibleBase == "yesterday":
+		base = t.today().Add(-24 * time.Hour)
+		remainingValue = strings.TrimPrefix(remainingValue, possibleBase)
+	case possibleBase == "today":
+		remainingValue = strings.TrimPrefix(remainingValue, possibleBase)
 		fallthrough
 	default:
-		base = t.now()
+		base = t.today()
 	}
 	if len(strings.TrimSpace(remainingValue)) == 0 {
 		return base.Format(time.DateOnly)
@@ -83,6 +110,29 @@ func (t TagExpansion) expandDate(v string) string {
 	}
 	// Unknown expansion. Let validation handle that
 	return v
+}
+
+func (t TagExpansion) guessBase(v string) string {
+	splitIdx := strings.IndexAny(v, "+-")
+	if splitIdx == -1 {
+		return v
+	}
+	return v[:splitIdx]
+}
+
+func (t TagExpansion) isWeekday(v string) bool {
+	_, ok := weekdayLookup[v]
+	return ok
+}
+
+func (t TagExpansion) findNext(day time.Weekday) time.Time {
+	today := t.today()
+	switch {
+	case day >= today.Weekday():
+		return today.Add(time.Duration(day-today.Weekday()) * 24 * time.Hour)
+	default:
+		return today.Add(time.Duration(7-today.Weekday()+day) * 24 * time.Hour)
+	}
 }
 
 func (t TagExpansion) expandInt(i *todotxt.Item, tag string, value string) string {
@@ -249,4 +299,9 @@ func (t TagExpansion) now() time.Time {
 		return t.nowFunc()
 	}
 	return time.Now()
+}
+
+func (t TagExpansion) today() time.Time {
+	now := t.now()
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 }

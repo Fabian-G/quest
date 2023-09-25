@@ -102,6 +102,7 @@ func Test_IntExpansion(t *testing.T) {
 }
 
 func Test_DateExpansion(t *testing.T) {
+	today, _ := time.Parse(time.DateOnly, "2022-02-02")
 	testCases := map[string]struct {
 		otherTasksInList  []*todotxt.Item
 		description       string
@@ -135,6 +136,46 @@ func Test_DateExpansion(t *testing.T) {
 			description:       "an unknown:tag should work",
 			expectedExpansion: "an unknown:tag should work",
 		},
+		"monday": {
+			description:       "due:monday",
+			expectedExpansion: "due:2022-02-07",
+		},
+		"tuesday": {
+			description:       "due:tuesday",
+			expectedExpansion: "due:2022-02-08",
+		},
+		"wednesday": {
+			description:       "due:wednesday",
+			expectedExpansion: "due:2022-02-02",
+		},
+		"thursday": {
+			description:       "due:thursday",
+			expectedExpansion: "due:2022-02-03",
+		},
+		"friday": {
+			description:       "due:friday",
+			expectedExpansion: "due:2022-02-04",
+		},
+		"saturday": {
+			description:       "due:saturday",
+			expectedExpansion: "due:2022-02-05",
+		},
+		"sunday": {
+			description:       "due:sunday",
+			expectedExpansion: "due:2022-02-06",
+		},
+		"tomorrow": {
+			description:       "due:tomorrow",
+			expectedExpansion: "due:2022-02-03",
+		},
+		"yesterday": {
+			description:       "due:yesterday",
+			expectedExpansion: "due:2022-02-01",
+		},
+		"case insensitive": {
+			description:       "due:MoNdAy",
+			expectedExpansion: "due:2022-02-07",
+		},
 	}
 
 	for name, tc := range testCases {
@@ -146,7 +187,7 @@ func Test_DateExpansion(t *testing.T) {
 			list.AddHook(hook.NewTagExpansionWithNowFunc(list, true, map[string]qselect.DType{
 				"due": qselect.QDate,
 			}, func() time.Time {
-				return time.Date(2022, 2, 2, 0, 0, 0, 0, time.UTC)
+				return today
 			}))
 
 			err := item.EditDescription(tc.description)
