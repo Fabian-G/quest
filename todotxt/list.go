@@ -161,6 +161,14 @@ func (l *List) AllTags() []string {
 	return allTags
 }
 
+func (l *List) Secret(secretChange func() error) error {
+	l.hooksDisabled = true
+	defer func() {
+		l.hooksDisabled = false
+	}()
+	return secretChange()
+}
+
 func (l *List) validate() error {
 	errs := make([]error, 0)
 	for _, value := range l.idxOrder {

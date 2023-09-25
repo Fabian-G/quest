@@ -8,9 +8,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+var InternalEditTag = "quest-object-id"
+
 func buildTagTypes(v *viper.Viper) map[string]qselect.DType {
 	typeDefsConfig := v.GetStringMapString(Tags)
-	typeDefs := make(map[string]qselect.DType)
+	typeDefs := map[string]qselect.DType{
+		// Add internal tags
+		InternalEditTag: qselect.QString,
+	}
 
 	for key, value := range typeDefsConfig {
 		typ := qselect.DType(value)

@@ -238,6 +238,14 @@ func Test_SetTagForNewTag(t *testing.T) {
 	assert.Equal(t, "This is rec:+5y a description with tags rec:5y new:+1d", item.Description())
 }
 
+func Test_ClearTag(t *testing.T) {
+	item := todotxt.MustBuildItem(todotxt.WithDescription("This is rec:+5y a description with tags rec:5y rec:+6y"))
+
+	item.SetTag("rec", "")
+
+	assert.Equal(t, "This is a description with tags", item.Description())
+}
+
 func Test_CleaDescripton(t *testing.T) {
 	testCases := map[string]struct {
 		cleanProjects      []todotxt.Project

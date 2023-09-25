@@ -131,6 +131,10 @@ func (i *Item) replaceDescMatches(regex *regexp.Regexp, replacement string) stri
 
 func (i *Item) SetTag(key, value string) error {
 	matcher := MatcherForTag(key)
+	if strings.TrimSpace(value) == "" {
+		newDescription := i.replaceDescMatches(matcher, " ")
+		return i.EditDescription(strings.TrimSpace(newDescription))
+	}
 	if matcher.MatchString(i.Description()) {
 		newDescription := i.replaceDescMatches(matcher, fmt.Sprintf(" %s:%s ", key, value))
 		return i.EditDescription(strings.TrimSpace(newDescription))

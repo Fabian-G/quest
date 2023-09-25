@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
-	"strings"
+	"strconv"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/config"
@@ -69,7 +69,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 	}
 	slices.SortStableFunc(selection, sortFunc)
 
-	filePath, writtenLines, err := e.dumpDescriptionsToTempFile(selection)
+	filePath, err := e.dumpDescriptionsToTempFile(list, selection)
 	if err != nil {
 		return err
 	}
@@ -78,9 +78,9 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 		if err = cmdutil.StartEditor(cfg.GetString(config.Editor), filePath); err != nil {
 			return err
 		}
-		changes, removals, err := e.applyChanges(filePath, writtenLines, list, selection)
+		additions, changes, removals, err := e.applyChanges(filePath, list, selection)
 		if err == nil {
-			fmt.Fprintf(cmd.OutOrStdout(), "Items edited:  %d\nItems removed: %d\n", changes, removals)
+			fmt.Fprintf(cmd.OutOrStdout(), "Items Added:   %d\nItems changed: %d\nItems removed: %d\n", additions, changes, removals)
 			return nil
 		}
 		if !cmdutil.AskRetry(cmd, err) {
@@ -89,53 +89,130 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func (e *editCommand) dumpDescriptionsToTempFile(items []*todotxt.Item) (string, int, error) {
+func (e *editCommand) dumpDescriptionsToTempFile(list *todotxt.List, items []*todotxt.Item) (string, error) {
+	if err := setObjectIdTag(list, items); err != nil {
+		return "", err
+	}
 	tmpFile, err := os.CreateTemp("", "quest-edit-*.todo.txt")
 	if err != nil {
-		return "", 0, fmt.Errorf("could not create tmp file: %w", err)
+		return "", fmt.Errorf("could not create tmp file: %w", err)
 	}
 	defer func() {
 		tmpFile.Close()
 	}()
 	writer := bufio.NewWriter(tmpFile)
 	if err = todotxt.DefaultEncoder.Encode(writer, items); err != nil {
-		return "", 0, err
+		return "", err
 	}
 
-	return tmpFile.Name(), len(items), writer.Flush()
+	if err := clearObjectIdTag(list, items); err != nil {
+		return "", err
+	}
+
+	return tmpFile.Name(), writer.Flush()
 }
 
-func (e *editCommand) applyChanges(tmpFile string, expectedLines int, list *todotxt.List, selection []*todotxt.Item) (int, int, error) {
+func (e *editCommand) applyChanges(tmpFile string, list *todotxt.List, selection []*todotxt.Item) (added int, changed int, removed int, err error) {
 	file, err := os.Open(tmpFile)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
-	defer func() {
-		file.Close()
-	}()
+	defer file.Close()
 	changeList, err := todotxt.DefaultDecoder.Decode(file)
 	if err != nil {
-		return 0, 0, err
-	}
-	if len(changeList) != expectedLines {
-		return 0, 0, fmt.Errorf("expected %d lines, but got %d. Do not delete, add or reorder lines when editing", expectedLines, len(changeList))
+		return 0, 0, 0, err
 	}
 
-	var removedItems, changedItems int
-	for idx, item := range changeList {
-		if strings.TrimSpace(item.Description()) == "" {
-			removedItems++
-			list.Remove(list.IndexOf(selection[idx]))
+	changedItems, addedItems, err := mapToIds(changeList)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	for _, item := range addedItems {
+		err := list.Add(item)
+		if err != nil {
+			return 0, 0, 0, err
+		}
+		added++
+	}
+
+	deletedItems := make([]*todotxt.Item, len(selection)) // what remains in this list after the loop will be deleted
+	copy(deletedItems, selection)
+	for id, item := range changedItems {
+		deletedItems[id] = nil
+		if item.Equals(selection[id]) {
 			continue
 		}
-		before := *selection[idx]
-		if err := selection[idx].Apply(item); err != nil {
-			return 0, 0, err
-		}
-		if !before.Equals(selection[idx]) {
-			changedItems++
+		changed++
+		if err := selection[id].Apply(item); err != nil {
+			return 0, 0, 0, err
 		}
 	}
 
-	return changedItems, removedItems, nil
+	for _, i := range deletedItems {
+		if i == nil {
+			continue
+		}
+		removed++
+		if err := list.Remove(list.IndexOf(i)); err != nil {
+			return 0, 0, 0, err
+		}
+	}
+
+	return
+}
+
+func getEditId(item *todotxt.Item) (int, error) {
+	tagValues := item.Tags()[config.InternalEditTag]
+	if len(tagValues) == 0 {
+		return -1, nil
+	}
+	id, err := strconv.Atoi(tagValues[0])
+	if err != nil {
+		return 0, fmt.Errorf("encountered invalid %s tag. Dot not change them: %w", config.InternalEditTag, err)
+	}
+	return id, nil
+}
+
+func setObjectIdTag(list *todotxt.List, items []*todotxt.Item) error {
+	return list.Secret(func() error {
+		for i, item := range items {
+			if err := item.SetTag(config.InternalEditTag, strconv.Itoa(i)); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func clearObjectIdTag(list *todotxt.List, items []*todotxt.Item) error {
+	return list.Secret(func() error {
+		for _, item := range items {
+			if err := item.SetTag(config.InternalEditTag, ""); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func mapToIds(items []*todotxt.Item) (map[int]*todotxt.Item, []*todotxt.Item, error) {
+	idMap := make(map[int]*todotxt.Item)
+	noId := make([]*todotxt.Item, 0)
+	for _, item := range items {
+		id, err := getEditId(item)
+		if err != nil {
+			return nil, nil, err
+		}
+		if id == -1 {
+			noId = append(noId, item)
+		} else if _, ok := idMap[id]; ok {
+			return nil, nil, fmt.Errorf("encountered duplicate id %d. Do not change the %s tag", id, config.InternalEditTag)
+		} else {
+			idMap[id] = item
+
+			item.SetTag(config.InternalEditTag, "")
+		}
+	}
+	return idMap, noId, nil
 }
