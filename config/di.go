@@ -21,6 +21,7 @@ type Di struct {
 	macros               []MacroDef
 	questScoreCalculator *qscore.Calculator
 	sortCompiler         *qsort.Compiler
+	editor               Editor
 }
 
 func (d *Di) TodoTxtRepo() *todotxt.Repo {
@@ -89,4 +90,19 @@ func (d *Di) SortCompiler() qsort.Compiler {
 		d.sortCompiler = &sort
 	}
 	return *d.sortCompiler
+}
+
+func (d *Di) Editor() Editor {
+	if d.editor == nil {
+		d.editor = buildEditor(d.Config())
+	}
+	return d.editor
+}
+
+func (d *Di) SetConfig(v *viper.Viper) {
+	d.config = v
+}
+
+func (d *Di) SetEditor(e Editor) {
+	d.editor = e
 }

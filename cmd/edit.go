@@ -52,6 +52,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 	di := cmd.Context().Value(cmdutil.DiKey).(*config.Di)
 	repo := di.TodoTxtRepo()
 	cfg := di.Config()
+	editor := di.Editor()
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
 	selector, err := cmdutil.ParseTaskSelection(e.viewDef.DefaultQuery, args, e.qql, e.rng, e.str)
 	if err != nil {
@@ -78,7 +79,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 	}
 	defer os.Remove(filePath)
 	for {
-		if err = cmdutil.StartEditor(cfg.GetString(config.Editor), filePath); err != nil {
+		if err = editor.Edit(filePath); err != nil {
 			return err
 		}
 		additions, changes, removals, err := e.applyChanges(filePath, list, selection)
@@ -90,7 +91,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		if err := repo.Rollback(list); err != nil {
-			return e.handleRollbackFailure(path.Dir(cfg.GetString(config.TodoFile)), filePath, err)
+			return e.handleRollbackFailure(path.Dir(cfg.GetString(config.TodoFileKey)), filePath, err)
 		}
 		selection = selector.Filter(list)
 		slices.SortStableFunc(selection, sortFunc)
