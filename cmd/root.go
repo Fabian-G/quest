@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Root(di *config.Di) *cobra.Command {
+func Root(di *config.Di) (*cobra.Command, context.Context) {
 	defaultView := di.DefaultViewDef()
 	rootCmd := newViewCommand(defaultView).command()
 	rootCmd.PersistentPreRunE = cmdutil.Steps(
@@ -36,11 +36,5 @@ func Root(di *config.Di) *cobra.Command {
 		rootCmd.AddCommand(viewCommand.command())
 	}
 
-	return rootCmd
-}
-func Execute(di *config.Di, args []string) error {
-	ctx := context.WithValue(context.Background(), cmdutil.DiKey, di)
-	root := Root(di)
-	root.SetArgs(args)
-	return root.ExecuteContext(ctx)
+	return rootCmd, context.WithValue(context.Background(), cmdutil.DiKey, di)
 }

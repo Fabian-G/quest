@@ -19,17 +19,14 @@ func Test_ItemsAreOrderedCorrectly(t *testing.T) {
 	item 3
 	item 2`)
 	repo := todotxt.NewRepo(file)
-	repo.DefaultOrder = func(i1, i2 *todotxt.Item) int {
-		return -1 * strings.Compare(i1.Description(), i2.Description())
-	}
 
 	list, err := repo.Read()
 
 	assert.Nil(t, err)
 	assert.Equal(t, 3, list.Len())
-	assert.Equal(t, "item 3", list.Get(1).Description())
-	assert.Equal(t, "item 2", list.Get(2).Description())
-	assert.Equal(t, "item 1", list.Get(3).Description())
+	assert.Equal(t, "item 1", list.Get(1).Description())
+	assert.Equal(t, "item 3", list.Get(2).Description())
+	assert.Equal(t, "item 2", list.Get(3).Description())
 }
 
 func Test_OptimisticLockingReturnsErrorOnSaveIfWrittenInTheMeantime(t *testing.T) {

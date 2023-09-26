@@ -1,7 +1,6 @@
 package todotxt_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/Fabian-G/quest/todotxt"
@@ -146,16 +145,39 @@ func TestList_Remove(t *testing.T) {
 }
 
 func TestList_Add(t *testing.T) {
-	list := todotxt.ListOf(todotxt.MustBuildItem(
-		todotxt.WithDescription("A"),
-		todotxt.WithDescription("C"),
-	))
-	list.IdxOrderFunc = func(i1, i2 *todotxt.Item) int { return strings.Compare(i1.Description(), i2.Description()) }
-	list.Reindex()
+	list := todotxt.ListOf(
+		todotxt.MustBuildItem(todotxt.WithDescription("A")),
+		todotxt.MustBuildItem(todotxt.WithDescription("C")),
+	)
 
 	newItem := todotxt.MustBuildItem(todotxt.WithDescription("B"))
 	err := list.Add(newItem)
 
 	assert.Nil(t, err)
-	assert.Equal(t, 2, list.IndexOf(newItem))
+	assert.Equal(t, 3, list.IndexOf(newItem))
+}
+
+func Test_SnapshotAndRestore(t *testing.T) {
+	list := todotxt.ListOf(
+		todotxt.MustBuildItem(todotxt.WithDescription("A")),
+		todotxt.MustBuildItem(todotxt.WithDescription("B")),
+	)
+	pointerA := list.Get(1)
+	list.Snapshot()
+
+	err := list.Get(1).EditDescription("Hello World")
+	assert.Nil(t, err)
+	err = list.Add(todotxt.MustBuildItem(todotxt.WithDescription("123")))
+	assert.Nil(t, err)
+	err = list.Add(todotxt.MustBuildItem(todotxt.WithDescription("12345")))
+	assert.Nil(t, err)
+	err = list.Remove(2)
+	assert.Nil(t, err)
+
+	list.Reset()
+
+	assert.Equal(t, 2, list.Len())
+	assert.Equal(t, "A", pointerA.Description())
+	assert.Equal(t, "B", list.Get(2).Description())
+
 }

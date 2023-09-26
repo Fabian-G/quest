@@ -40,7 +40,6 @@ type Repo struct {
 	Encoder      *Encoder
 	Decoder      *Decoder
 	DefaultHooks []HookBuilder
-	DefaultOrder func(*Item, *Item) int
 	Keep         int
 }
 
@@ -65,13 +64,6 @@ func (t *Repo) Save(l *List) error {
 }
 
 func (t *Repo) handleOptimisticLocking(l *List) error {
-	if err := t.checkOLockError(); err != nil {
-		return fmt.Errorf("locking error: %w", t.writeToAlternativeLocation(l))
-	}
-	return nil
-}
-
-func (t *Repo) checkOLockError() error {
 	if t.checksum == [20]byte{} {
 		return nil // This is a save without a prior read, so we don't need locking
 	}
@@ -83,7 +75,7 @@ func (t *Repo) checkOLockError() error {
 		return fmt.Errorf("could not determine checksum of current state")
 	}
 	if sha1.Sum(currentData) != t.checksum {
-		return OLockError{}
+		return fmt.Errorf("locking error: %w", t.writeToAlternativeLocation(l))
 	}
 	return nil
 }
@@ -172,8 +164,6 @@ func (t *Repo) Read() (*List, error) {
 		return nil, fmt.Errorf("could not parse txt file %s: %w", t.file, err)
 	}
 	list := ListOf(tasks...)
-	list.IdxOrderFunc = t.DefaultOrder
-	list.Reindex()
 	t.checksum = sha1.Sum(rawData)
 	for _, b := range t.DefaultHooks {
 		list.AddHook(b(list))
@@ -193,18 +183,6 @@ func (t *Repo) load() ([]byte, error) {
 		return nil, fmt.Errorf("could not read txt file %s: %w", t.file, err)
 	}
 	return rawData, nil
-}
-
-func (t *Repo) Rollback(list *List) error {
-	if err := t.checkOLockError(); err != nil {
-		return err
-	}
-	oldList, err := t.Read()
-	if err != nil {
-		return err
-	}
-	list.copyFrom(oldList)
-	return list.validate()
 }
 
 // Watch watches watches for file changes.

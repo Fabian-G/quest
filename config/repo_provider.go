@@ -1,8 +1,6 @@
 package config
 
 import (
-	"log"
-
 	"github.com/Fabian-G/quest/hook"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/qsort"
@@ -14,22 +12,12 @@ func buildTodoTxtRepo(v *viper.Viper, sortCompiler qsort.Compiler, tagTypes map[
 	repo := todotxt.NewRepo(v.GetString(TodoFileKey))
 	repo.DefaultHooks = hooks(v, tagTypes)
 	repo.Keep = v.GetInt(KeepBackupsKey)
-	defOrder, err := sortCompiler.CompileSortFunc(v.GetString(IdxOrderKey))
-	if err != nil {
-		log.Fatal(err)
-	}
-	repo.DefaultOrder = defOrder
 	return repo
 }
 
 func buildDoneTxtRepo(v *viper.Viper, sortCompiler qsort.Compiler) *todotxt.Repo {
 	repo := todotxt.NewRepo(v.GetString(DoneFileKey))
 	repo.Keep = v.GetInt(KeepBackupsKey)
-	defOrder, err := sortCompiler.CompileSortFunc(v.GetString(IdxOrderKey))
-	if err != nil {
-		log.Fatal(err)
-	}
-	repo.DefaultOrder = defOrder
 	return repo
 }
 

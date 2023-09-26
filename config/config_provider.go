@@ -17,7 +17,6 @@ type Key = string
 const (
 	TodoFileKey    Key = "todo-file"
 	DoneFileKey    Key = "done-file"
-	IdxOrderKey    Key = "index-order"
 	KeepBackupsKey Key = "backup"
 	InteractiveKey Key = "interactive"
 	EditorKey      Key = "editor"
@@ -67,7 +66,6 @@ func setTopLevelDefaults(v *viper.Viper, homeDir string) {
 	if len(dataHome) == 0 {
 		dataHome = path.Join(homeDir, ".local/share")
 	}
-	v.SetDefault(IdxOrderKey, "+done,-creation,+description")
 	v.SetDefault(TodoFileKey, path.Join(dataHome, "quest/todo.txt"))
 	v.SetDefault(DoneFileKey, path.Join(dataHome, "quest/done.txt"))
 	v.SetDefault(KeepBackupsKey, 5)

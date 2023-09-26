@@ -24,7 +24,9 @@ Another task`
 
 	di.SetEditor(editSteps(complete(1), shuffle()))
 
-	err := cmd.Execute(di, []string{"edit", "-s", ""})
+	cmd, ctx := cmd.Root(di)
+	cmd.SetArgs([]string{"edit", "-s", ""})
+	err := cmd.ExecuteContext(ctx)
 
 	assert.Nil(t, err)
 	lines := ReadLines(t, todoFile)
@@ -48,7 +50,10 @@ Another task`
 
 	di.SetEditor(editAttempts(appendInvalidLine(), editSteps(removeLine(3), complete(1), shuffle())))
 
-	err := cmd.Execute(di, []string{"edit", "-s", ""})
+	cmd, ctx := cmd.Root(di)
+	cmd.SetArgs([]string{"edit", "-s", ""})
+	cmd.SetIn(strings.NewReader("Y\n"))
+	err := cmd.ExecuteContext(ctx)
 
 	assert.Nil(t, err)
 	lines := ReadLines(t, todoFile)
@@ -66,18 +71,23 @@ func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenAfterRollback(t *testin
 	di.Config().Set(config.TagsKey, map[string]string{
 		"order": "int",
 	})
+	di.Config().Set(config.UnknownTagsKey, false)
 	todoFile := di.Config().GetString(config.TodoFileKey)
 	todos := `+P1 T1
 +P1 T2
-+P1 T3`
++P1 T3
++P1 to be deleted`
 	assert.Nil(t, os.WriteFile(todoFile, []byte(todos), 0644))
 
 	di.SetEditor(editAttempts(
-		editSteps(appendOnEach("order:pmax+10"), appendInvalidLine()),
+		editSteps(appendOnEach("order:pmax+10"), appendInvalidTag(3)),
 		editSteps(removeLine(3), reverse()),
 	))
 
-	err := cmd.Execute(di, []string{"edit", "-s", ""})
+	cmd, ctx := cmd.Root(di)
+	cmd.SetArgs([]string{"edit", "-s", ""})
+	cmd.SetIn(strings.NewReader("Y\n"))
+	err := cmd.ExecuteContext(ctx)
 
 	assert.Nil(t, err)
 	lines := ReadLines(t, todoFile)
@@ -129,6 +139,17 @@ func appendInvalidLine() config.Editor {
 			return err
 		}
 		lines = append(lines, "2022-13-01 Hello World")
+		return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0644)
+	})
+}
+
+func appendInvalidTag(idx int) config.Editor {
+	return config.EditorFunc(func(path string) error {
+		lines, err := ReadLinesE(path)
+		if err != nil {
+			return err
+		}
+		lines[idx] = fmt.Sprintf("%s %s", lines[idx], "invalid:tag")
 		return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0644)
 	})
 }

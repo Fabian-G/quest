@@ -3,9 +3,7 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"os"
-	"path"
 	"slices"
 	"strconv"
 
@@ -50,8 +48,6 @@ func (e *editCommand) command() *cobra.Command {
 
 func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 	di := cmd.Context().Value(cmdutil.DiKey).(*config.Di)
-	repo := di.TodoTxtRepo()
-	cfg := di.Config()
 	editor := di.Editor()
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
 	selector, err := cmdutil.ParseTaskSelection(e.viewDef.DefaultQuery, args, e.qql, e.rng, e.str)
@@ -78,6 +74,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer os.Remove(filePath)
+	list.Snapshot()
 	for {
 		if err = editor.Edit(filePath); err != nil {
 			return err
@@ -90,32 +87,8 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 		if !cmdutil.AskRetry(cmd, err) {
 			return err
 		}
-		if err := repo.Rollback(list); err != nil {
-			return e.handleRollbackFailure(path.Dir(cfg.GetString(config.TodoFileKey)), filePath, err)
-		}
-		selection = selector.Filter(list)
-		slices.SortStableFunc(selection, sortFunc)
+		list.Reset()
 	}
-}
-
-func (e *editCommand) handleRollbackFailure(backupDir string, changeFilePath string, base error) error {
-	fmt.Printf("retry not possible: %s\n", base)
-	changeFile, err := os.Open(changeFilePath)
-	if err != nil {
-		return fmt.Errorf("could not save backup of changes: %w", err)
-	}
-	defer changeFile.Close()
-	changeBackup, err := os.CreateTemp(backupDir, "quest-edit-*.todo.txt")
-	if err != nil {
-		return fmt.Errorf("could not save backup of changes: %w", err)
-	}
-	defer changeBackup.Close()
-	_, err = io.Copy(changeBackup, changeFile)
-	if err != nil {
-		return fmt.Errorf("could not save backup of changes: %w", err)
-	}
-	fmt.Printf("a copy of your changes has been saved at %s, but you have to apply them manually", changeBackup.Name())
-	return err
 }
 
 func (e *editCommand) dumpDescriptionsToTempFile(list *todotxt.List, items []*todotxt.Item) (string, error) {
