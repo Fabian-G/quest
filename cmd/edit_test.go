@@ -22,7 +22,7 @@ A recurring task rec:+1w due:2020-01-01
 Another task`
 	assert.Nil(t, os.WriteFile(todoFile, []byte(todos), 0644))
 
-	di.SetEditor(completeAndShuffle(1))
+	di.SetEditor(editSteps(complete(1), shuffle()))
 
 	err := cmd.Execute(di, []string{"edit", "-s", ""})
 
@@ -46,7 +46,7 @@ A recurring task rec:+1w due:2020-01-01
 Another task`
 	assert.Nil(t, os.WriteFile(todoFile, []byte(todos), 0644))
 
-	di.SetEditor(editAttempts(appendInvalidLine(), editSteps(removeLine(3), completeAndShuffle(1))))
+	di.SetEditor(editAttempts(appendInvalidLine(), editSteps(removeLine(3), complete(1), shuffle())))
 
 	err := cmd.Execute(di, []string{"edit", "-s", ""})
 
@@ -104,13 +104,23 @@ func removeLine(idx int) config.Editor {
 	})
 }
 
-func completeAndShuffle(completeTask int) config.Editor {
+func complete(completeTask int) config.Editor {
 	return config.EditorFunc(func(path string) error {
 		lines, err := ReadLinesE(path)
 		if err != nil {
 			return err
 		}
 		lines[completeTask] = fmt.Sprintf("x %s", lines[completeTask])
+		return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0644)
+	})
+}
+
+func shuffle() config.Editor {
+	return config.EditorFunc(func(path string) error {
+		lines, err := ReadLinesE(path)
+		if err != nil {
+			return err
+		}
 		dest := make([]string, len(lines))
 		perm := rand.Perm(len(lines))
 		for i, v := range perm {
