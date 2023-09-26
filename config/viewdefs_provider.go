@@ -13,7 +13,7 @@ var fallbackListViewDef = ViewDef{
 	Name:              "list",
 	DefaultQuery:      "",
 	DefaultProjection: qprojection.StarProjection,
-	DefaultSortOrder:  "+done,+creation,+description",
+	DefaultSortOrder:  "",
 	DefaultClean:      nil,
 }
 

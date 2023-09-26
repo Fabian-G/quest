@@ -10,9 +10,12 @@ import (
 
 func main() {
 	args := os.Args[1:]
-	cmd.Execute(&config.Di{
+	err := cmd.Execute(&config.Di{
 		ConfigFile: configFromArgs(args),
 	}, args)
+	if err != nil {
+		os.Exit(1)
+	}
 }
 
 func configFromArgs(args []string) string {

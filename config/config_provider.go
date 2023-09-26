@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -25,6 +26,7 @@ const (
 	MacrosKey      Key = "macro"
 	TagsKey        Key = "tags"
 	QuestScoreKey  Key = "quest-score"
+	NowFuncKey     Key = "now-func-for-testing"
 )
 
 func buildConfig(file string) (*viper.Viper, error) {
@@ -88,4 +90,14 @@ func getDefaultEditor() string {
 		}
 	}
 	return ""
+}
+
+func nowFunc(v *viper.Viper) func() time.Time {
+	now := v.Get(NowFuncKey)
+	if now == nil {
+		return func() time.Time {
+			return time.Now()
+		}
+	}
+	return now.(func() time.Time)
 }

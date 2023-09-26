@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"os"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/config"
@@ -39,12 +38,9 @@ func Root(di *config.Di) *cobra.Command {
 
 	return rootCmd
 }
-func Execute(di *config.Di, args []string) {
+func Execute(di *config.Di, args []string) error {
 	ctx := context.WithValue(context.Background(), cmdutil.DiKey, di)
 	root := Root(di)
 	root.SetArgs(args)
-	err := root.ExecuteContext(ctx)
-	if err != nil {
-		os.Exit(1)
-	}
+	return root.ExecuteContext(ctx)
 }

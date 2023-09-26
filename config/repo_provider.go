@@ -44,11 +44,11 @@ func hooks(v *viper.Viper, tagTypes map[string]qselect.DType) []todotxt.HookBuil
 		v.SetDefault("recurrence.due-tag", "due")
 		v.SetDefault("recurrence.threshold-tag", "t")
 		hooks = append(hooks, func(l *todotxt.List) todotxt.Hook {
-			return hook.NewRecurrence(l, hook.RecurrenceTags{
+			return hook.NewRecurrenceWithNowFunc(l, hook.RecurrenceTags{
 				Rec:       v.GetString("recurrence.rec-tag"),
 				Due:       v.GetString("recurrence.due-tag"),
 				Threshold: v.GetString("recurrence.threshold-tag"),
-			})
+			}, nowFunc(v))
 		})
 	}
 	return hooks
