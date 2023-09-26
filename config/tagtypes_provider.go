@@ -11,7 +11,7 @@ import (
 var InternalEditTag = "quest-object-id"
 
 func buildTagTypes(v *viper.Viper) map[string]qselect.DType {
-	typeDefsConfig := v.GetStringMapString(Tags)
+	typeDefsConfig := v.GetStringMapString(TagsKey)
 	typeDefs := map[string]qselect.DType{
 		// Add internal tags
 		InternalEditTag: qselect.QString,

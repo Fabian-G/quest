@@ -10,7 +10,7 @@ import (
 )
 
 func buildScoreCalculator(v *viper.Viper) qscore.Calculator {
-	scoreConfig := v.Sub(QuestScore)
+	scoreConfig := v.Sub(QuestScoreKey)
 	minPriority, err := todotxt.PriorityFromString(scoreConfig.GetString("min-priority"))
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not parse min priority for quest-score: %w", err))

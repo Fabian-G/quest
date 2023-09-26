@@ -38,10 +38,10 @@ func (o *openCommand) open(cmd *cobra.Command, args []string) error {
 	repo := di.TodoTxtRepo()
 
 	for {
-		if err := cmdutil.StartEditor(cfg.GetString(config.Editor), cfg.GetString(config.TodoFile)); err != nil {
+		if err := cmdutil.StartEditor(cfg.GetString(config.EditorKey), cfg.GetString(config.TodoFileKey)); err != nil {
 			return err
 		}
-		todoFile, err := os.Open(cfg.GetString(config.TodoFile))
+		todoFile, err := os.Open(cfg.GetString(config.TodoFileKey))
 		if err != nil {
 			return err
 		}

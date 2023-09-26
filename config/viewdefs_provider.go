@@ -41,7 +41,7 @@ func buildDefaultViewDef(v *viper.Viper) ViewDef {
 }
 
 func buildViewDefs(v *viper.Viper) []ViewDef {
-	views, ok := v.Get(Views).([]any)
+	views, ok := v.Get(ViewsKey).([]any)
 	if !ok {
 		log.Fatal("error in config: expected view to be a list")
 	}
@@ -58,7 +58,7 @@ func getViewDef(parent *viper.Viper, subCfg *viper.Viper) ViewDef {
 	subCfg.SetDefault("projection", qprojection.StarProjection)
 	subCfg.SetDefault("sort", "+done,-creation,+description")
 	subCfg.SetDefault("clean", nil)
-	subCfg.SetDefault("interactive", parent.Get(Interactive))
+	subCfg.SetDefault("interactive", parent.Get(InteractiveKey))
 	return ViewDef{
 		Name:              subCfg.GetString("name"),
 		DefaultQuery:      subCfg.GetString("query"),

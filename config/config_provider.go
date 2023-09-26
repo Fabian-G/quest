@@ -14,17 +14,17 @@ import (
 type Key = string
 
 const (
-	TodoFile    Key = "todo-file"
-	DoneFile    Key = "done-file"
-	IdxOrder    Key = "index-order"
-	KeepBackups Key = "backup"
-	Interactive Key = "interactive"
-	Editor      Key = "editor"
-	UnknownTags Key = "unknown-tags"
-	Views       Key = "view"
-	Macros      Key = "macro"
-	Tags        Key = "tags"
-	QuestScore  Key = "quest-score"
+	TodoFileKey    Key = "todo-file"
+	DoneFileKey    Key = "done-file"
+	IdxOrderKey    Key = "index-order"
+	KeepBackupsKey Key = "backup"
+	InteractiveKey Key = "interactive"
+	EditorKey      Key = "editor"
+	UnknownTagsKey Key = "unknown-tags"
+	ViewsKey       Key = "view"
+	MacrosKey      Key = "macro"
+	TagsKey        Key = "tags"
+	QuestScoreKey  Key = "quest-score"
 )
 
 func buildConfig(file string) (*viper.Viper, error) {
@@ -65,19 +65,19 @@ func setTopLevelDefaults(v *viper.Viper, homeDir string) {
 	if len(dataHome) == 0 {
 		dataHome = path.Join(homeDir, ".local/share")
 	}
-	v.SetDefault(IdxOrder, "+done,-creation,+description")
-	v.SetDefault(TodoFile, path.Join(dataHome, "quest/todo.txt"))
-	v.SetDefault(DoneFile, path.Join(dataHome, "quest/done.txt"))
-	v.SetDefault(KeepBackups, 5)
-	v.SetDefault(Editor, getDefaultEditor())
-	v.SetDefault(UnknownTags, true)
-	v.SetDefault(Macros, []any{})
-	v.SetDefault(Views, []any{})
-	v.SetDefault(Tags, make(map[string]string))
-	v.SetDefault(Interactive, false)
-	v.SetDefault(QuestScore+".urgency-tag", "due")
-	v.SetDefault(QuestScore+".urgency-begin", 90)
-	v.SetDefault(QuestScore+".min-priority", "E")
+	v.SetDefault(IdxOrderKey, "+done,-creation,+description")
+	v.SetDefault(TodoFileKey, path.Join(dataHome, "quest/todo.txt"))
+	v.SetDefault(DoneFileKey, path.Join(dataHome, "quest/done.txt"))
+	v.SetDefault(KeepBackupsKey, 5)
+	v.SetDefault(EditorKey, getDefaultEditor())
+	v.SetDefault(UnknownTagsKey, true)
+	v.SetDefault(MacrosKey, []any{})
+	v.SetDefault(ViewsKey, []any{})
+	v.SetDefault(TagsKey, make(map[string]string))
+	v.SetDefault(InteractiveKey, false)
+	v.SetDefault(QuestScoreKey+".urgency-tag", "due")
+	v.SetDefault(QuestScoreKey+".urgency-begin", 90)
+	v.SetDefault(QuestScoreKey+".min-priority", "E")
 }
 
 func getDefaultEditor() string {

@@ -21,7 +21,7 @@ func Root(di *config.Di) *cobra.Command {
 	rootCmd.SilenceUsage = true
 	rootCmd.PersistentFlags().String("config", "", "the config file to use") // This is just for the help message. Parsing happens in main.go
 	rootCmd.PersistentFlags().StringP("file", "f", "", "the todo.txt file")
-	di.Config().BindPFlag(config.TodoFile, rootCmd.PersistentFlags().Lookup("file"))
+	di.Config().BindPFlag(config.TodoFileKey, rootCmd.PersistentFlags().Lookup("file"))
 	rootCmd.AddGroup(&cobra.Group{
 		ID:    "view",
 		Title: "Views",

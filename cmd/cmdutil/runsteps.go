@@ -97,15 +97,15 @@ func createFileIfNotExists(file string) error {
 
 func EnsureTodoFileExits(cmd *cobra.Command, args []string) error {
 	v := cmd.Context().Value(DiKey).(*config.Di).Config()
-	v.Set(config.TodoFile, os.ExpandEnv(v.GetString(config.TodoFile)))
-	file := v.GetString(config.TodoFile)
+	v.Set(config.TodoFileKey, os.ExpandEnv(v.GetString(config.TodoFileKey)))
+	file := v.GetString(config.TodoFileKey)
 	return createFileIfNotExists(file)
 }
 
 func EnsureDoneFileExists(cmd *cobra.Command, args []string) error {
 	v := cmd.Context().Value(DiKey).(*config.Di).Config()
-	v.Set(config.DoneFile, os.ExpandEnv(v.GetString(config.DoneFile)))
-	file := v.GetString(config.DoneFile)
+	v.Set(config.DoneFileKey, os.ExpandEnv(v.GetString(config.DoneFileKey)))
+	file := v.GetString(config.DoneFileKey)
 	return createFileIfNotExists(file)
 }
 
@@ -122,7 +122,7 @@ func RegisterMacros(cmd *cobra.Command, args []string) error {
 
 func SyncConflictProtection(cmd *cobra.Command, args []string) error {
 	v := cmd.Context().Value(DiKey).(*config.Di).Config()
-	file := v.GetString(config.TodoFile)
+	file := v.GetString(config.TodoFileKey)
 	filesInDir, err := os.ReadDir(path.Dir(file))
 	if err != nil {
 		return fmt.Errorf("could check for sync conflicts: %w", err)
