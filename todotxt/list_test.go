@@ -104,7 +104,7 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			var hookCalled bool
 			tc.initial.AddHook(
-				todotxt.HookFunc(func(event todotxt.ModEvent) error {
+				todotxt.HookFunc(func(list *todotxt.List, event todotxt.ModEvent) error {
 					hookCalled = true
 					tc.previousMatcher(t, event.Previous)
 					tc.currentMatcher(t, event.Current)
@@ -119,7 +119,7 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 
 func Test_ModificationsMadeInTheHookGetThroughToTheList(t *testing.T) {
 	list := todotxt.ListOf(todotxt.MustBuildItem(todotxt.WithDescription("Hello World")))
-	undoer := todotxt.HookFunc(func(event todotxt.ModEvent) error {
+	undoer := todotxt.HookFunc(func(list *todotxt.List, event todotxt.ModEvent) error {
 		// We don't like any changes, so we undo them all, but leave a note
 		*event.Current = *event.Previous
 		event.Current.EditDescription(event.Current.Description() + " That change sucked")

@@ -39,7 +39,7 @@ type Repo struct {
 	watchLock    sync.Mutex
 	Encoder      *Encoder
 	Decoder      *Decoder
-	DefaultHooks []HookBuilder
+	DefaultHooks []Hook
 	Keep         int
 }
 
@@ -166,7 +166,7 @@ func (t *Repo) Read() (*List, error) {
 	list := ListOf(tasks...)
 	t.checksum = sha1.Sum(rawData)
 	for _, b := range t.DefaultHooks {
-		list.AddHook(b(list))
+		list.AddHook(b)
 	}
 	return list, list.validate()
 }

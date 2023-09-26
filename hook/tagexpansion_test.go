@@ -89,7 +89,7 @@ func Test_IntExpansion(t *testing.T) {
 				todotxt.WithDescription("Hello World"),
 			)
 			list := todotxt.ListOf(append(tc.otherTasksInList, item)...)
-			list.AddHook(hook.NewTagExpansion(list, false, map[string]qselect.DType{
+			list.AddHook(hook.NewTagExpansion(false, map[string]qselect.DType{
 				"i": qselect.QInt,
 			}))
 
@@ -184,7 +184,7 @@ func Test_DateExpansion(t *testing.T) {
 				todotxt.WithDescription("Hello World"),
 			)
 			list := todotxt.ListOf(append(tc.otherTasksInList, item)...)
-			list.AddHook(hook.NewTagExpansionWithNowFunc(list, true, map[string]qselect.DType{
+			list.AddHook(hook.NewTagExpansionWithNowFunc(true, map[string]qselect.DType{
 				"due": qselect.QDate,
 			}, func() time.Time {
 				return today
@@ -203,7 +203,7 @@ func Test_TagExpansionsIgnoresRemovalEvents(t *testing.T) {
 		todotxt.WithDescription("Hello World"),
 	)
 	list := todotxt.ListOf(item)
-	list.AddHook(hook.NewTagExpansionWithNowFunc(list, false, map[string]qselect.DType{
+	list.AddHook(hook.NewTagExpansionWithNowFunc(false, map[string]qselect.DType{
 		"due": qselect.QDate,
 	}, func() time.Time {
 		return time.Date(2022, 2, 2, 0, 0, 0, 0, time.UTC)
@@ -233,7 +233,7 @@ func Test_TagExpansionsError(t *testing.T) {
 				todotxt.WithDescription("Hello World"),
 			)
 			list := todotxt.ListOf(item)
-			list.AddHook(hook.NewTagExpansionWithNowFunc(list, false, map[string]qselect.DType{
+			list.AddHook(hook.NewTagExpansionWithNowFunc(false, map[string]qselect.DType{
 				"due":     qselect.QDate,
 				"someInt": qselect.QInt,
 			}, func() time.Time {

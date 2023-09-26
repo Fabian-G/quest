@@ -21,23 +21,20 @@ func buildDoneTxtRepo(v *viper.Viper, sortCompiler qsort.Compiler) *todotxt.Repo
 	return repo
 }
 
-func hooks(v *viper.Viper, tagTypes map[string]qselect.DType) []todotxt.HookBuilder {
-	hooks := make([]todotxt.HookBuilder, 0)
+func hooks(v *viper.Viper, tagTypes map[string]qselect.DType) []todotxt.Hook {
+	hooks := make([]todotxt.Hook, 0)
 	if len(tagTypes) > 0 {
-		hooks = append(hooks, func(l *todotxt.List) todotxt.Hook {
-			return hook.NewTagExpansion(l, v.GetBool(UnknownTagsKey), tagTypes)
-		})
+		hooks = append(hooks, hook.NewTagExpansion(v.GetBool(UnknownTagsKey), tagTypes))
+
 	}
 	if recTag := v.GetString("recurrence.rec-tag"); recTag != "" {
 		v.SetDefault("recurrence.due-tag", "due")
 		v.SetDefault("recurrence.threshold-tag", "t")
-		hooks = append(hooks, func(l *todotxt.List) todotxt.Hook {
-			return hook.NewRecurrenceWithNowFunc(l, hook.RecurrenceTags{
-				Rec:       v.GetString("recurrence.rec-tag"),
-				Due:       v.GetString("recurrence.due-tag"),
-				Threshold: v.GetString("recurrence.threshold-tag"),
-			}, nowFunc(v))
-		})
+		hooks = append(hooks, hook.NewRecurrenceWithNowFunc(hook.RecurrenceTags{
+			Rec:       v.GetString("recurrence.rec-tag"),
+			Due:       v.GetString("recurrence.due-tag"),
+			Threshold: v.GetString("recurrence.threshold-tag"),
+		}, nowFunc(v)))
 	}
 	return hooks
 }

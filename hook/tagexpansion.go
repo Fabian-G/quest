@@ -32,48 +32,45 @@ var weekdayLookup = map[string]time.Weekday{
 }
 
 type TagExpansion struct {
-	list       *todotxt.List
 	tags       map[string]qselect.DType
 	unkownTags bool
 	nowFunc    func() time.Time
 }
 
-func NewTagExpansion(list *todotxt.List, unknownTags bool, tags map[string]qselect.DType) todotxt.Hook {
+func NewTagExpansion(unknownTags bool, tags map[string]qselect.DType) todotxt.Hook {
 	return &TagExpansion{
-		list:       list,
 		tags:       tags,
 		unkownTags: unknownTags,
 	}
 }
 
-func NewTagExpansionWithNowFunc(list *todotxt.List, unknownTags bool, tags map[string]qselect.DType, now func() time.Time) todotxt.Hook {
+func NewTagExpansionWithNowFunc(unknownTags bool, tags map[string]qselect.DType, now func() time.Time) todotxt.Hook {
 	return &TagExpansion{
-		list:       list,
 		tags:       tags,
 		unkownTags: unknownTags,
 		nowFunc:    now,
 	}
 }
 
-func (t TagExpansion) OnMod(event todotxt.ModEvent) error {
+func (t TagExpansion) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
 	if event.Current == nil {
 		return nil // We don't care about removals
 	}
 	for itemTag := range event.Current.Tags() {
 		if typ, ok := t.tags[itemTag]; ok {
-			t.expandTag(typ, itemTag, event.Current)
+			t.expandTag(list, typ, itemTag, event.Current)
 		}
 	}
 	return t.validateItem(event.Current)
 }
 
-func (t TagExpansion) expandTag(typ qselect.DType, tag string, i *todotxt.Item) {
+func (t TagExpansion) expandTag(list *todotxt.List, typ qselect.DType, tag string, i *todotxt.Item) {
 	tagValue := i.Tags()[tag][0]
 	switch typ {
 	case qselect.QDate:
 		i.SetTag(tag, t.expandDate(tagValue))
 	case qselect.QInt:
-		i.SetTag(tag, t.expandInt(i, tag, tagValue))
+		i.SetTag(tag, t.expandInt(list, i, tag, tagValue))
 	}
 }
 
@@ -135,7 +132,7 @@ func (t TagExpansion) findNext(day time.Weekday) time.Time {
 	}
 }
 
-func (t TagExpansion) expandInt(i *todotxt.Item, tag string, value string) string {
+func (t TagExpansion) expandInt(list *todotxt.List, i *todotxt.Item, tag string, value string) string {
 	if _, err := strconv.Atoi(value); err == nil {
 		// This is already a proper integer
 		return value
@@ -145,16 +142,16 @@ func (t TagExpansion) expandInt(i *todotxt.Item, tag string, value string) strin
 	var remainingValue string
 	switch {
 	case strings.HasPrefix(value, "max"):
-		base = t.globalMaxValue(tag)
+		base = t.globalMaxValue(list, tag)
 		remainingValue = strings.TrimPrefix(value, "max")
 	case strings.HasPrefix(value, "min"):
-		base = t.globalMinValue(tag)
+		base = t.globalMinValue(list, tag)
 		remainingValue = strings.TrimPrefix(value, "min")
 	case strings.HasPrefix(value, "pmax"):
-		base = t.projectMaxValue(i.Projects(), tag)
+		base = t.projectMaxValue(list, i.Projects(), tag)
 		remainingValue = strings.TrimPrefix(value, "pmax")
 	case strings.HasPrefix(value, "pmin"):
-		base = t.projectMinValue(i.Projects(), tag)
+		base = t.projectMinValue(list, i.Projects(), tag)
 		remainingValue = strings.TrimPrefix(value, "pmin")
 	}
 	if len(strings.TrimSpace(remainingValue)) == 0 {
@@ -167,10 +164,10 @@ func (t TagExpansion) expandInt(i *todotxt.Item, tag string, value string) strin
 	return strconv.Itoa(base + offset)
 }
 
-func (t TagExpansion) globalMaxValue(tag string) int {
+func (t TagExpansion) globalMaxValue(list *todotxt.List, tag string) int {
 	var maximum int = math.MinInt
 	var foundOne bool
-	for _, i := range t.list.Tasks() {
+	for _, i := range list.Tasks() {
 		for _, v := range i.Tags()[tag] {
 			if i, err := strconv.Atoi(v); err == nil {
 				foundOne = true
@@ -184,10 +181,10 @@ func (t TagExpansion) globalMaxValue(tag string) int {
 	return maximum
 }
 
-func (t TagExpansion) globalMinValue(tag string) int {
+func (t TagExpansion) globalMinValue(list *todotxt.List, tag string) int {
 	var minimum int = math.MaxInt
 	var foundOne bool
-	for _, i := range t.list.Tasks() {
+	for _, i := range list.Tasks() {
 		for _, v := range i.Tags()[tag] {
 			if i, err := strconv.Atoi(v); err == nil {
 				foundOne = true
@@ -201,10 +198,10 @@ func (t TagExpansion) globalMinValue(tag string) int {
 	return minimum
 }
 
-func (t TagExpansion) projectMaxValue(projects []todotxt.Project, tag string) int {
+func (t TagExpansion) projectMaxValue(list *todotxt.List, projects []todotxt.Project, tag string) int {
 	var maximum int = math.MinInt
 	var foundOne bool
-	for _, i := range t.list.Tasks() {
+	for _, i := range list.Tasks() {
 		if !slices.ContainsFunc(i.Projects(), func(p todotxt.Project) bool {
 			return slices.Contains(projects, p)
 		}) {
@@ -223,10 +220,10 @@ func (t TagExpansion) projectMaxValue(projects []todotxt.Project, tag string) in
 	return maximum
 }
 
-func (t TagExpansion) projectMinValue(projects []todotxt.Project, tag string) int {
+func (t TagExpansion) projectMinValue(list *todotxt.List, projects []todotxt.Project, tag string) int {
 	var minimum int = math.MaxInt
 	var foundOne bool
-	for _, i := range t.list.Tasks() {
+	for _, i := range list.Tasks() {
 		if !slices.ContainsFunc(i.Projects(), func(p todotxt.Project) bool {
 			return slices.Contains(projects, p)
 		}) {
@@ -245,7 +242,7 @@ func (t TagExpansion) projectMinValue(projects []todotxt.Project, tag string) in
 	return minimum
 }
 
-func (t TagExpansion) OnValidate(event todotxt.ValidationEvent) error {
+func (t TagExpansion) OnValidate(list *todotxt.List, event todotxt.ValidationEvent) error {
 	return t.validateItem(event.Item)
 }
 

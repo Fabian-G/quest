@@ -5,7 +5,7 @@ import "errors"
 var ErrAbort = errors.New("operation aborted by hook")
 
 type Event interface {
-	Dispatch(Hook) error
+	Dispatch(*List, Hook) error
 }
 
 // ModEvent is an event that is issued whenever a modification to the list happens.
@@ -22,31 +22,29 @@ func (m ModEvent) IsCompleteEvent() bool {
 	return m.Previous != nil && m.Current != nil && !m.Previous.Done() && m.Current.Done()
 }
 
-func (m ModEvent) Dispatch(h Hook) error {
-	return h.OnMod(m)
+func (m ModEvent) Dispatch(list *List, h Hook) error {
+	return h.OnMod(list, m)
 }
 
 type ValidationEvent struct {
 	Item *Item
 }
 
-func (v ValidationEvent) Dispatch(h Hook) error {
-	return h.OnValidate(v)
+func (v ValidationEvent) Dispatch(list *List, h Hook) error {
+	return h.OnValidate(list, v)
 }
-
-type HookBuilder func(*List) Hook
 
 type Hook interface {
-	OnMod(event ModEvent) error
-	OnValidate(event ValidationEvent) error
+	OnMod(list *List, event ModEvent) error
+	OnValidate(list *List, event ValidationEvent) error
 }
 
-type HookFunc func(event ModEvent) error
+type HookFunc func(*List, ModEvent) error
 
-func (h HookFunc) OnMod(event ModEvent) error {
-	return h(event)
+func (h HookFunc) OnMod(list *List, event ModEvent) error {
+	return h(list, event)
 }
 
-func (h HookFunc) OnValidate(ValidationEvent) error {
+func (h HookFunc) OnValidate(*List, ValidationEvent) error {
 	return nil
 }

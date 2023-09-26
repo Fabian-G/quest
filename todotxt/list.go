@@ -216,7 +216,7 @@ func (l *List) emit(me Event) error {
 		l.hooksDisabled = false
 	}()
 	for _, h := range l.hooks {
-		if err := me.Dispatch(h); err != nil {
+		if err := me.Dispatch(l, h); err != nil {
 			return err
 		}
 	}

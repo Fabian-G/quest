@@ -13,6 +13,7 @@ import (
 var ErrNoRecurrenceBase = errors.New("when the recurrence tag is set, either the due tag or the threshold tag (or both) must be set")
 
 type recurrenceParams struct {
+	list      *todotxt.List
 	base      *todotxt.Item
 	due       time.Time
 	threshold time.Time
@@ -21,7 +22,6 @@ type recurrenceParams struct {
 }
 
 type Recurrence struct {
-	list    *todotxt.List
 	tags    RecurrenceTags
 	nowFunc func() time.Time
 }
@@ -32,26 +32,24 @@ type RecurrenceTags struct {
 	Threshold string
 }
 
-func NewRecurrence(list *todotxt.List, tags RecurrenceTags) todotxt.Hook {
+func NewRecurrence(tags RecurrenceTags) todotxt.Hook {
 	return &Recurrence{
-		list: list,
 		tags: tags,
 	}
 }
 
-func NewRecurrenceWithNowFunc(list *todotxt.List, tags RecurrenceTags, now func() time.Time) todotxt.Hook {
+func NewRecurrenceWithNowFunc(tags RecurrenceTags, now func() time.Time) todotxt.Hook {
 	return &Recurrence{
-		list:    list,
 		nowFunc: now,
 		tags:    tags,
 	}
 }
 
-func (r Recurrence) OnMod(event todotxt.ModEvent) error {
+func (r Recurrence) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
 	if !event.IsCompleteEvent() || len(event.Current.Tags()[r.tags.Rec]) == 0 {
 		return nil
 	}
-	param, err := r.parseRecurrenceParams(event.Current)
+	param, err := r.parseRecurrenceParams(list, event.Current)
 	if err != nil {
 		return err
 	}
@@ -62,11 +60,11 @@ func (r Recurrence) OnMod(event todotxt.ModEvent) error {
 	return r.spawnAbsolute(param)
 }
 
-func (r Recurrence) OnValidate(event todotxt.ValidationEvent) error {
+func (r Recurrence) OnValidate(list *todotxt.List, event todotxt.ValidationEvent) error {
 	if len(event.Item.Tags()[r.tags.Rec]) == 0 {
 		return nil
 	}
-	_, err := r.parseRecurrenceParams(event.Item)
+	_, err := r.parseRecurrenceParams(list, event.Item)
 	if err != nil {
 		return fmt.Errorf("recurrent task contains error: %w", err)
 	}
@@ -116,7 +114,7 @@ func (r Recurrence) spawnRelative(params recurrenceParams) error {
 			return fmt.Errorf("failed to set new due date when trying to spawn new recurrent task")
 		}
 	}
-	return r.list.Add(newItem)
+	return params.list.Add(newItem)
 }
 
 func (r Recurrence) spawnAbsolute(params recurrenceParams) error {
@@ -142,12 +140,13 @@ func (r Recurrence) spawnAbsolute(params recurrenceParams) error {
 			return fmt.Errorf("failed to set new threshold date when trying to spawn new recurrent task")
 		}
 	}
-	return r.list.Add(newItem)
+	return params.list.Add(newItem)
 }
 
-func (r Recurrence) parseRecurrenceParams(current *todotxt.Item) (recurrenceParams, error) {
+func (r Recurrence) parseRecurrenceParams(list *todotxt.List, current *todotxt.Item) (recurrenceParams, error) {
 	params := recurrenceParams{
 		base: current,
+		list: list,
 	}
 	tags := current.Tags()
 	recTag := r.tags.Rec
