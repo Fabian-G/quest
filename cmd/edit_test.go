@@ -61,6 +61,34 @@ Another task`
 	})
 }
 
+func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenAfterRollback(t *testing.T) {
+	di := BuildTestDi(t)
+	di.Config().Set(config.TagsKey, map[string]string{
+		"order": "int",
+	})
+	todoFile := di.Config().GetString(config.TodoFileKey)
+	todos := `+P1 T1
++P1 T2
++P1 T3`
+	assert.Nil(t, os.WriteFile(todoFile, []byte(todos), 0644))
+
+	di.SetEditor(editAttempts(
+		editSteps(appendOnEach("order:pmax+10"), appendInvalidLine()),
+		editSteps(removeLine(3), reverse()),
+	))
+
+	err := cmd.Execute(di, []string{"edit", "-s", ""})
+
+	assert.Nil(t, err)
+	lines := ReadLines(t, todoFile)
+	assert.Len(t, lines, 3)
+	assert.ElementsMatch(t, ReadLines(t, todoFile), []string{
+		"+P1 T1 order:30",
+		"+P1 T2 order:20",
+		"+P1 T3 order:10",
+	})
+}
+
 func editAttempts(editors ...config.Editor) config.Editor {
 	invocationCount := 0
 	return config.EditorFunc(func(path string) error {
@@ -79,6 +107,18 @@ func editSteps(editors ...config.Editor) config.Editor {
 			}
 		}
 		return nil
+	})
+}
+func appendOnEach(suffix string) config.Editor {
+	return config.EditorFunc(func(path string) error {
+		lines, err := ReadLinesE(path)
+		if err != nil {
+			return err
+		}
+		for i, l := range lines {
+			lines[i] = fmt.Sprintf("%s %s", l, suffix)
+		}
+		return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0644)
 	})
 }
 
@@ -111,6 +151,17 @@ func complete(completeTask int) config.Editor {
 			return err
 		}
 		lines[completeTask] = fmt.Sprintf("x %s", lines[completeTask])
+		return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0644)
+	})
+}
+
+func reverse() config.Editor {
+	return config.EditorFunc(func(path string) error {
+		lines, err := ReadLinesE(path)
+		if err != nil {
+			return err
+		}
+		slices.Reverse(lines)
 		return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0644)
 	})
 }
