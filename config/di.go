@@ -65,7 +65,7 @@ func (d *Di) DefaultViewDef() ViewDef {
 
 func (d *Di) ViewDefs() []ViewDef {
 	if d.viewDefs == nil {
-		d.viewDefs = buildViewDefs(d.Config())
+		d.viewDefs = buildViewDefs(d.DefaultViewDef(), d.Config())
 	}
 	return d.viewDefs
 }

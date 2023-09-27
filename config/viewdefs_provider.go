@@ -36,45 +36,44 @@ func buildDefaultViewDef(v *viper.Viper) ViewDef {
 	if defView == nil {
 		return fallbackListViewDef
 	}
-	return getViewDef(v, defView)
+	return getViewDef(fallbackListViewDef, defView)
 }
 
-func buildViewDefs(v *viper.Viper) []ViewDef {
+func buildViewDefs(defaultView ViewDef, v *viper.Viper) []ViewDef {
 	views, ok := v.Get(ViewsKey).([]any)
 	if !ok {
 		log.Fatal("error in config: expected view to be a list")
 	}
 	defs := make([]ViewDef, 0, len(views))
 	for idx := range views {
-		defs = append(defs, getViewDef(v, v.Sub(fmt.Sprintf("view.%d", idx))))
+		defs = append(defs, getViewDef(defaultView, v.Sub(fmt.Sprintf("view.%d", idx))))
 	}
 	return defs
 }
 
-func getViewDef(parent *viper.Viper, subCfg *viper.Viper) ViewDef {
-	subCfg.SetDefault("name", "")
-	subCfg.SetDefault("query", "")
-	subCfg.SetDefault("projection", qprojection.StarProjection)
-	subCfg.SetDefault("sort", []string{"+done", "-creation", "+description"})
-	subCfg.SetDefault("clean", nil)
-	subCfg.SetDefault("interactive", parent.Get(InteractiveKey))
+func getViewDef(defaultView ViewDef, subCfg *viper.Viper) ViewDef {
+	subCfg.SetDefault("query", defaultView.DefaultQuery)
+	subCfg.SetDefault("projection", defaultView.DefaultProjection)
+	subCfg.SetDefault("sort", defaultView.DefaultSortOrder)
+	subCfg.SetDefault("clean", defaultView.DefaultClean)
+	subCfg.SetDefault("interactive", defaultView.Interactive)
 	return ViewDef{
 		Name:              subCfg.GetString("name"),
 		DefaultQuery:      subCfg.GetString("query"),
 		DefaultProjection: subCfg.GetStringSlice("projection"),
 		DefaultSortOrder:  subCfg.GetStringSlice("sort"),
 		DefaultClean:      subCfg.GetStringSlice("clean"),
-		Add:               getAddDef(subCfg.Sub("add")),
+		Add:               getAddDef(defaultView, subCfg.Sub("add")),
 		Interactive:       subCfg.GetBool("interactive"),
 	}
 }
 
-func getAddDef(subCfg *viper.Viper) AddDef {
+func getAddDef(defaultView ViewDef, subCfg *viper.Viper) AddDef {
 	if subCfg == nil {
-		return AddDef{}
+		return defaultView.Add
 	}
-	subCfg.SetDefault("prefix", "")
-	subCfg.SetDefault("suffix", "")
+	subCfg.SetDefault("prefix", defaultView.Add.Prefix)
+	subCfg.SetDefault("suffix", defaultView.Add.Suffix)
 	return AddDef{
 		Prefix: subCfg.GetString("prefix"),
 		Suffix: subCfg.GetString("suffix"),

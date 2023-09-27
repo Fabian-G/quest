@@ -18,7 +18,6 @@ const (
 	TodoFileKey    Key = "todo-file"
 	DoneFileKey    Key = "done-file"
 	KeepBackupsKey Key = "backup"
-	InteractiveKey Key = "interactive"
 	EditorKey      Key = "editor"
 	UnknownTagsKey Key = "unknown-tags"
 	ViewsKey       Key = "view"
@@ -75,7 +74,6 @@ func setTopLevelDefaults(v *viper.Viper, homeDir string) {
 	v.SetDefault(MacrosKey, []any{})
 	v.SetDefault(ViewsKey, []any{})
 	v.SetDefault(TagsKey, make(map[string]string))
-	v.SetDefault(InteractiveKey, false)
 	v.SetDefault(QuestScoreKey+".urgency-tag", "due")
 	v.SetDefault(QuestScoreKey+".urgency-begin", 90)
 	v.SetDefault(QuestScoreKey+".min-priority", "E")
