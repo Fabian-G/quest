@@ -2,12 +2,16 @@ package cmd
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/config"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
 )
+
+var setRegex = regexp.MustCompile("^[^[:space:]]+=[^[:space:]]*$")
 
 type setCommand struct {
 	viewDef config.ViewDef
@@ -28,7 +32,7 @@ func newSetCommand(def config.ViewDef) *setCommand {
 func (s *setCommand) command() *cobra.Command {
 	var setCommand = &cobra.Command{
 		Use:      "set",
-		Args:     cobra.MinimumNArgs(2),
+		Args:     cobra.MinimumNArgs(1),
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
@@ -43,11 +47,18 @@ func (s *setCommand) command() *cobra.Command {
 }
 
 func (s *setCommand) set(cmd *cobra.Command, args []string) error {
+	selectors := make([]string, 0)
+	tagOps := make([]string, 0)
+	for _, arg := range args {
+		if setRegex.MatchString(arg) {
+			tagOps = append(tagOps, arg)
+		} else {
+			selectors = append(selectors, arg)
+		}
+	}
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
-	tag := args[0]
-	value := args[1]
 
-	selector, err := cmdutil.ParseTaskSelection(s.viewDef.DefaultQuery, args[2:], s.qql, s.rng, s.str)
+	selector, err := cmdutil.ParseTaskSelection(s.viewDef.DefaultQuery, selectors, s.qql, s.rng, s.str)
 	if err != nil {
 		return err
 	}
@@ -66,14 +77,22 @@ func (s *setCommand) set(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, t := range confirmedSelection {
-		if err := t.SetTag(tag, value); err != nil {
-			return err
+		for _, tagOp := range tagOps {
+			eqIdx := strings.Index(tagOp, "=")
+			if err := t.SetTag(tagOp[:eqIdx], tagOp[eqIdx+1:]); err != nil {
+				return err
+			}
 		}
+
 	}
-	if value == "" {
-		cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed tag \"%s\" from", tag), list, confirmedSelection)
-	} else {
-		cmdutil.PrintSuccessMessage(fmt.Sprintf("Set tag \"%s\" to \"%s\" on", tag, value), list, confirmedSelection)
+	for _, tagOp := range tagOps {
+		eqIdx := strings.Index(tagOp, "=")
+		tag, value := tagOp[:eqIdx], tagOp[eqIdx+1:]
+		if value == "" {
+			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed tag \"%s\" from", tag), list, confirmedSelection)
+		} else {
+			cmdutil.PrintSuccessMessage(fmt.Sprintf("Set tag \"%s\" to \"%s\" on", tag, value), list, confirmedSelection)
+		}
 	}
 	return nil
 }
