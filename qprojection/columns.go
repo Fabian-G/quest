@@ -12,7 +12,7 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-const StarProjection = "idx,done,priority,completion,creation,projects,contexts,tags,description"
+const StarProjection = "line,done,priority,completion,creation,projects,contexts,tags,description"
 
 type matcher interface {
 	match(string) bool
@@ -28,7 +28,7 @@ type columnDef struct {
 }
 
 var columns = []columnDef{
-	idxColumn,
+	lineColumn,
 	tagColumn,
 	doneColumn,
 	priorityColumn,
@@ -131,12 +131,12 @@ var contextsColumn = columnDef{
 	}),
 }
 
-var idxColumn = columnDef{
-	matcher: staticMatch("idx"),
-	name:    staticName("Idx"),
+var lineColumn = columnDef{
+	matcher: staticMatch("line"),
+	name:    staticName("#"),
 	extractor: func(key string) exFunc {
 		return func(p Projector, list *todotxt.List, item *todotxt.Item) string {
-			return strconv.Itoa(list.IndexOf(item))
+			return strconv.Itoa(list.LineOf(item))
 		}
 	},
 }

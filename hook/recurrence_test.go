@@ -96,10 +96,10 @@ func Test_dueDateRecurrence(t *testing.T) {
 
 			assert.Nil(t, err)
 			assert.Equal(t, 2, list.Len())
-			assert.True(t, list.Get(1).Done())
-			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s due:%s", tc.recurrence, tc.dueDate), list.Get(1).Description())
-			assert.False(t, list.Get(2).Done())
-			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s due:%s", tc.recurrence, tc.expectedDueDate), list.Get(2).Description())
+			assert.True(t, list.GetLine(1).Done())
+			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s due:%s", tc.recurrence, tc.dueDate), list.GetLine(1).Description())
+			assert.False(t, list.GetLine(2).Done())
+			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s due:%s", tc.recurrence, tc.expectedDueDate), list.GetLine(2).Description())
 		})
 	}
 }
@@ -179,10 +179,10 @@ func Test_thresholdDateRecurrence(t *testing.T) {
 
 			assert.Nil(t, err)
 			assert.Equal(t, 2, list.Len())
-			assert.True(t, list.Get(1).Done())
-			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s t:%s", tc.recurrence, tc.tDate), list.Get(1).Description())
-			assert.False(t, list.Get(2).Done())
-			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s t:%s", tc.recurrence, tc.expectedTDate), list.Get(2).Description())
+			assert.True(t, list.GetLine(1).Done())
+			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s t:%s", tc.recurrence, tc.tDate), list.GetLine(1).Description())
+			assert.False(t, list.GetLine(2).Done())
+			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s t:%s", tc.recurrence, tc.expectedTDate), list.GetLine(2).Description())
 		})
 	}
 }
@@ -233,10 +233,10 @@ func Test_bothDateRecurrence(t *testing.T) {
 
 			assert.Nil(t, err)
 			assert.Equal(t, 2, list.Len())
-			assert.True(t, list.Get(1).Done())
-			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s t:%s due:%s", tc.recurrence, tc.tDate, tc.dueDate), list.Get(1).Description())
-			assert.False(t, list.Get(2).Done())
-			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s t:%s due:%s", tc.recurrence, tc.expectedTDate, tc.expectedDueDate), list.Get(2).Description())
+			assert.True(t, list.GetLine(1).Done())
+			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s t:%s due:%s", tc.recurrence, tc.tDate, tc.dueDate), list.GetLine(1).Description())
+			assert.False(t, list.GetLine(2).Done())
+			assert.Equal(t, fmt.Sprintf("A recurrent item rec:%s t:%s due:%s", tc.recurrence, tc.expectedTDate, tc.expectedDueDate), list.GetLine(2).Description())
 		})
 	}
 }
@@ -252,8 +252,8 @@ func Test_CreationDateGetsUpdatedToToday(t *testing.T) {
 
 	assert.Nil(t, err)
 	expectedDate := time.Date(1990, 5, 5, 0, 0, 0, 0, time.UTC)
-	assert.Equal(t, &expectedDate, list.Get(2).CreationDate())
-	assert.Nil(t, list.Get(2).CompletionDate())
+	assert.Equal(t, &expectedDate, list.GetLine(2).CreationDate())
+	assert.Nil(t, list.GetLine(2).CompletionDate())
 }
 
 func Test_RecurrenceValidationOnMissing(t *testing.T) {

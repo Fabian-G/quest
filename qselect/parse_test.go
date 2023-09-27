@@ -356,7 +356,7 @@ func Test_eval(t *testing.T) {
 			}
 			queryFn, err := CompileQQL(tc.query)
 			assert.Nil(t, err)
-			assert.Equal(t, tc.result, queryFn(tc.list, tc.list.Get(tc.itemNumber)))
+			assert.Equal(t, tc.result, queryFn(tc.list, tc.list.GetLine(tc.itemNumber)))
 		})
 	}
 }

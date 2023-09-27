@@ -209,7 +209,7 @@ func Test_TagExpansionsIgnoresRemovalEvents(t *testing.T) {
 		return time.Date(2022, 2, 2, 0, 0, 0, 0, time.UTC)
 	}))
 
-	err := list.Remove(list.IndexOf(item))
+	err := list.Remove(list.LineOf(item))
 
 	assert.Nil(t, err)
 	assert.Equal(t, 0, list.Len())

@@ -130,8 +130,8 @@ func Test_CanRegisterMacros(t *testing.T) {
 
 	matches := query.Filter(list)
 	assert.Len(t, matches, 2)
-	assert.Equal(t, list.Get(1).Description(), matches[0].Description())
-	assert.Equal(t, list.Get(4).Description(), matches[1].Description())
+	assert.Equal(t, list.GetLine(1).Description(), matches[0].Description())
+	assert.Equal(t, list.GetLine(4).Description(), matches[1].Description())
 }
 
 func Test_AlphaIsRestoredAfterMacroExecution(t *testing.T) {

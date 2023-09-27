@@ -67,7 +67,7 @@ func (a *archiveCommand) archive(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, t := range confirmedSelection {
-		if err := list.Remove(list.IndexOf(t)); err != nil {
+		if err := list.Remove(list.LineOf(t)); err != nil {
 			return err
 		}
 		if err := doneList.Add(t); err != nil {

@@ -64,6 +64,6 @@ func (a *addCommand) add(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("could not add task: %w", err)
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "Successfully added task with index %d\n", list.IndexOf(newItem))
+	fmt.Fprintf(cmd.OutOrStdout(), "Successfully added task with index %d\n", list.LineOf(newItem))
 	return nil
 }

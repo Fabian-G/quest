@@ -24,11 +24,11 @@ func Test_Range(t *testing.T) {
 		rng             string
 		expectedMatches []string
 	}{
-		"single idx": {
+		"single line": {
 			rng:             "3",
 			expectedMatches: []string{"T3"},
 		},
-		"multiple indices": {
+		"multiple lines": {
 			rng:             "3, 5, 7",
 			expectedMatches: []string{"T3", "T5", "T7"},
 		},

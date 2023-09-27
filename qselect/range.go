@@ -29,11 +29,11 @@ func compileRange(query string) (Func, error) {
 		case len(bounds) > 2:
 			return nil, errors.New("only one minus sign per interval allowed")
 		case len(bounds) == 1:
-			idx, err := strconv.Atoi(strings.TrimSpace(bounds[0]))
+			line, err := strconv.Atoi(strings.TrimSpace(bounds[0]))
 			if err != nil {
 				return nil, fmt.Errorf("the range bounds must be valid integers: %w", err)
 			}
-			intervals = append(intervals, interval{idx, idx})
+			intervals = append(intervals, interval{line, line})
 		case len(bounds) == 2:
 			var leftBound int
 			var err error
@@ -59,9 +59,9 @@ func compileRange(query string) (Func, error) {
 	}
 
 	return func(l *todotxt.List, i *todotxt.Item) bool {
-		idx := l.IndexOf(i)
+		line := l.LineOf(i)
 		return slices.ContainsFunc(intervals, func(i interval) bool {
-			return i.begin <= idx && idx <= i.end
+			return i.begin <= line && line <= i.end
 		})
 	}, nil
 

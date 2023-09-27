@@ -78,27 +78,24 @@ func (l *List) AddHook(hook Hook) {
 	l.hooks = append(l.hooks, hook)
 }
 
-func (l *List) Remove(idx int) error {
-	realIdx := idx - 1
-	if realIdx < 0 || realIdx >= len(l.items) {
-		return fmt.Errorf("idx %d out of range %d-%d", idx, min(1, len(l.items)), len(l.items))
+func (l *List) Remove(line int) error {
+	idx := line - 1
+	if idx < 0 || idx >= len(l.items) {
+		return fmt.Errorf("idx %d out of range %d-%d", line, min(1, len(l.items)), len(l.items))
 	}
-	l.deletions()[realIdx] = struct{}{}
-	err := l.emit(ModEvent{Previous: l.items[realIdx], Current: nil})
+	l.deletions()[idx] = struct{}{}
+	err := l.emit(ModEvent{Previous: l.items[idx], Current: nil})
 	if err != nil {
-		delete(l.deletions(), realIdx)
+		delete(l.deletions(), idx)
 	}
 	return err
 }
 
-// Get returns the item with the specified idx. The idx is 1-based (see IndexOf)
-func (l *List) Get(idx int) *Item {
-	return l.items[idx-1]
+func (l *List) GetLine(line int) *Item {
+	return l.items[line-1]
 }
 
-// IndexOf returns the index of the according to the IdxOrderFunc
-// The index is 1 bases so that (depending on the IdxOrderFunc) the index corresponds to the line number
-func (l *List) IndexOf(i *Item) int {
+func (l *List) LineOf(i *Item) int {
 	return slices.Index(l.items, i) + 1
 }
 

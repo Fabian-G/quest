@@ -45,7 +45,7 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World")),
 			),
 			op: func(l *todotxt.List) {
-				l.Get(1).Complete()
+				l.GetLine(1).Complete()
 			},
 			previousMatcher: func(t *testing.T, i *todotxt.Item) {
 				assert.Equal(t, "Hello World", i.Description())
@@ -60,7 +60,7 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World"), todotxt.WithDone(true)),
 			),
 			op: func(l *todotxt.List) {
-				l.Get(1).MarkUndone()
+				l.GetLine(1).MarkUndone()
 			},
 			previousMatcher: func(t *testing.T, i *todotxt.Item) {
 				assert.Equal(t, "Hello World", i.Description())
@@ -75,7 +75,7 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World")),
 			),
 			op: func(l *todotxt.List) {
-				l.Get(1).EditDescription("This is a description change")
+				l.GetLine(1).EditDescription("This is a description change")
 			},
 			previousMatcher: func(t *testing.T, i *todotxt.Item) {
 				assert.Equal(t, "Hello World", i.Description())
@@ -89,7 +89,7 @@ func Test_HooksGetCalledOnModification(t *testing.T) {
 				todotxt.MustBuildItem(todotxt.WithDescription("Hello World")),
 			),
 			op: func(l *todotxt.List) {
-				l.Get(1).PrioritizeAs(todotxt.PrioB)
+				l.GetLine(1).PrioritizeAs(todotxt.PrioB)
 			},
 			previousMatcher: func(t *testing.T, i *todotxt.Item) {
 				assert.Equal(t, todotxt.PrioNone, i.Priority())
@@ -127,12 +127,12 @@ func Test_ModificationsMadeInTheHookGetThroughToTheList(t *testing.T) {
 	})
 	list.AddHook(undoer)
 
-	list.Get(1).Complete()
-	list.Get(1).EditDescription("Foo")
-	list.Get(1).PrioritizeAs(todotxt.PrioA)
+	list.GetLine(1).Complete()
+	list.GetLine(1).EditDescription("Foo")
+	list.GetLine(1).PrioritizeAs(todotxt.PrioA)
 
-	assert.Equal(t, "Hello World That change sucked That change sucked That change sucked", list.Get(1).Description())
-	assert.False(t, list.Get(1).Done())
+	assert.Equal(t, "Hello World That change sucked That change sucked That change sucked", list.GetLine(1).Description())
+	assert.False(t, list.GetLine(1).Done())
 }
 
 func TestList_Remove(t *testing.T) {
@@ -154,7 +154,7 @@ func TestList_Add(t *testing.T) {
 	err := list.Add(newItem)
 
 	assert.Nil(t, err)
-	assert.Equal(t, 3, list.IndexOf(newItem))
+	assert.Equal(t, 3, list.LineOf(newItem))
 }
 
 func Test_SnapshotAndRestore(t *testing.T) {
@@ -162,10 +162,10 @@ func Test_SnapshotAndRestore(t *testing.T) {
 		todotxt.MustBuildItem(todotxt.WithDescription("A")),
 		todotxt.MustBuildItem(todotxt.WithDescription("B")),
 	)
-	pointerA := list.Get(1)
+	pointerA := list.GetLine(1)
 	list.Snapshot()
 
-	err := list.Get(1).EditDescription("Hello World")
+	err := list.GetLine(1).EditDescription("Hello World")
 	assert.Nil(t, err)
 	err = list.Add(todotxt.MustBuildItem(todotxt.WithDescription("123")))
 	assert.Nil(t, err)
@@ -178,6 +178,6 @@ func Test_SnapshotAndRestore(t *testing.T) {
 
 	assert.Equal(t, 2, list.Len())
 	assert.Equal(t, "A", pointerA.Description())
-	assert.Equal(t, "B", list.Get(2).Description())
+	assert.Equal(t, "B", list.GetLine(2).Description())
 
 }

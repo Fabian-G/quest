@@ -156,7 +156,7 @@ func (e *editCommand) applyChanges(tmpFile string, list *todotxt.List, selection
 			continue
 		}
 		removed++
-		if err := list.Remove(list.IndexOf(i)); err != nil {
+		if err := list.Remove(list.LineOf(i)); err != nil {
 			return 0, 0, 0, err
 		}
 	}
