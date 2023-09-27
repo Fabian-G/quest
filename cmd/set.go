@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var setRegex = regexp.MustCompile("^[^[:space:]]+=[^[:space:]]*$")
+var setRegex = regexp.MustCompile("^[^[:space:]]+:[^[:space:]]*$")
 
 type setCommand struct {
 	viewDef config.ViewDef
@@ -78,16 +78,16 @@ func (s *setCommand) set(cmd *cobra.Command, args []string) error {
 
 	for _, t := range confirmedSelection {
 		for _, tagOp := range tagOps {
-			eqIdx := strings.Index(tagOp, "=")
-			if err := t.SetTag(tagOp[:eqIdx], tagOp[eqIdx+1:]); err != nil {
+			sepIdx := strings.Index(tagOp, ":")
+			if err := t.SetTag(tagOp[:sepIdx], tagOp[sepIdx+1:]); err != nil {
 				return err
 			}
 		}
 
 	}
 	for _, tagOp := range tagOps {
-		eqIdx := strings.Index(tagOp, "=")
-		tag, value := tagOp[:eqIdx], tagOp[eqIdx+1:]
+		sepIdx := strings.Index(tagOp, ":")
+		tag, value := tagOp[:sepIdx], tagOp[sepIdx+1:]
 		if value == "" {
 			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed tag \"%s\" from", tag), list, confirmedSelection)
 		} else {
