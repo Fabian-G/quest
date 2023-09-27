@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"io"
+	"strings"
 	"time"
 )
 
@@ -31,7 +32,7 @@ func (f JsonEncoder) Encode(w io.Writer, tasks []*Item) error {
 		projects, contexts, tags := t.Projects(), t.Contexts(), t.Tags()
 		jsonItems = append(jsonItems, jsonItem{
 			Done:             t.Done(),
-			Priority:         t.prio.String(),
+			Priority:         strings.Trim(t.prio.String(), "()"),
 			Tags:             tags,
 			Contexts:         contexts,
 			Projects:         projects,
