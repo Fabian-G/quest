@@ -70,6 +70,6 @@ func (c *completeCommand) complete(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	cmdutil.PrintSuccessMessage("Completed", confirmedSelection)
+	cmdutil.PrintSuccessMessage("Completed", list, confirmedSelection)
 	return nil
 }

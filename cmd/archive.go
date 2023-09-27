@@ -75,6 +75,6 @@ func (a *archiveCommand) archive(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	cmdutil.PrintSuccessMessage("Archived", confirmedSelection)
+	cmdutil.PrintSuccessMessage("Archived", list, confirmedSelection)
 	return nil
 }

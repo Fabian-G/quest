@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type removeCommand struct {
+type setCommand struct {
 	viewDef config.ViewDef
 	qql     []string
 	rng     []string
@@ -17,39 +17,44 @@ type removeCommand struct {
 	all     bool
 }
 
-func newRemoveCommand(def config.ViewDef) *removeCommand {
-	cmd := removeCommand{
+func newSetCommand(def config.ViewDef) *setCommand {
+	cmd := setCommand{
 		viewDef: def,
 	}
 
 	return &cmd
 }
 
-func (r *removeCommand) command() *cobra.Command {
-	var removeCommand = &cobra.Command{
-		Use:      "remove",
+func (s *setCommand) command() *cobra.Command {
+	var setCommand = &cobra.Command{
+		Use:      "set",
+		Args:     cobra.MinimumNArgs(2),
 		Short:    "TODO",
 		Long:     `TODO `,
 		Example:  "TODO",
 		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList),
-		RunE:     r.remove,
+		RunE:     s.set,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
-	removeCommand.Flags().BoolVarP(&r.all, "all", "a", false, "TODO")
-	cmdutil.RegisterSelectionFlags(removeCommand, &r.qql, &r.rng, &r.str)
-	return removeCommand
+	setCommand.Flags().BoolVarP(&s.all, "all", "a", false, "TODO")
+	cmdutil.RegisterSelectionFlags(setCommand, &s.qql, &s.rng, &s.str)
+	return setCommand
 }
 
-func (r *removeCommand) remove(cmd *cobra.Command, args []string) error {
+func (s *setCommand) set(cmd *cobra.Command, args []string) error {
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
-	selector, err := cmdutil.ParseTaskSelection(r.viewDef.DefaultQuery, args, r.qql, r.rng, r.str)
+	tag := args[0]
+	value := args[1]
+
+	selector, err := cmdutil.ParseTaskSelection(s.viewDef.DefaultQuery, args[2:], s.qql, s.rng, s.str)
 	if err != nil {
 		return err
 	}
+
 	selection := selector.Filter(list)
 	var confirmedSelection []*todotxt.Item = selection
-	if !r.all {
+	if !s.all {
 		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
 		if err != nil {
 			return err
@@ -61,10 +66,14 @@ func (r *removeCommand) remove(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, t := range confirmedSelection {
-		if err := list.Remove(list.LineOf(t)); err != nil {
+		if err := t.SetTag(tag, value); err != nil {
 			return err
 		}
 	}
-	cmdutil.PrintSuccessMessage("Removed", list, confirmedSelection)
+	if value == "" {
+		cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed tag \"%s\" from", tag), list, confirmedSelection)
+	} else {
+		cmdutil.PrintSuccessMessage(fmt.Sprintf("Set tag \"%s\" to \"%s\" on", tag, value), list, confirmedSelection)
+	}
 	return nil
 }
