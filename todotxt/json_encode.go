@@ -14,15 +14,15 @@ type JsonEncoder struct {
 }
 
 type jsonItem struct {
-	Done             bool       `json:"done,omitempty"`
-	Priority         string     `json:"priority,omitempty"`
-	Tags             Tags       `json:"tags,omitempty"`
-	Contexts         []Context  `json:"contexts,omitempty"`
-	Projects         []Project  `json:"projects,omitempty"`
-	Creation         *time.Time `json:"creation,omitempty"`
-	Completion       *time.Time `json:"completion,omitempty"`
-	Description      string     `json:"description,omitempty"`
-	CleanDescription string     `json:"clean_description,omitempty"`
+	Done             bool      `json:"done,omitempty"`
+	Priority         string    `json:"priority,omitempty"`
+	Tags             Tags      `json:"tags,omitempty"`
+	Contexts         []Context `json:"contexts,omitempty"`
+	Projects         []Project `json:"projects,omitempty"`
+	Creation         string    `json:"creation,omitempty"`
+	Completion       string    `json:"completion,omitempty"`
+	Description      string    `json:"description,omitempty"`
+	CleanDescription string    `json:"clean_description,omitempty"`
 }
 
 func (f JsonEncoder) Encode(w io.Writer, tasks []*Item) error {
@@ -36,12 +36,19 @@ func (f JsonEncoder) Encode(w io.Writer, tasks []*Item) error {
 			Tags:             tags,
 			Contexts:         contexts,
 			Projects:         projects,
-			Creation:         t.CreationDate(),
-			Completion:       t.CompletionDate(),
+			Creation:         f.formatOrEmpty(t.CreationDate()),
+			Completion:       f.formatOrEmpty(t.CompletionDate()),
 			Description:      t.Description(),
 			CleanDescription: t.CleanDescription(t.Projects(), t.Contexts(), tags.Keys()),
 		})
 	}
 	json.NewEncoder(out).Encode(jsonItems)
 	return out.Flush()
+}
+
+func (f JsonEncoder) formatOrEmpty(date *time.Time) string {
+	if date == nil {
+		return ""
+	}
+	return date.Format(time.DateOnly)
 }
