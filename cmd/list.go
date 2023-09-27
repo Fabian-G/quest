@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/config"
@@ -20,7 +19,7 @@ type viewCommand struct {
 	def          config.ViewDef
 	projection   []string
 	clean        []string
-	sortOrder    string
+	sortOrder    []string
 	qqlSearch    []string
 	rngSearch    []string
 	stringSearch []string
@@ -51,8 +50,8 @@ func (v *viewCommand) command() *cobra.Command {
 		Title: "View Commands",
 	})
 
-	listCmd.Flags().StringSliceVarP(&v.projection, "projection", "p", strings.Split(v.def.DefaultProjection, ","), "TODO")
-	listCmd.Flags().StringVarP(&v.sortOrder, "sort", "s", v.def.DefaultSortOrder, "TODO")
+	listCmd.Flags().StringSliceVarP(&v.projection, "projection", "p", v.def.DefaultProjection, "TODO")
+	listCmd.Flags().StringSliceVarP(&v.sortOrder, "sort", "s", v.def.DefaultSortOrder, "TODO")
 	listCmd.Flags().StringSliceVarP(&v.clean, "clean", "c", v.def.DefaultClean, "TODO")
 	listCmd.Flags().BoolVar(&v.json, "json", false, "TODO")
 	listCmd.Flags().BoolVarP(&v.interactive, "interactive", "i", v.def.Interactive, "set to false to make the list non-interactive")

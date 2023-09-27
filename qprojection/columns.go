@@ -12,7 +12,9 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-const StarProjection = "line,done,priority,completion,creation,projects,contexts,tags,description"
+var StarProjection = []string{
+	"line", "done", "priority", "completion", "creation", "projects", "contexts", "tags", "description",
+}
 
 type matcher interface {
 	match(string) bool

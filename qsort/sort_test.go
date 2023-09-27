@@ -1,6 +1,7 @@
 package qsort_test
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -134,7 +135,7 @@ func Test_Sort(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			cmpFunc, err := qsort.Compiler{}.CompileSortFunc(tc.sortString)
+			cmpFunc, err := qsort.Compiler{}.CompileSortFunc(strings.Split(tc.sortString, ","))
 			assert.Nil(t, err)
 			assert.Equal(t, tc.expectedOrder, cmpFunc(tc.first, tc.second))
 		})

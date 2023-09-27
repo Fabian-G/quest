@@ -15,7 +15,7 @@ import (
 	"golang.org/x/term"
 )
 
-var detailsProjection = strings.Split(strings.ReplaceAll(qprojection.StarProjection, ",tags", ""), ",")
+var detailsProjection = slices.DeleteFunc(slices.Clone(qprojection.StarProjection), func(s string) bool { return s == "tags" })
 
 type List struct {
 	list            *todotxt.List

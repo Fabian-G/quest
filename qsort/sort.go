@@ -18,8 +18,7 @@ type Compiler struct {
 	ScoreCalculator qscore.Calculator
 }
 
-func (c Compiler) CompileSortFunc(sort string) (func(*todotxt.Item, *todotxt.Item) int, error) {
-	sortingKeys := strings.Split(sort, ",")
+func (c Compiler) CompileSortFunc(sortingKeys []string) (func(*todotxt.Item, *todotxt.Item) int, error) {
 	compareFuncs := make([]func(*todotxt.Item, *todotxt.Item) int, 0, len(sortingKeys))
 
 	for _, key := range sortingKeys {

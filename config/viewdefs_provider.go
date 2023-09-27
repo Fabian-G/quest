@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/Fabian-G/quest/qprojection"
 	"github.com/spf13/viper"
@@ -13,15 +12,15 @@ var fallbackListViewDef = ViewDef{
 	Name:              "list",
 	DefaultQuery:      "",
 	DefaultProjection: qprojection.StarProjection,
-	DefaultSortOrder:  "",
+	DefaultSortOrder:  nil,
 	DefaultClean:      nil,
 }
 
 type ViewDef struct {
 	Name              string
 	DefaultQuery      string
-	DefaultProjection string
-	DefaultSortOrder  string
+	DefaultProjection []string
+	DefaultSortOrder  []string
 	DefaultClean      []string
 	Interactive       bool
 	Add               AddDef
@@ -56,15 +55,15 @@ func getViewDef(parent *viper.Viper, subCfg *viper.Viper) ViewDef {
 	subCfg.SetDefault("name", "")
 	subCfg.SetDefault("query", "")
 	subCfg.SetDefault("projection", qprojection.StarProjection)
-	subCfg.SetDefault("sort", "+done,-creation,+description")
+	subCfg.SetDefault("sort", []string{"+done", "-creation", "+description"})
 	subCfg.SetDefault("clean", nil)
 	subCfg.SetDefault("interactive", parent.Get(InteractiveKey))
 	return ViewDef{
 		Name:              subCfg.GetString("name"),
 		DefaultQuery:      subCfg.GetString("query"),
-		DefaultProjection: subCfg.GetString("projection"),
-		DefaultSortOrder:  subCfg.GetString("sort"),
-		DefaultClean:      strings.Split(subCfg.GetString("clean"), ","),
+		DefaultProjection: subCfg.GetStringSlice("projection"),
+		DefaultSortOrder:  subCfg.GetStringSlice("sort"),
+		DefaultClean:      subCfg.GetStringSlice("clean"),
 		Add:               getAddDef(subCfg.Sub("add")),
 		Interactive:       subCfg.GetBool("interactive"),
 	}

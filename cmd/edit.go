@@ -19,7 +19,7 @@ type editCommand struct {
 	qql       []string
 	rng       []string
 	str       []string
-	sortOrder string
+	sortOrder []string
 }
 
 func newEditCommand(def config.ViewDef) *editCommand {
@@ -42,7 +42,7 @@ func (e *editCommand) command() *cobra.Command {
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
 	cmdutil.RegisterSelectionFlags(editCommand, &e.qql, &e.rng, &e.str)
-	editCommand.Flags().StringVarP(&e.sortOrder, "sort", "s", e.viewDef.DefaultSortOrder, "TODO")
+	editCommand.Flags().StringSliceVarP(&e.sortOrder, "sort", "s", e.viewDef.DefaultSortOrder, "TODO")
 	return editCommand
 }
 
