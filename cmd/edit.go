@@ -125,22 +125,22 @@ func (e *editCommand) applyChanges(tmpFile string, list *todotxt.List, selection
 		return 0, 0, 0, err
 	}
 
-	changedItems, addedItems, err := mapToIds(changeList, len(selection))
+	changedItems, err := mapToIds(changeList, len(selection))
 	if err != nil {
 		return 0, 0, 0, err
-	}
-
-	for _, item := range addedItems {
-		err := list.Add(item)
-		if err != nil {
-			return 0, 0, 0, err
-		}
-		added++
 	}
 
 	deletedItems := make([]*todotxt.Item, len(selection)) // what remains in this list after the loop will be deleted
 	copy(deletedItems, selection)
 	for _, item := range changedItems {
+		if item.id == -1 {
+			err := list.Add(item.item)
+			if err != nil {
+				return 0, 0, 0, err
+			}
+			added++
+			continue
+		}
 		deletedItems[item.id] = nil
 		if item.item.Equals(selection[item.id]) {
 			continue
@@ -203,23 +203,21 @@ type itemWithId struct {
 	item *todotxt.Item
 }
 
-func mapToIds(items []*todotxt.Item, maxId int) ([]itemWithId, []*todotxt.Item, error) {
+func mapToIds(items []*todotxt.Item, maxId int) ([]itemWithId, error) {
 	idMap := make([]itemWithId, 0) // slice instead of map, because we must retain the order
-	noId := make([]*todotxt.Item, 0)
 	for _, item := range items {
 		id, err := getEditId(item)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		if id == -1 {
-			noId = append(noId, item)
+			idMap = append(idMap, itemWithId{id: -1, item: item})
 		} else if slices.ContainsFunc(idMap, func(iwi itemWithId) bool { return iwi.id == id }) {
-			return nil, nil, fmt.Errorf("encountered duplicate id %d. Do not change the %s tag", id, config.InternalEditTag)
+			return nil, fmt.Errorf("encountered duplicate id %d. Do not change the %s tag", id, config.InternalEditTag)
 		} else {
 			idMap = append(idMap, itemWithId{id: id, item: item})
-
 			item.SetTag(config.InternalEditTag, "")
 		}
 	}
-	return idMap, noId, nil
+	return idMap, nil
 }

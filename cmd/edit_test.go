@@ -99,6 +99,34 @@ func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenAfterRollback(t *testin
 	})
 }
 
+func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenEvenWhenThereAreNewItems(t *testing.T) {
+	di := BuildTestDi(t)
+	di.Config().Set(config.TagsKey, map[string]string{
+		"order": "int",
+	})
+	di.Config().Set(config.UnknownTagsKey, false)
+	todoFile := di.Config().GetString(config.TodoFileKey)
+	todos := `+P1 T1
++P1 T2`
+	assert.Nil(t, os.WriteFile(todoFile, []byte(todos), 0644))
+
+	di.SetEditor(editSteps(appendLine("+P1 T3"), appendOnEach("order:pmax+10")))
+
+	cmd, ctx := cmd.Root(di)
+	cmd.SetArgs([]string{"edit", "-s", ""})
+	cmd.SetIn(strings.NewReader("Y\n"))
+	err := cmd.ExecuteContext(ctx)
+
+	assert.Nil(t, err)
+	lines := ReadLines(t, todoFile)
+	assert.Len(t, lines, 3)
+	assert.ElementsMatch(t, ReadLines(t, todoFile), []string{
+		"+P1 T1 order:10",
+		"+P1 T2 order:20",
+		"+P1 T3 order:30",
+	})
+}
+
 func editAttempts(editors ...config.Editor) config.Editor {
 	invocationCount := 0
 	return config.EditorFunc(func(path string) error {
@@ -132,15 +160,19 @@ func appendOnEach(suffix string) config.Editor {
 	})
 }
 
-func appendInvalidLine() config.Editor {
+func appendLine(line string) config.Editor {
 	return config.EditorFunc(func(path string) error {
 		lines, err := ReadLinesE(path)
 		if err != nil {
 			return err
 		}
-		lines = append(lines, "2022-13-01 Hello World")
+		lines = append(lines, line)
 		return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0644)
 	})
+}
+
+func appendInvalidLine() config.Editor {
+	return appendLine("2022-13-01 Hello World")
 }
 
 func appendInvalidTag(idx int) config.Editor {
