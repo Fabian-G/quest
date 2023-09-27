@@ -17,7 +17,7 @@ type jsonItem struct {
 	Priority         string     `json:"priority,omitempty"`
 	Tags             Tags       `json:"tags,omitempty"`
 	Contexts         []Context  `json:"contexts,omitempty"`
-	Project          []Project  `json:"project,omitempty"`
+	Projects         []Project  `json:"projects,omitempty"`
 	Creation         *time.Time `json:"creation,omitempty"`
 	Completion       *time.Time `json:"completion,omitempty"`
 	Description      string     `json:"description,omitempty"`
@@ -34,7 +34,7 @@ func (f JsonEncoder) Encode(w io.Writer, tasks []*Item) error {
 			Priority:         t.prio.String(),
 			Tags:             tags,
 			Contexts:         contexts,
-			Project:          projects,
+			Projects:         projects,
 			Creation:         t.CreationDate(),
 			Completion:       t.CompletionDate(),
 			Description:      t.Description(),
