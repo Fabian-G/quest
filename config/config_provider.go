@@ -26,6 +26,7 @@ const (
 	TagsKey        Key = "tags"
 	QuestScoreKey  Key = "quest-score"
 	NowFuncKey     Key = "now-func-for-testing"
+	ClearOnDone    Key = "clear-on-done"
 )
 
 func buildConfig(file string) (*viper.Viper, error) {
@@ -78,6 +79,7 @@ func setTopLevelDefaults(v *viper.Viper, homeDir string) {
 	v.SetDefault(QuestScoreKey+".urgency-tag", "due")
 	v.SetDefault(QuestScoreKey+".urgency-begin", 90)
 	v.SetDefault(QuestScoreKey+".min-priority", "E")
+	v.SetDefault(ClearOnDone, nil)
 }
 
 func getDefaultEditor() string {

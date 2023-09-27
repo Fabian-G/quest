@@ -94,7 +94,11 @@ func (p Projector) expandAliasColumns(projection []string, list *todotxt.List) [
 }
 
 func (p Projector) expandClean(list *todotxt.List) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {
-	for _, c := range p.Clean {
+	return ExpandCleanExpression(list, p.Clean)
+}
+
+func ExpandCleanExpression(list *todotxt.List, clean []string) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {
+	for _, c := range clean {
 		c := strings.TrimSpace(c)
 		switch {
 		case c == "+ALL":
@@ -110,7 +114,7 @@ func (p Projector) expandClean(list *todotxt.List) (proj []todotxt.Project, ctx 
 		case len(c) == 0:
 			continue
 		default:
-			tags = append(tags, c)
+			tags = append(tags, strings.TrimPrefix(c, "tag:"))
 		}
 	}
 	return

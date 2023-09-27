@@ -27,6 +27,9 @@ func hooks(v *viper.Viper, tagTypes map[string]qselect.DType) []todotxt.Hook {
 		hooks = append(hooks, hook.NewTagExpansion(v.GetBool(UnknownTagsKey), tagTypes))
 
 	}
+	if len(v.GetStringSlice(ClearOnDone)) > 0 {
+		hooks = append(hooks, hook.ClearOnDone{Clear: v.GetStringSlice(ClearOnDone)})
+	}
 	if recTag := v.GetString("recurrence.rec-tag"); recTag != "" {
 		v.SetDefault("recurrence.due-tag", "due")
 		v.SetDefault("recurrence.threshold-tag", "t")
