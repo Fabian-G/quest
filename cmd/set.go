@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
@@ -11,7 +12,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var setRegex = regexp.MustCompile("^[^[:space:]]+:[^[:space:]]*$")
+var setTagRegex = regexp.MustCompile("^[^[:space:]]+:[^[:space:]]+$")
+var setProjectRegex = regexp.MustCompile(`^\+[^[:space:]]+$`)
+var setContextRegex = regexp.MustCompile("^@[^[:space:]]+$")
 
 type setCommand struct {
 	viewDef config.ViewDef
@@ -47,15 +50,7 @@ func (s *setCommand) command() *cobra.Command {
 }
 
 func (s *setCommand) set(cmd *cobra.Command, args []string) error {
-	selectors := make([]string, 0)
-	tagOps := make([]string, 0)
-	for _, arg := range args {
-		if setRegex.MatchString(arg) {
-			tagOps = append(tagOps, arg)
-		} else {
-			selectors = append(selectors, arg)
-		}
-	}
+	projectsOps, contextOps, tagOps, selectors := s.parseArgs(args)
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
 
 	selector, err := cmdutil.ParseTaskSelection(s.viewDef.DefaultQuery, selectors, s.qql, s.rng, s.str)
@@ -76,23 +71,77 @@ func (s *setCommand) set(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	var projectAdded map[todotxt.Project][]*todotxt.Item = make(map[todotxt.Project][]*todotxt.Item)
+	var contextAdded map[todotxt.Context][]*todotxt.Item = make(map[todotxt.Context][]*todotxt.Item)
 	for _, t := range confirmedSelection {
-		for _, tagOp := range tagOps {
-			sepIdx := strings.Index(tagOp, ":")
-			if err := t.SetTag(tagOp[:sepIdx], tagOp[sepIdx+1:]); err != nil {
+		for key, value := range tagOps {
+			if err := t.SetTag(key, value); err != nil {
 				return err
 			}
 		}
 
-	}
-	for _, tagOp := range tagOps {
-		sepIdx := strings.Index(tagOp, ":")
-		tag, value := tagOp[:sepIdx], tagOp[sepIdx+1:]
-		if value == "" {
-			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed tag \"%s\" from", tag), list, confirmedSelection)
-		} else {
-			cmdutil.PrintSuccessMessage(fmt.Sprintf("Set tag \"%s\" to \"%s\" on", tag, value), list, confirmedSelection)
+		contexts := t.Contexts()
+		for _, context := range contextOps {
+			if slices.Contains(contexts, context) {
+				continue
+			}
+			if err := t.EditDescription(fmt.Sprintf("%s %s", context, t.Description())); err != nil {
+				return err
+			}
+			contextAdded[context] = append(contextAdded[context], t)
+		}
+
+		projects := t.Projects()
+		for _, project := range projectsOps {
+			if slices.Contains(projects, project) {
+				continue
+			}
+			if err := t.EditDescription(fmt.Sprintf("%s %s", project, t.Description())); err != nil {
+				return err
+			}
+			projectAdded[project] = append(projectAdded[project], t)
 		}
 	}
+
+	for key, value := range tagOps {
+		cmdutil.PrintSuccessMessage(fmt.Sprintf("Set tag \"%s\" to \"%s\" on", key, value), list, confirmedSelection)
+	}
+	for _, context := range contextOps {
+		if len(contextAdded[context]) > 0 {
+			cmdutil.PrintSuccessMessage(fmt.Sprintf("Set context \"%s\" on", context), list, contextAdded[context])
+		}
+	}
+	for _, project := range projectsOps {
+		if len(projectAdded[project]) > 0 {
+			cmdutil.PrintSuccessMessage(fmt.Sprintf("Set Project \"%s\" on", project), list, projectAdded[project])
+		}
+	}
+	if len(tagOps)+len(projectAdded)+len(contextAdded) == 0 {
+		fmt.Println("nothing to do")
+	}
 	return nil
+}
+
+func (s *setCommand) parseArgs(args []string) (projects []todotxt.Project, contexts []todotxt.Context, tags map[string]string, selectors []string) {
+	tags = make(map[string]string)
+
+	if idx := slices.Index(args, "on"); idx != -1 {
+		selectors = args[idx+1:]
+		args = slices.Delete(args, idx, len(args))
+	}
+
+	for _, arg := range args {
+		switch {
+		case setTagRegex.MatchString(arg):
+			sepIdx := strings.Index(arg, ":")
+			tags[arg[:sepIdx]] = arg[sepIdx+1:]
+		case setProjectRegex.MatchString(arg):
+			projects = append(projects, todotxt.Project(strings.TrimPrefix(arg, "+")))
+		case setContextRegex.MatchString(arg):
+			contexts = append(contexts, todotxt.Context(strings.TrimPrefix(arg, "@")))
+		default:
+			selectors = append(selectors, arg)
+		}
+	}
+	return
 }
