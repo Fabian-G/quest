@@ -1,4 +1,4 @@
-// stolen form https://github.com/dustin/go-humanize
+// stolen from https://github.com/dustin/go-humanize
 package qprojection
 
 import (
