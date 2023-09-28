@@ -5,12 +5,15 @@ import (
 	"strings"
 
 	"github.com/Fabian-G/quest/qscore"
+	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 )
 
 type Projector struct {
-	Clean     []string
-	ScoreCalc qscore.Calculator
+	Clean         []string
+	ScoreCalc     qscore.Calculator
+	HumanizedTags []string
+	TagTypes      map[string]qselect.DType
 }
 
 func (p Projector) Verify(projection []string, list *todotxt.List) error {

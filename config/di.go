@@ -2,11 +2,14 @@ package config
 
 import (
 	"log"
+	"slices"
 
+	"github.com/Fabian-G/quest/qprojection"
 	"github.com/Fabian-G/quest/qscore"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -16,11 +19,13 @@ type Di struct {
 	repo                 *todotxt.Repo
 	doneRepo             *todotxt.Repo
 	tagTypes             map[string]qselect.DType
+	humanizedTags        []string
 	defaultView          *ViewDef
 	viewDefs             []ViewDef
 	macros               []MacroDef
 	questScoreCalculator *qscore.Calculator
 	sortCompiler         *qsort.Compiler
+	projector            map[string]*qprojection.Projector
 	editor               Editor
 }
 
@@ -55,6 +60,13 @@ func (d *Di) TagTypes() map[string]qselect.DType {
 	return d.tagTypes
 }
 
+func (d *Di) HumanizedTags() []string {
+	if d.humanizedTags == nil {
+		d.humanizedTags = buildHumanizedTags(d.Config())
+	}
+	return d.humanizedTags
+}
+
 func (d *Di) DefaultViewDef() ViewDef {
 	if d.defaultView == nil {
 		defViewDef := buildDefaultViewDef(d.Config())
@@ -84,12 +96,30 @@ func (d *Di) QuestScoreCalculator() qscore.Calculator {
 	}
 	return *d.questScoreCalculator
 }
+
 func (d *Di) SortCompiler() qsort.Compiler {
 	if d.sortCompiler == nil {
 		sort := buildSortCompiler(d.TagTypes(), d.QuestScoreCalculator())
 		d.sortCompiler = &sort
 	}
 	return *d.sortCompiler
+}
+
+func (d *Di) Projector(cmd *cobra.Command) qprojection.Projector {
+	view := cmd.Name()
+	if d.projector == nil {
+		d.projector = make(map[string]*qprojection.Projector)
+	}
+	if _, ok := d.projector[view]; !ok {
+		viewDef := d.DefaultViewDef()
+		viewDefIdx := slices.IndexFunc[[]ViewDef, ViewDef](d.ViewDefs(), func(vd ViewDef) bool { return vd.Name == view })
+		if viewDefIdx != -1 {
+			viewDef = d.ViewDefs()[viewDefIdx]
+		}
+		projectorForView := buildProjector(viewDef, d.HumanizedTags(), d.TagTypes(), d.QuestScoreCalculator())
+		d.projector[view] = &projectorForView
+	}
+	return *d.projector[view]
 }
 
 func (d *Di) Editor() Editor {

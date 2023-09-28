@@ -68,8 +68,10 @@ Another task`
 
 func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenAfterRollback(t *testing.T) {
 	di := BuildTestDi(t)
-	di.Config().Set(config.TagsKey, map[string]string{
-		"order": "int",
+	di.Config().Set(config.TagsKey, map[string]any{
+		"order": map[string]any{
+			"type": "int",
+		},
 	})
 	di.Config().Set(config.UnknownTagsKey, false)
 	todoFile := di.Config().GetString(config.TodoFileKey)
@@ -101,8 +103,10 @@ func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenAfterRollback(t *testin
 
 func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenEvenWhenThereAreNewItems(t *testing.T) {
 	di := BuildTestDi(t)
-	di.Config().Set(config.TagsKey, map[string]string{
-		"order": "int",
+	di.Config().Set(config.TagsKey, map[string]any{
+		"order": map[string]any{
+			"type": "int",
+		},
 	})
 	di.Config().Set(config.UnknownTagsKey, false)
 	todoFile := di.Config().GetString(config.TodoFileKey)

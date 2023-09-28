@@ -14,7 +14,7 @@ type JsonEncoder struct {
 }
 
 type jsonItem struct {
-	Line             int       `json:"line",omitempty`
+	Line             int       `json:"line,omitempty"`
 	Done             bool      `json:"done,omitempty"`
 	Priority         string    `json:"priority,omitempty"`
 	Tags             Tags      `json:"tags,omitempty"`

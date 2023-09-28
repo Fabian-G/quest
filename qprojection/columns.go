@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/mattn/go-runewidth"
 )
@@ -58,7 +60,19 @@ var tagColumn = columnDef{
 	extractor: func(key string) exFunc {
 		tagKey := strings.Split(key, ":")[1]
 		return func(p Projector, l *todotxt.List, i *todotxt.Item) string {
-			tagValues := i.Tags()[tagKey]
+			var tagValues []string
+			if p.TagTypes[tagKey] == qselect.QDate && slices.Contains(p.HumanizedTags, tagKey) {
+				for _, v := range i.Tags()[tagKey] {
+					d, err := time.Parse(time.DateOnly, v)
+					if err != nil {
+						tagValues = append(tagValues, v)
+						continue
+					}
+					tagValues = append(tagValues, humanTime(d))
+				}
+			} else {
+				tagValues = i.Tags()[tagKey]
+			}
 			return strings.Join(tagValues, ",")
 		}
 	},

@@ -6,7 +6,6 @@ import (
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/config"
-	"github.com/Fabian-G/quest/qprojection"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
@@ -18,7 +17,6 @@ import (
 type viewCommand struct {
 	def          config.ViewDef
 	projection   []string
-	clean        []string
 	sortOrder    []string
 	qqlSearch    []string
 	rngSearch    []string
@@ -52,7 +50,6 @@ func (v *viewCommand) command() *cobra.Command {
 
 	listCmd.Flags().StringSliceVarP(&v.projection, "projection", "p", v.def.DefaultProjection, "TODO")
 	listCmd.Flags().StringSliceVarP(&v.sortOrder, "sort", "s", v.def.DefaultSortOrder, "TODO")
-	listCmd.Flags().StringSliceVarP(&v.clean, "clean", "c", v.def.DefaultClean, "TODO")
 	listCmd.Flags().BoolVar(&v.json, "json", false, "TODO")
 	listCmd.Flags().BoolVarP(&v.interactive, "interactive", "i", v.def.Interactive, "set to false to make the list non-interactive")
 	cmdutil.RegisterSelectionFlags(listCmd, &v.qqlSearch, &v.rngSearch, &v.stringSearch)
@@ -87,10 +84,7 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	projector := qprojection.Projector{
-		Clean:     v.clean,
-		ScoreCalc: di.QuestScoreCalculator(),
-	}
+	projector := di.Projector(cmd)
 	if err := projector.Verify(v.projection, list); err != nil {
 		return fmt.Errorf("invalid projection: %w", err)
 	}
