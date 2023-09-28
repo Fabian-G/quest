@@ -72,34 +72,21 @@ func (s *setCommand) set(cmd *cobra.Command, args []string) error {
 	}
 
 	var projectAdded map[todotxt.Project][]*todotxt.Item = make(map[todotxt.Project][]*todotxt.Item)
-	var contextAdded map[todotxt.Context][]*todotxt.Item = make(map[todotxt.Context][]*todotxt.Item)
+	var contextAdded map[todotxt.Context][]*todotxt.Item
 	for _, t := range confirmedSelection {
-		for key, value := range tagOps {
-			if err := t.SetTag(key, value); err != nil {
-				return err
-			}
+		err = s.applyTags(t, tagOps)
+		if err != nil {
+			return err
 		}
 
-		contexts := t.Contexts()
-		for _, context := range contextOps {
-			if slices.Contains(contexts, context) {
-				continue
-			}
-			if err := t.EditDescription(fmt.Sprintf("%s %s", context, t.Description())); err != nil {
-				return err
-			}
-			contextAdded[context] = append(contextAdded[context], t)
+		contextAdded, err = s.applyContexts(t, contextOps)
+		if err != nil {
+			return err
 		}
 
-		projects := t.Projects()
-		for _, project := range projectsOps {
-			if slices.Contains(projects, project) {
-				continue
-			}
-			if err := t.EditDescription(fmt.Sprintf("%s %s", project, t.Description())); err != nil {
-				return err
-			}
-			projectAdded[project] = append(projectAdded[project], t)
+		projectAdded, err = s.applyProjects(t, projectsOps)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -120,6 +107,45 @@ func (s *setCommand) set(cmd *cobra.Command, args []string) error {
 		fmt.Println("nothing to do")
 	}
 	return nil
+}
+
+func (s *setCommand) applyTags(t *todotxt.Item, tagOps map[string]string) error {
+	for key, value := range tagOps {
+		if err := t.SetTag(key, value); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *setCommand) applyContexts(t *todotxt.Item, contextOps []todotxt.Context) (map[todotxt.Context][]*todotxt.Item, error) {
+	contextAdded := make(map[todotxt.Context][]*todotxt.Item)
+	contexts := t.Contexts()
+	for _, context := range contextOps {
+		if slices.Contains(contexts, context) {
+			continue
+		}
+		if err := t.EditDescription(fmt.Sprintf("%s %s", context, t.Description())); err != nil {
+			return nil, err
+		}
+		contextAdded[context] = append(contextAdded[context], t)
+	}
+	return contextAdded, nil
+}
+
+func (s *setCommand) applyProjects(t *todotxt.Item, projectsOps []todotxt.Project) (map[todotxt.Project][]*todotxt.Item, error) {
+	projectsAdded := make(map[todotxt.Project][]*todotxt.Item)
+	projects := t.Projects()
+	for _, project := range projectsOps {
+		if slices.Contains(projects, project) {
+			continue
+		}
+		if err := t.EditDescription(fmt.Sprintf("%s %s", project, t.Description())); err != nil {
+			return nil, err
+		}
+		projectsAdded[project] = append(projectsAdded[project], t)
+	}
+	return projectsAdded, nil
 }
 
 func (s *setCommand) parseArgs(args []string) (projects []todotxt.Project, contexts []todotxt.Context, tags map[string]string, selectors []string) {

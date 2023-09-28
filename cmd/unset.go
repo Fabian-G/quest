@@ -73,59 +73,98 @@ func (u *unsetCommand) unset(cmd *cobra.Command, args []string) error {
 	var contextsRemoved map[todotxt.Context][]*todotxt.Item = make(map[todotxt.Context][]*todotxt.Item)
 	var tagsRemoved map[string][]*todotxt.Item = make(map[string][]*todotxt.Item)
 	for _, t := range confirmedSelection {
-		tags := t.Tags()
-		for _, tag := range tagOps {
-			if _, ok := tags[tag]; !ok {
-				continue
-			}
-			if err := t.SetTag(tag, ""); err != nil {
-				return err
-			}
-			tagsRemoved[tag] = append(tagsRemoved[tag], t)
+		tagsRemoved, err = u.applyTags(t, tagOps)
+		if err != nil {
+			return err
 		}
 
-		contexts := t.Contexts()
-		for _, context := range contextOps {
-			if !slices.Contains(contexts, context) {
-				continue
-			}
-			if err := t.EditDescription(t.CleanDescription(nil, []todotxt.Context{context}, nil)); err != nil {
-				return err
-			}
-			contextsRemoved[context] = append(contextsRemoved[context], t)
+		contextsRemoved, err = u.applyContexts(t, contextOps)
+		if err != nil {
+			return err
 		}
 
-		projects := t.Projects()
-		for _, project := range projectsOps {
-			if !slices.Contains(projects, project) {
-				continue
-			}
-			if err := t.EditDescription(t.CleanDescription([]todotxt.Project{project}, nil, nil)); err != nil {
-				return err
-			}
-			projectsRemoved[project] = append(projectsRemoved[project], t)
+		projectsRemoved, err = u.applyProjects(t, projectsOps)
+		if err != nil {
+			return err
 		}
 	}
 
-	for _, tag := range tagOps {
-		if len(tagsRemoved[tag]) > 0 {
-			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed tag \"%s\" from", tag), list, tagsRemoved[tag])
-		}
-	}
-	for _, context := range contextOps {
-		if len(contextsRemoved[context]) > 0 {
-			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed context \"%s\" from", context), list, contextsRemoved[context])
-		}
-	}
-	for _, project := range projectsOps {
-		if len(projectsRemoved[project]) > 0 {
-			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed Project \"%s\" from", project), list, projectsRemoved[project])
-		}
-	}
+	u.printTagChanges(list, tagOps, tagsRemoved)
+	u.printProjectChanges(list, projectsOps, projectsRemoved)
+	u.printContextChanges(list, contextOps, contextsRemoved)
 	if len(tagsRemoved)+len(projectsRemoved)+len(contextsRemoved) == 0 {
 		fmt.Println("nothing to do")
 	}
 	return nil
+}
+
+func (u *unsetCommand) printTagChanges(list *todotxt.List, tagOps []string, removals map[string][]*todotxt.Item) {
+	for _, tag := range tagOps {
+		if len(removals[tag]) > 0 {
+			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed tag \"%s\" from", tag), list, removals[tag])
+		}
+	}
+}
+
+func (u *unsetCommand) printContextChanges(list *todotxt.List, contextOps []todotxt.Context, removals map[todotxt.Context][]*todotxt.Item) {
+	for _, context := range contextOps {
+		if len(removals[context]) > 0 {
+			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed context \"%s\" from", context), list, removals[context])
+		}
+	}
+}
+
+func (u *unsetCommand) printProjectChanges(list *todotxt.List, projectOps []todotxt.Project, removals map[todotxt.Project][]*todotxt.Item) {
+	for _, project := range projectOps {
+		if len(removals[project]) > 0 {
+			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed Project \"%s\" from", project), list, removals[project])
+		}
+	}
+}
+
+func (u *unsetCommand) applyTags(t *todotxt.Item, tagOps []string) (map[string][]*todotxt.Item, error) {
+	tagsRemoved := make(map[string][]*todotxt.Item)
+	tags := t.Tags()
+	for _, tag := range tagOps {
+		if _, ok := tags[tag]; !ok {
+			continue
+		}
+		if err := t.SetTag(tag, ""); err != nil {
+			return nil, err
+		}
+		tagsRemoved[tag] = append(tagsRemoved[tag], t)
+	}
+	return tagsRemoved, nil
+}
+
+func (u *unsetCommand) applyProjects(t *todotxt.Item, projectOps []todotxt.Project) (map[todotxt.Project][]*todotxt.Item, error) {
+	projectsRemoved := make(map[todotxt.Project][]*todotxt.Item)
+	projects := t.Projects()
+	for _, project := range projectOps {
+		if !slices.Contains(projects, project) {
+			continue
+		}
+		if err := t.EditDescription(t.CleanDescription([]todotxt.Project{project}, nil, nil)); err != nil {
+			return nil, err
+		}
+		projectsRemoved[project] = append(projectsRemoved[project], t)
+	}
+	return projectsRemoved, nil
+}
+
+func (u *unsetCommand) applyContexts(t *todotxt.Item, contextOps []todotxt.Context) (map[todotxt.Context][]*todotxt.Item, error) {
+	contextsRemoved := make(map[todotxt.Context][]*todotxt.Item)
+	contexts := t.Contexts()
+	for _, context := range contextOps {
+		if !slices.Contains(contexts, context) {
+			continue
+		}
+		if err := t.EditDescription(t.CleanDescription(nil, []todotxt.Context{context}, nil)); err != nil {
+			return nil, err
+		}
+		contextsRemoved[context] = append(contextsRemoved[context], t)
+	}
+	return contextsRemoved, nil
 }
 
 func (u *unsetCommand) parseArgs(args []string) (projects []todotxt.Project, contexts []todotxt.Context, tags []string, selectors []string) {
