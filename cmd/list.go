@@ -99,7 +99,7 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 	slices.SortStableFunc(selection, sortFunc)
 
 	if v.json {
-		return todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), selection)
+		return todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), list, selection)
 	}
 
 	listView, err := view.NewList(projector, v.interactive)

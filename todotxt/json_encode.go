@@ -14,6 +14,7 @@ type JsonEncoder struct {
 }
 
 type jsonItem struct {
+	Line             int       `json:"line",omitempty`
 	Done             bool      `json:"done,omitempty"`
 	Priority         string    `json:"priority,omitempty"`
 	Tags             Tags      `json:"tags,omitempty"`
@@ -25,12 +26,13 @@ type jsonItem struct {
 	CleanDescription string    `json:"clean_description,omitempty"`
 }
 
-func (f JsonEncoder) Encode(w io.Writer, tasks []*Item) error {
+func (f JsonEncoder) Encode(w io.Writer, list *List, tasks []*Item) error {
 	out := bufio.NewWriter(w)
 	jsonItems := make([]jsonItem, 0, len(tasks))
 	for _, t := range tasks {
 		projects, contexts, tags := t.Projects(), t.Contexts(), t.Tags()
 		jsonItems = append(jsonItems, jsonItem{
+			Line:             list.LineOf(t),
 			Done:             t.Done(),
 			Priority:         strings.Trim(t.prio.String(), "()"),
 			Tags:             tags,
