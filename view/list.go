@@ -15,6 +15,16 @@ import (
 	"golang.org/x/term"
 )
 
+var interactiveStyles = table.Styles{
+	Selected: lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("3")),
+	Header:   lipgloss.NewStyle().Bold(true).Padding(0, 1),
+	Cell:     lipgloss.NewStyle().Padding(0, 1),
+}
+var nonInteractiveStyles = table.Styles{
+	Selected: lipgloss.NewStyle(),
+	Header:   lipgloss.NewStyle().Bold(true).Padding(0, 1),
+	Cell:     lipgloss.NewStyle().Padding(0, 1),
+}
 var detailsProjection = slices.DeleteFunc(slices.Clone(qprojection.StarProjection), func(s string) bool { return s == "tags" })
 
 type List struct {
@@ -154,12 +164,10 @@ func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projec
 		l = l.updateSize()
 		l = l.moveCursorToItem(previous)
 		l.table.Focus()
-		l.table.SetStyles(table.DefaultStyles())
+		l.table.SetStyles(interactiveStyles)
 	} else {
 		l.table.SetHeight(len(rows))
-		defaultStyles := table.DefaultStyles()
-		defaultStyles.Selected = lipgloss.NewStyle()
-		l.table.SetStyles(defaultStyles)
+		l.table.SetStyles(nonInteractiveStyles)
 	}
 	return l
 }
