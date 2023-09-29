@@ -52,6 +52,7 @@ func buildFreeVars(universe *todotxt.List, item *todotxt.Item) map[string]any {
 	alpha["minInt"] = math.MinInt
 	alpha["minDate"] = time.Time{}
 	alpha["maxDate"] = maxTime
+	alpha["_list"] = universe
 	return alpha
 }
 

@@ -3,6 +3,8 @@ package qselect
 import (
 	"fmt"
 	"maps"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -159,6 +161,22 @@ var functions = map[string]queryFunc{
 		argTypes:         []DType{QItem, QString, QStringSlice},
 		trailingOptional: true,
 		injectIt:         true,
+		wantsContext:     false,
+	},
+	"shell": {
+		fn:               shell,
+		resultType:       QString,
+		argTypes:         []DType{QItem, QString, QString},
+		trailingOptional: true,
+		injectIt:         true,
+		wantsContext:     true,
+	},
+	"int": {
+		fn:               toInt,
+		resultType:       QInt,
+		argTypes:         []DType{QString, QInt},
+		trailingOptional: true,
+		injectIt:         false,
 		wantsContext:     false,
 	},
 }
@@ -357,4 +375,46 @@ func stringListTag(args []any) any {
 		allValues = append(allValues, strings.Split(v, ",")...)
 	}
 	return toAnySlice(allValues)
+}
+
+func toInt(args []any) any {
+	intString := args[0].(string)
+	defaultInt := 0
+	if len(args) == 2 {
+		defaultInt = args[1].(int)
+	}
+	result, err := strconv.Atoi(intString)
+	if err != nil {
+		return defaultInt
+	}
+	return result
+}
+
+func shell(args []any) any {
+	alpha := args[0].(map[string]any)
+	item := args[1].(*todotxt.Item)
+	command := args[2].(string)
+	defaultOutput := ""
+	if len(args) >= 3 {
+		defaultOutput = args[3].(string)
+	}
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		shell = "bash"
+	}
+	cmd := exec.Command(shell, "-c", command)
+	buffer := strings.Builder{}
+	todotxt.DefaultJsonEncoder.Encode(&buffer, alpha["_list"].(*todotxt.List), []*todotxt.Item{item})
+	itemJson := strings.Trim(strings.TrimSpace(buffer.String()), "[]")
+	cmd.Stdin = strings.NewReader(itemJson)
+	outBuffer := strings.Builder{}
+	errBUffer := strings.Builder{}
+	cmd.Stdout = &outBuffer
+	cmd.Stderr = &errBUffer
+
+	err := cmd.Run()
+	if err != nil {
+		return defaultOutput
+	}
+	return outBuffer.String()
 }
