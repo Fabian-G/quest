@@ -6,14 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Fabian-G/quest/config"
-	"github.com/spf13/viper"
+	"github.com/Fabian-G/quest/di"
 	"github.com/stretchr/testify/assert"
 )
 
 var today = time.Date(2022, 2, 2, 0, 0, 0, 0, time.UTC)
 
-func BuildTestConfig(t *testing.T) *viper.Viper {
+func BuildTestConfig(t *testing.T, opts ...func(di.Config) di.Config) di.Config {
 	testTodoDir, err := os.MkdirTemp("", "quest-cmd-test-*")
 	assert.Nil(t, err)
 	t.Cleanup(func() {
@@ -26,29 +25,55 @@ func BuildTestConfig(t *testing.T) *viper.Viper {
 	assert.Nil(t, err)
 	defer testDoneFile.Close()
 
-	cfg := viper.New()
-	cfg.Set(config.TodoFileKey, testTodoFile.Name())
-	cfg.Set(config.DoneFileKey, testDoneFile.Name())
-	cfg.Set(config.NowFuncKey, func() time.Time {
+	cfg := di.Config{}
+	cfg.TodoFile = testTodoFile.Name()
+	cfg.DoneFile = testDoneFile.Name()
+	cfg.NowFunc = func() time.Time {
 		return today
-	})
+	}
 
-	cfg.SetDefault(config.ViewsKey, []any{})
-	cfg.SetDefault(config.MacrosKey, []any{})
-	cfg.SetDefault(config.QuestScoreKey+".urgency-tag", "due")
-	cfg.SetDefault(config.QuestScoreKey+".urgency-begin", 90)
-	cfg.SetDefault(config.QuestScoreKey+".min-priority", "E")
-	cfg.SetDefault(config.UnknownTagsKey, true)
+	cfg.QuestScore.MinPriority = "E"
+	cfg.QuestScore.UrgencyBegin = 90
+	cfg.QuestScore.UrgencyTag = "due"
+	cfg.UnknownTags = true
+	cfg.Tags = map[string]di.TagDef{
+		di.InternalEditTag: {
+			Type:     "int",
+			Humanize: false,
+		},
+	}
+
+	for _, o := range opts {
+		cfg = o(cfg)
+	}
 	return cfg
 }
 
-func ActivateRecurrence(v *viper.Viper) {
-	v.Set("recurrence.rec-tag", "rec")
+func WithoutUnknownTags(c di.Config) di.Config {
+	c.UnknownTags = false
+	return c
 }
 
-func BuildTestDi(t *testing.T) *config.Di {
-	di := config.Di{}
-	di.SetConfig(BuildTestConfig(t))
+func WithRecurrence(cfg di.Config) di.Config {
+	cfg.Recurrence.RecTag = "rec"
+	cfg.Recurrence.DueTag = "due"
+	cfg.Recurrence.ThresholdTag = "t"
+	return cfg
+}
+
+func WithTag(key string, typ string) func(di.Config) di.Config {
+	return func(c di.Config) di.Config {
+		c.Tags[key] = di.TagDef{
+			Type:     typ,
+			Humanize: false,
+		}
+		return c
+	}
+}
+
+func BuildTestDi(t *testing.T, config di.Config) *di.Container {
+	di := di.Container{}
+	di.SetConfig(config)
 	return &di
 }
 

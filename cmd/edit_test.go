@@ -9,14 +9,13 @@ import (
 	"testing"
 
 	"github.com/Fabian-G/quest/cmd"
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_EditsAreCorrectEvenWhenShufflingLines(t *testing.T) {
-	di := BuildTestDi(t)
-	ActivateRecurrence(di.Config())
-	todoFile := di.Config().GetString(config.TodoFileKey)
+	di := BuildTestDi(t, BuildTestConfig(t, WithRecurrence))
+	todoFile := di.Config().TodoFile
 	todos := `x a done task
 A recurring task rec:+1w due:2020-01-01
 Another task`
@@ -40,9 +39,8 @@ Another task`
 }
 
 func Test_RecurrenceIsTriggeredAfterRollback(t *testing.T) {
-	di := BuildTestDi(t)
-	ActivateRecurrence(di.Config())
-	todoFile := di.Config().GetString(config.TodoFileKey)
+	di := BuildTestDi(t, BuildTestConfig(t, WithRecurrence))
+	todoFile := di.Config().TodoFile
 	todos := `x a done task
 A recurring task rec:+1w due:2020-01-01
 Another task`
@@ -67,14 +65,8 @@ Another task`
 }
 
 func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenAfterRollback(t *testing.T) {
-	di := BuildTestDi(t)
-	di.Config().Set(config.TagsKey, map[string]any{
-		"order": map[string]any{
-			"type": "int",
-		},
-	})
-	di.Config().Set(config.UnknownTagsKey, false)
-	todoFile := di.Config().GetString(config.TodoFileKey)
+	di := BuildTestDi(t, BuildTestConfig(t, WithoutUnknownTags, WithTag("order", "int"), WithoutUnknownTags))
+	todoFile := di.Config().TodoFile
 	todos := `+P1 T1
 +P1 T2
 +P1 T3
@@ -102,14 +94,8 @@ func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenAfterRollback(t *testin
 }
 
 func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenEvenWhenThereAreNewItems(t *testing.T) {
-	di := BuildTestDi(t)
-	di.Config().Set(config.TagsKey, map[string]any{
-		"order": map[string]any{
-			"type": "int",
-		},
-	})
-	di.Config().Set(config.UnknownTagsKey, false)
-	todoFile := di.Config().GetString(config.TodoFileKey)
+	di := BuildTestDi(t, BuildTestConfig(t, WithoutUnknownTags, WithTag("order", "int")))
+	todoFile := di.Config().TodoFile
 	todos := `+P1 T1
 +P1 T2`
 	assert.Nil(t, os.WriteFile(todoFile, []byte(todos), 0644))
@@ -131,17 +117,17 @@ func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenEvenWhenThereAreNewItem
 	})
 }
 
-func editAttempts(editors ...config.Editor) config.Editor {
+func editAttempts(editors ...di.Editor) di.Editor {
 	invocationCount := 0
-	return config.EditorFunc(func(path string) error {
+	return di.EditorFunc(func(path string) error {
 		err := editors[invocationCount].Edit(path)
 		invocationCount++
 		return err
 	})
 }
 
-func editSteps(editors ...config.Editor) config.Editor {
-	return config.EditorFunc(func(path string) error {
+func editSteps(editors ...di.Editor) di.Editor {
+	return di.EditorFunc(func(path string) error {
 		for _, e := range editors {
 			err := e.Edit(path)
 			if err != nil {
@@ -151,8 +137,8 @@ func editSteps(editors ...config.Editor) config.Editor {
 		return nil
 	})
 }
-func appendOnEach(suffix string) config.Editor {
-	return config.EditorFunc(func(path string) error {
+func appendOnEach(suffix string) di.Editor {
+	return di.EditorFunc(func(path string) error {
 		lines, err := ReadLinesE(path)
 		if err != nil {
 			return err
@@ -164,8 +150,8 @@ func appendOnEach(suffix string) config.Editor {
 	})
 }
 
-func appendLine(line string) config.Editor {
-	return config.EditorFunc(func(path string) error {
+func appendLine(line string) di.Editor {
+	return di.EditorFunc(func(path string) error {
 		lines, err := ReadLinesE(path)
 		if err != nil {
 			return err
@@ -175,12 +161,12 @@ func appendLine(line string) config.Editor {
 	})
 }
 
-func appendInvalidLine() config.Editor {
+func appendInvalidLine() di.Editor {
 	return appendLine("2022-13-01 Hello World")
 }
 
-func appendInvalidTag(idx int) config.Editor {
-	return config.EditorFunc(func(path string) error {
+func appendInvalidTag(idx int) di.Editor {
+	return di.EditorFunc(func(path string) error {
 		lines, err := ReadLinesE(path)
 		if err != nil {
 			return err
@@ -190,8 +176,8 @@ func appendInvalidTag(idx int) config.Editor {
 	})
 }
 
-func removeLine(idx int) config.Editor {
-	return config.EditorFunc(func(path string) error {
+func removeLine(idx int) di.Editor {
+	return di.EditorFunc(func(path string) error {
 		lines, err := ReadLinesE(path)
 		if err != nil {
 			return err
@@ -201,8 +187,8 @@ func removeLine(idx int) config.Editor {
 	})
 }
 
-func complete(completeTask int) config.Editor {
-	return config.EditorFunc(func(path string) error {
+func complete(completeTask int) di.Editor {
+	return di.EditorFunc(func(path string) error {
 		lines, err := ReadLinesE(path)
 		if err != nil {
 			return err
@@ -212,8 +198,8 @@ func complete(completeTask int) config.Editor {
 	})
 }
 
-func reverse() config.Editor {
-	return config.EditorFunc(func(path string) error {
+func reverse() di.Editor {
+	return di.EditorFunc(func(path string) error {
 		lines, err := ReadLinesE(path)
 		if err != nil {
 			return err
@@ -223,8 +209,8 @@ func reverse() config.Editor {
 	})
 }
 
-func shuffle() config.Editor {
-	return config.EditorFunc(func(path string) error {
+func shuffle() di.Editor {
+	return di.EditorFunc(func(path string) error {
 		lines, err := ReadLinesE(path)
 		if err != nil {
 			return err

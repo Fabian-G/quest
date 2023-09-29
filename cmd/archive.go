@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
@@ -15,14 +15,14 @@ var doneFunc qselect.Func = func(l *todotxt.List, i *todotxt.Item) bool {
 }
 
 type archiveCommand struct {
-	viewDef config.ViewDef
+	viewDef di.ViewDef
 	qql     []string
 	rng     []string
 	str     []string
 	all     bool
 }
 
-func newArchiveCommand(def config.ViewDef) *archiveCommand {
+func newArchiveCommand(def di.ViewDef) *archiveCommand {
 	cmd := archiveCommand{
 		viewDef: def,
 	}
@@ -49,7 +49,7 @@ func (a *archiveCommand) command() *cobra.Command {
 func (a *archiveCommand) archive(cmd *cobra.Command, args []string) error {
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
 	doneList := cmd.Context().Value(cmdutil.DoneListKey).(*todotxt.List)
-	selector, err := cmdutil.ParseTaskSelection(a.viewDef.DefaultQuery, args, a.qql, a.rng, a.str)
+	selector, err := cmdutil.ParseTaskSelection(a.viewDef.Query, args, a.qql, a.rng, a.str)
 	if err != nil {
 		return err
 	}

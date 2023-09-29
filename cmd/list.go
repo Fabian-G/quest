@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
@@ -15,7 +15,7 @@ import (
 )
 
 type viewCommand struct {
-	def          config.ViewDef
+	def          di.ViewDef
 	projection   []string
 	sortOrder    []string
 	qqlSearch    []string
@@ -25,7 +25,7 @@ type viewCommand struct {
 	interactive  bool
 }
 
-func newViewCommand(def config.ViewDef) *viewCommand {
+func newViewCommand(def di.ViewDef) *viewCommand {
 	cmd := viewCommand{
 		def: def,
 	}
@@ -33,9 +33,9 @@ func newViewCommand(def config.ViewDef) *viewCommand {
 	return &cmd
 }
 
-func (v *viewCommand) command() *cobra.Command {
+func (v *viewCommand) command(name string) *cobra.Command {
 	var listCmd = &cobra.Command{
-		Use:     v.def.Name,
+		Use:     name,
 		Short:   "TODO",
 		GroupID: "view",
 		Long:    `TODO `,
@@ -48,8 +48,8 @@ func (v *viewCommand) command() *cobra.Command {
 		Title: "View Commands",
 	})
 
-	listCmd.Flags().StringSliceVarP(&v.projection, "projection", "p", v.def.DefaultProjection, "TODO")
-	listCmd.Flags().StringSliceVarP(&v.sortOrder, "sort", "s", v.def.DefaultSortOrder, "TODO")
+	listCmd.Flags().StringSliceVarP(&v.projection, "projection", "p", v.def.Projection, "TODO")
+	listCmd.Flags().StringSliceVarP(&v.sortOrder, "sort", "s", v.def.Sort, "TODO")
 	listCmd.Flags().BoolVar(&v.json, "json", false, "TODO")
 	listCmd.Flags().BoolVarP(&v.interactive, "interactive", "i", v.def.Interactive, "set to false to make the list non-interactive")
 	cmdutil.RegisterSelectionFlags(listCmd, &v.qqlSearch, &v.rngSearch, &v.stringSearch)
@@ -67,16 +67,16 @@ func (v *viewCommand) command() *cobra.Command {
 }
 
 func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
-	di := cmd.Context().Value(cmdutil.DiKey).(*config.Di)
+	di := cmd.Context().Value(cmdutil.DiKey).(*di.Container)
 	repo := di.TodoTxtRepo()
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
-	query, err := cmdutil.ParseTaskSelection(v.def.DefaultQuery, args, v.qqlSearch, v.rngSearch, v.stringSearch)
+	query, err := cmdutil.ParseTaskSelection(v.def.Query, args, v.qqlSearch, v.rngSearch, v.stringSearch)
 	if err != nil {
 		return fmt.Errorf("invalid query specified: %w", err)
 	}
 
 	sortCompiler := qsort.Compiler{
-		TagTypes:        di.TagTypes(),
+		TagTypes:        di.Config().TagTypes(),
 		ScoreCalculator: di.QuestScoreCalculator(),
 	}
 	sortFunc, err := sortCompiler.CompileSortFunc(v.sortOrder)

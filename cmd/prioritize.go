@@ -4,21 +4,21 @@ import (
 	"fmt"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
 )
 
 type prioritizeCommand struct {
-	viewDef config.ViewDef
+	viewDef di.ViewDef
 	qql     []string
 	rng     []string
 	str     []string
 	all     bool
 }
 
-func newPrioritizeCommand(def config.ViewDef) *prioritizeCommand {
+func newPrioritizeCommand(def di.ViewDef) *prioritizeCommand {
 	cmd := prioritizeCommand{
 		viewDef: def,
 	}
@@ -50,7 +50,7 @@ func (p *prioritizeCommand) prioritize(cmd *cobra.Command, args []string) error 
 	if err != nil {
 		return fmt.Errorf("invalid priority %s: %w", args[0], err)
 	}
-	selector, err := cmdutil.ParseTaskSelection(p.viewDef.DefaultQuery, args[1:], p.qql, p.rng, p.str)
+	selector, err := cmdutil.ParseTaskSelection(p.viewDef.Query, args[1:], p.qql, p.rng, p.str)
 	if err != nil {
 		return err
 	}

@@ -4,20 +4,20 @@ import (
 	"fmt"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
 )
 
 type removeCommand struct {
-	viewDef config.ViewDef
+	viewDef di.ViewDef
 	qql     []string
 	rng     []string
 	str     []string
 	all     bool
 }
 
-func newRemoveCommand(def config.ViewDef) *removeCommand {
+func newRemoveCommand(def di.ViewDef) *removeCommand {
 	cmd := removeCommand{
 		viewDef: def,
 	}
@@ -43,7 +43,7 @@ func (r *removeCommand) command() *cobra.Command {
 
 func (r *removeCommand) remove(cmd *cobra.Command, args []string) error {
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
-	selector, err := cmdutil.ParseTaskSelection(r.viewDef.DefaultQuery, args, r.qql, r.rng, r.str)
+	selector, err := cmdutil.ParseTaskSelection(r.viewDef.Query, args, r.qql, r.rng, r.str)
 	if err != nil {
 		return err
 	}

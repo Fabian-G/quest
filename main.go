@@ -5,12 +5,12 @@ import (
 	"strings"
 
 	"github.com/Fabian-G/quest/cmd"
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 )
 
 func main() {
 	args := os.Args[1:]
-	cmd, ctx := cmd.Root(&config.Di{
+	cmd, ctx := cmd.Root(&di.Container{
 		ConfigFile: configFromArgs(args),
 	})
 	cmd.SetArgs(args)

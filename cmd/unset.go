@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
 )
@@ -15,14 +15,14 @@ import (
 var unsetTagRegex = regexp.MustCompile("^[^[:space:]]+$")
 
 type unsetCommand struct {
-	viewDef config.ViewDef
+	viewDef di.ViewDef
 	qql     []string
 	rng     []string
 	str     []string
 	all     bool
 }
 
-func newUnsetCommand(def config.ViewDef) *unsetCommand {
+func newUnsetCommand(def di.ViewDef) *unsetCommand {
 	cmd := unsetCommand{
 		viewDef: def,
 	}
@@ -51,7 +51,7 @@ func (u *unsetCommand) unset(cmd *cobra.Command, args []string) error {
 	projectsOps, contextOps, tagOps, selectors := u.parseArgs(args)
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
 
-	selector, err := cmdutil.ParseTaskSelection(u.viewDef.DefaultQuery, selectors, u.qql, u.rng, u.str)
+	selector, err := cmdutil.ParseTaskSelection(u.viewDef.Query, selectors, u.qql, u.rng, u.str)
 	if err != nil {
 		return err
 	}

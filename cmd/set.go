@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
 )
@@ -17,14 +17,14 @@ var setProjectRegex = regexp.MustCompile(`^\+[^[:space:]]+$`)
 var setContextRegex = regexp.MustCompile("^@[^[:space:]]+$")
 
 type setCommand struct {
-	viewDef config.ViewDef
+	viewDef di.ViewDef
 	qql     []string
 	rng     []string
 	str     []string
 	all     bool
 }
 
-func newSetCommand(def config.ViewDef) *setCommand {
+func newSetCommand(def di.ViewDef) *setCommand {
 	cmd := setCommand{
 		viewDef: def,
 	}
@@ -53,7 +53,7 @@ func (s *setCommand) set(cmd *cobra.Command, args []string) error {
 	projectsOps, contextOps, tagOps, selectors := s.parseArgs(args)
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
 
-	selector, err := cmdutil.ParseTaskSelection(s.viewDef.DefaultQuery, selectors, s.qql, s.rng, s.str)
+	selector, err := cmdutil.ParseTaskSelection(s.viewDef.Query, selectors, s.qql, s.rng, s.str)
 	if err != nil {
 		return err
 	}

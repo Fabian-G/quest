@@ -7,19 +7,19 @@ import (
 	"time"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
 )
 
 type addCommand struct {
-	def  config.AddDef
+	def  di.ViewDef
 	prio string
 }
 
-func newAddCommand(def config.ViewDef) *addCommand {
+func newAddCommand(def di.ViewDef) *addCommand {
 	cmd := addCommand{
-		def: def.Add,
+		def: def,
 	}
 
 	return &cmd
@@ -53,7 +53,7 @@ func (a *addCommand) add(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not parse priority value %s: %w", a.prio, err)
 	}
 	newItem, err := todotxt.BuildItem(
-		todotxt.WithDescription(strings.TrimSpace(fmt.Sprintf("%s %s %s", a.def.Prefix, description, a.def.Suffix))),
+		todotxt.WithDescription(strings.TrimSpace(fmt.Sprintf("%s %s %s", a.def.AddPrefix, description, a.def.AddSuffix))),
 		todotxt.WithCreationDate(time.Now()),
 		todotxt.WithPriority(prio),
 	)

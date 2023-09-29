@@ -8,21 +8,20 @@ import (
 	"strconv"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
-	"github.com/Fabian-G/quest/config"
-	"github.com/Fabian-G/quest/qsort"
+	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
 )
 
 type editCommand struct {
-	viewDef   config.ViewDef
+	viewDef   di.ViewDef
 	qql       []string
 	rng       []string
 	str       []string
 	sortOrder []string
 }
 
-func newEditCommand(def config.ViewDef) *editCommand {
+func newEditCommand(def di.ViewDef) *editCommand {
 	cmd := editCommand{
 		viewDef: def,
 	}
@@ -42,15 +41,15 @@ func (e *editCommand) command() *cobra.Command {
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
 	cmdutil.RegisterSelectionFlags(editCommand, &e.qql, &e.rng, &e.str)
-	editCommand.Flags().StringSliceVarP(&e.sortOrder, "sort", "s", e.viewDef.DefaultSortOrder, "TODO")
+	editCommand.Flags().StringSliceVarP(&e.sortOrder, "sort", "s", e.viewDef.Sort, "TODO")
 	return editCommand
 }
 
 func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
-	di := cmd.Context().Value(cmdutil.DiKey).(*config.Di)
+	di := cmd.Context().Value(cmdutil.DiKey).(*di.Container)
 	editor := di.Editor()
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
-	selector, err := cmdutil.ParseTaskSelection(e.viewDef.DefaultQuery, args, e.qql, e.rng, e.str)
+	selector, err := cmdutil.ParseTaskSelection(e.viewDef.Query, args, e.qql, e.rng, e.str)
 	if err != nil {
 		return err
 	}
@@ -59,10 +58,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(cmd.OutOrStdout(), "no matches")
 		return nil
 	}
-	sortCompiler := qsort.Compiler{
-		TagTypes:        di.TagTypes(),
-		ScoreCalculator: di.QuestScoreCalculator(),
-	}
+	sortCompiler := di.SortCompiler()
 	sortFunc, err := sortCompiler.CompileSortFunc(e.sortOrder)
 	if err != nil {
 		return err
@@ -165,13 +161,13 @@ func (e *editCommand) applyChanges(tmpFile string, list *todotxt.List, selection
 }
 
 func getEditId(item *todotxt.Item) (int, error) {
-	tagValues := item.Tags()[config.InternalEditTag]
+	tagValues := item.Tags()[di.InternalEditTag]
 	if len(tagValues) == 0 {
 		return -1, nil
 	}
 	id, err := strconv.Atoi(tagValues[0])
 	if err != nil {
-		return 0, fmt.Errorf("encountered invalid %s tag. Dot not change them: %w", config.InternalEditTag, err)
+		return 0, fmt.Errorf("encountered invalid %s tag. Dot not change them: %w", di.InternalEditTag, err)
 	}
 	return id, nil
 }
@@ -179,7 +175,7 @@ func getEditId(item *todotxt.Item) (int, error) {
 func setObjectIdTag(list *todotxt.List, items []*todotxt.Item) error {
 	return list.Secret(func() error {
 		for i, item := range items {
-			if err := item.SetTag(config.InternalEditTag, strconv.Itoa(i)); err != nil {
+			if err := item.SetTag(di.InternalEditTag, strconv.Itoa(i)); err != nil {
 				return err
 			}
 		}
@@ -190,7 +186,7 @@ func setObjectIdTag(list *todotxt.List, items []*todotxt.Item) error {
 func clearObjectIdTag(list *todotxt.List, items []*todotxt.Item) error {
 	return list.Secret(func() error {
 		for _, item := range items {
-			if err := item.SetTag(config.InternalEditTag, ""); err != nil {
+			if err := item.SetTag(di.InternalEditTag, ""); err != nil {
 				return err
 			}
 		}
@@ -213,10 +209,10 @@ func mapToIds(items []*todotxt.Item, maxId int) ([]itemWithId, error) {
 		if id == -1 {
 			idMap = append(idMap, itemWithId{id: -1, item: item})
 		} else if slices.ContainsFunc(idMap, func(iwi itemWithId) bool { return iwi.id == id }) {
-			return nil, fmt.Errorf("encountered duplicate id %d. Do not change the %s tag", id, config.InternalEditTag)
+			return nil, fmt.Errorf("encountered duplicate id %d. Do not change the %s tag", id, di.InternalEditTag)
 		} else {
 			idMap = append(idMap, itemWithId{id: id, item: item})
-			item.SetTag(config.InternalEditTag, "")
+			item.SetTag(di.InternalEditTag, "")
 		}
 	}
 	return idMap, nil

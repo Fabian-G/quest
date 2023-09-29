@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 	"github.com/spf13/cobra"
 )
 
@@ -33,16 +33,16 @@ However, special features like recurrence or tag expansion will not be triggered
 }
 
 func (o *openCommand) open(cmd *cobra.Command, args []string) error {
-	di := cmd.Context().Value(cmdutil.DiKey).(*config.Di)
+	di := cmd.Context().Value(cmdutil.DiKey).(*di.Container)
 	cfg := di.Config()
 	repo := di.TodoTxtRepo()
 	editor := di.Editor()
 
 	for {
-		if err := editor.Edit(cfg.GetString(config.TodoFileKey)); err != nil {
+		if err := editor.Edit(cfg.TodoFile); err != nil {
 			return err
 		}
-		todoFile, err := os.Open(cfg.GetString(config.TodoFileKey))
+		todoFile, err := os.Open(cfg.TodoFile)
 		if err != nil {
 			return err
 		}

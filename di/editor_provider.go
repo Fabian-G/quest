@@ -1,11 +1,9 @@
-package config
+package di
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
-
-	"github.com/spf13/viper"
 )
 
 type Editor interface {
@@ -18,8 +16,8 @@ func (e EditorFunc) Edit(path string) error {
 	return e(path)
 }
 
-func buildEditor(v *viper.Viper) Editor {
-	command := v.GetString(EditorKey)
+func buildEditor(c Config) Editor {
+	command := c.Editor
 	return EditorFunc(func(path string) error {
 		cmd := exec.Command(command, path)
 		cmd.Stdin = os.Stdin

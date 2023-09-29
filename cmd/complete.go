@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
@@ -15,14 +15,14 @@ var notDoneFunc qselect.Func = func(l *todotxt.List, i *todotxt.Item) bool {
 }
 
 type completeCommand struct {
-	viewDef config.ViewDef
+	viewDef di.ViewDef
 	qql     []string
 	rng     []string
 	str     []string
 	all     bool
 }
 
-func newCompleteCommand(def config.ViewDef) *completeCommand {
+func newCompleteCommand(def di.ViewDef) *completeCommand {
 	cmd := completeCommand{
 		viewDef: def,
 	}
@@ -48,7 +48,7 @@ func (c *completeCommand) command() *cobra.Command {
 
 func (c *completeCommand) complete(cmd *cobra.Command, args []string) error {
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
-	selector, err := cmdutil.ParseTaskSelection(c.viewDef.DefaultQuery, args, c.qql, c.rng, c.str)
+	selector, err := cmdutil.ParseTaskSelection(c.viewDef.Query, args, c.qql, c.rng, c.str)
 	if err != nil {
 		return err
 	}

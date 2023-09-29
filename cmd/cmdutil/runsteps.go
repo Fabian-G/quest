@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Fabian-G/quest/config"
+	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/spf13/cobra"
@@ -35,8 +35,21 @@ func Steps(steps ...func(*cobra.Command, []string) error) func(*cobra.Command, [
 	}
 }
 
+func ConfigOverrides(cmd *cobra.Command, args []string) error {
+	di := cmd.Context().Value(DiKey).(*di.Container)
+	cfg := di.Config()
+
+	file := cmd.Root().PersistentFlags().Lookup("file")
+	if file.Changed {
+		cfg.TodoFile = file.Value.String()
+	}
+
+	di.SetConfig(cfg)
+	return nil
+}
+
 func LoadList(cmd *cobra.Command, args []string) error {
-	repo := cmd.Context().Value(DiKey).(*config.Di).TodoTxtRepo()
+	repo := cmd.Context().Value(DiKey).(*di.Container).TodoTxtRepo()
 	list, err := repo.Read()
 	if err != nil {
 		return err
@@ -46,7 +59,7 @@ func LoadList(cmd *cobra.Command, args []string) error {
 }
 
 func SaveList(cmd *cobra.Command, args []string) error {
-	repo := cmd.Context().Value(DiKey).(*config.Di).TodoTxtRepo()
+	repo := cmd.Context().Value(DiKey).(*di.Container).TodoTxtRepo()
 	list := cmd.Context().Value(ListKey).(*todotxt.List)
 	if err := repo.Save(list); err != nil {
 		return fmt.Errorf("could not save todo file: %w", err)
@@ -56,7 +69,7 @@ func SaveList(cmd *cobra.Command, args []string) error {
 }
 
 func LoadDoneList(cmd *cobra.Command, args []string) error {
-	repo := cmd.Context().Value(DiKey).(*config.Di).DoneTxtRepo()
+	repo := cmd.Context().Value(DiKey).(*di.Container).DoneTxtRepo()
 	list, err := repo.Read()
 	if err != nil {
 		return err
@@ -66,7 +79,7 @@ func LoadDoneList(cmd *cobra.Command, args []string) error {
 }
 
 func SaveDoneList(cmd *cobra.Command, args []string) error {
-	repo := cmd.Context().Value(DiKey).(*config.Di).DoneTxtRepo()
+	repo := cmd.Context().Value(DiKey).(*di.Container).DoneTxtRepo()
 	list := cmd.Context().Value(DoneListKey).(*todotxt.List)
 	if err := repo.Save(list); err != nil {
 		return fmt.Errorf("could not save done file: %w", err)
@@ -96,23 +109,21 @@ func createFileIfNotExists(file string) error {
 }
 
 func EnsureTodoFileExits(cmd *cobra.Command, args []string) error {
-	v := cmd.Context().Value(DiKey).(*config.Di).Config()
-	v.Set(config.TodoFileKey, os.ExpandEnv(v.GetString(config.TodoFileKey)))
-	file := v.GetString(config.TodoFileKey)
+	v := cmd.Context().Value(DiKey).(*di.Container).Config()
+	file := v.TodoFile
 	return createFileIfNotExists(file)
 }
 
 func EnsureDoneFileExists(cmd *cobra.Command, args []string) error {
-	v := cmd.Context().Value(DiKey).(*config.Di).Config()
-	v.Set(config.DoneFileKey, os.ExpandEnv(v.GetString(config.DoneFileKey)))
-	file := v.GetString(config.DoneFileKey)
+	v := cmd.Context().Value(DiKey).(*di.Container).Config()
+	file := v.DoneFile
 	return createFileIfNotExists(file)
 }
 
 func RegisterMacros(cmd *cobra.Command, args []string) error {
-	di := cmd.Context().Value(DiKey).(*config.Di)
-	for _, macro := range di.MacroDefs() {
-		err := qselect.RegisterMacro(macro.Name, macro.Query, macro.InTypes, macro.ResultType, macro.InjectIt)
+	di := cmd.Context().Value(DiKey).(*di.Container)
+	for _, macro := range di.Config().Macros {
+		err := qselect.RegisterMacro(macro.Name, macro.Query, macro.InDTypes(), qselect.DType(macro.ResultType), macro.InjectIt)
 		if err != nil {
 			return err
 		}
@@ -121,8 +132,8 @@ func RegisterMacros(cmd *cobra.Command, args []string) error {
 }
 
 func SyncConflictProtection(cmd *cobra.Command, args []string) error {
-	v := cmd.Context().Value(DiKey).(*config.Di).Config()
-	file := v.GetString(config.TodoFileKey)
+	v := cmd.Context().Value(DiKey).(*di.Container).Config()
+	file := v.TodoFile
 	filesInDir, err := os.ReadDir(path.Dir(file))
 	if err != nil {
 		return fmt.Errorf("could check for sync conflicts: %w", err)
