@@ -395,7 +395,7 @@ func shell(args []any) any {
 	item := args[1].(*todotxt.Item)
 	command := args[2].(string)
 	defaultOutput := ""
-	if len(args) >= 3 {
+	if len(args) >= 4 {
 		defaultOutput = args[3].(string)
 	}
 	shell := os.Getenv("SHELL")
