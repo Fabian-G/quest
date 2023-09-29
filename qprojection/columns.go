@@ -11,6 +11,7 @@ import (
 
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -73,7 +74,13 @@ var tagColumn = columnDef{
 			} else {
 				tagValues = i.Tags()[tagKey]
 			}
-			return strings.Join(tagValues, ",")
+			var color lipgloss.Color
+			if f, ok := p.TagColors[tagKey]; ok {
+				if c := f(l, i); c != nil {
+					color = *c
+				}
+			}
+			return p.colorize(color, strings.Join(tagValues, ","))
 		}
 	},
 }
@@ -83,7 +90,7 @@ var doneColumn = columnDef{
 	name:    staticName("Done"),
 	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
 		if item.Done() {
-			return "x"
+			return p.colorize(p.defaultColor, "x")
 		}
 		return ""
 	}),
@@ -93,7 +100,17 @@ var priorityColumn = columnDef{
 	matcher: staticMatch("priority"),
 	name:    staticName("Priority"),
 	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
-		return item.Priority().String()
+		prio := item.Priority().String()
+		switch item.Priority() {
+		case todotxt.PrioA:
+			return p.colorize(lipgloss.Color("1"), prio)
+		case todotxt.PrioB:
+			return p.colorize(lipgloss.Color("2"), prio)
+		case todotxt.PrioC:
+			return p.colorize(lipgloss.Color("3"), prio)
+		default:
+			return p.colorize(p.defaultColor, prio)
+		}
 	}),
 }
 
@@ -105,7 +122,7 @@ var creationColumn = columnDef{
 		if date == nil {
 			return ""
 		}
-		return date.Format(time.DateOnly)
+		return p.colorize(p.defaultColor, date.Format(time.DateOnly))
 	}),
 }
 
@@ -117,7 +134,7 @@ var completionColumn = columnDef{
 		if date == nil {
 			return ""
 		}
-		return date.Format(time.DateOnly)
+		return p.colorize(p.defaultColor, date.Format(time.DateOnly))
 	}),
 }
 
@@ -130,7 +147,7 @@ var projectsColumn = columnDef{
 		for _, p := range projects {
 			projectStrings = append(projectStrings, p.String())
 		}
-		return strings.Join(projectStrings, ",")
+		return p.colorize(p.defaultColor, strings.Join(projectStrings, ","))
 	}),
 }
 
@@ -143,7 +160,7 @@ var contextsColumn = columnDef{
 		for _, p := range contexts {
 			contextStrings = append(contextStrings, p.String())
 		}
-		return strings.Join(contextStrings, ",")
+		return p.colorize(p.defaultColor, strings.Join(contextStrings, ","))
 	}),
 }
 
@@ -152,7 +169,7 @@ var lineColumn = columnDef{
 	name:    staticName("#"),
 	extractor: func(key string) exFunc {
 		return func(p Projector, list *todotxt.List, item *todotxt.Item) string {
-			return strconv.Itoa(list.LineOf(item))
+			return p.colorize(p.defaultColor, strconv.Itoa(list.LineOf(item)))
 		}
 	},
 }
@@ -171,7 +188,7 @@ var descriptionColumn = columnDef{
 			}
 		}
 		return func(p Projector, l *todotxt.List, item *todotxt.Item) string {
-			return runewidth.Truncate(item.CleanDescription(p.expandClean(l)), width, "...")
+			return p.colorize(p.defaultColor, runewidth.Truncate(item.CleanDescription(p.expandClean(l)), width, "..."))
 		}
 	},
 }
@@ -188,15 +205,16 @@ var questScoreColumn = columnDef{
 		default:
 			score = fmt.Sprintf("%.1f", result.Score)
 		}
-		urgentFlag := "U"
-		importantFlag := "I"
-		if !result.IsImportant() {
-			importantFlag = " "
+		color := p.defaultColor
+		switch {
+		case result.IsImportant() && result.IsUrgent():
+			color = lipgloss.Color("2")
+		case result.IsImportant():
+			color = lipgloss.Color("6")
+		case result.IsUrgent():
+			color = lipgloss.Color("1")
 		}
-		if !result.IsUrgent() {
-			urgentFlag = " "
-		}
-		return fmt.Sprintf("%s %s%s", score, urgentFlag, importantFlag)
+		return p.colorize(color, score)
 	}),
 }
 

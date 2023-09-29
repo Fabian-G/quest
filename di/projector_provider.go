@@ -11,5 +11,7 @@ func buildProjector(c Config, view ViewDef, calc qscore.Calculator) qprojection.
 		ScoreCalc:     calc,
 		HumanizedTags: c.HumanizedTags(),
 		TagTypes:      c.TagTypes(),
+		TagColors:     c.TagColors(),
+		LineColors:    c.LineColors(),
 	}
 }

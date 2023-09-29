@@ -7,13 +7,20 @@ import (
 	"github.com/Fabian-G/quest/qscore"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/charmbracelet/lipgloss"
 )
+
+type ColorFunc func(*todotxt.List, *todotxt.Item) *lipgloss.Color
 
 type Projector struct {
 	Clean         []string
 	ScoreCalc     qscore.Calculator
 	HumanizedTags []string
 	TagTypes      map[string]qselect.DType
+	TagColors     map[string]ColorFunc
+	LineColors    ColorFunc
+	colorOverride *lipgloss.Color
+	defaultColor  lipgloss.Color
 }
 
 func (p Projector) Verify(projection []string, list *todotxt.List) error {
@@ -43,6 +50,7 @@ func (p Projector) Project(projection []string, list *todotxt.List, selection []
 	}
 	data := make([][]string, 0, len(selection))
 	for _, i := range selection {
+		p.colorOverride = p.LineColors(list, i)
 		data = append(data, p.projectItem(list, i, extractors))
 	}
 	return headers, data, nil
@@ -98,6 +106,19 @@ func (p Projector) expandAliasColumns(projection []string, list *todotxt.List) [
 
 func (p Projector) expandClean(list *todotxt.List) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {
 	return ExpandCleanExpression(list, p.Clean)
+}
+
+func (p Projector) colorize(wantedColor lipgloss.Color, s string) string {
+	color := wantedColor
+	if p.colorOverride != nil {
+		color = *p.colorOverride
+	}
+
+	termColor := lipgloss.ColorProfile().Color(string(color))
+	if termColor == nil {
+		return s
+	}
+	return fmt.Sprintf("\x1b[%sm%s\x1b[39m", termColor.Sequence(false), s)
 }
 
 func ExpandCleanExpression(list *todotxt.List, clean []string) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {

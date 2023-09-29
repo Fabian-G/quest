@@ -11,14 +11,22 @@ import (
 
 	"github.com/Fabian-G/quest/qprojection"
 	"github.com/Fabian-G/quest/qselect"
+	"github.com/Fabian-G/quest/todotxt"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/viper"
 )
 
 var InternalEditTag = "quest-object-id"
 
+type StyleDef struct {
+	If string `mapstructure:"if,omitempty"`
+	Fg string `mapstructure:"fg,omitempty"`
+}
+
 type TagDef struct {
-	Type     string `mapstructure:"type,omitempty"`
-	Humanize bool   `mapstructure:"humanize,omitempty"`
+	Type     string     `mapstructure:"type,omitempty"`
+	Humanize bool       `mapstructure:"humanize,omitempty"`
+	Styles   []StyleDef `mapstructure:"styles,omitempty"`
 }
 
 type MacroDef struct {
@@ -64,6 +72,7 @@ type Config struct {
 		DueTag       string `mapstructure:"due-tag,omitempty"`
 		ThresholdTag string `mapstructure:"threshold-tag,omitempty"`
 	} `mapstructure:"recurrence,omitempty"`
+	Styles      []StyleDef         `mapstructure:"styles"`
 	DefaultView ViewDef            `mapstructure:"default-view,omitempty"`
 	Views       map[string]ViewDef `mapstructure:"view,omitempty"`
 	Macros      []MacroDef         `mapstructure:"macro,omitempty"`
@@ -87,6 +96,51 @@ func (c Config) TagTypes() map[string]qselect.DType {
 		tagTypes[key] = qselect.DType(tagDef.Type)
 	}
 	return tagTypes
+}
+
+func (c Config) TagColors() map[string]qprojection.ColorFunc {
+	tagColors := make(map[string]qprojection.ColorFunc)
+	for t, tagDef := range c.Tags {
+		tagDef := tagDef
+		ifs := make([]qselect.Func, 0)
+		for _, s := range tagDef.Styles {
+			f, err := qselect.CompileQQL(s.If)
+			if err != nil {
+				log.Fatal(err)
+			}
+			ifs = append(ifs, f)
+		}
+		tagColors[t] = func(list *todotxt.List, item *todotxt.Item) *lipgloss.Color {
+			for i, f := range ifs {
+				if f(list, item) {
+					c := lipgloss.Color(tagDef.Styles[i].Fg)
+					return &c
+				}
+			}
+			return nil
+		}
+	}
+	return tagColors
+}
+
+func (c Config) LineColors() qprojection.ColorFunc {
+	ifs := make([]qselect.Func, 0)
+	for _, s := range c.Styles {
+		f, err := qselect.CompileQQL(s.If)
+		if err != nil {
+			log.Fatal(err)
+		}
+		ifs = append(ifs, f)
+	}
+	return func(list *todotxt.List, item *todotxt.Item) *lipgloss.Color {
+		for i, f := range ifs {
+			if f(list, item) {
+				c := lipgloss.Color(c.Styles[i].Fg)
+				return &c
+			}
+		}
+		return nil
+	}
 }
 
 func buildConfig(file string) (Config, error) {
