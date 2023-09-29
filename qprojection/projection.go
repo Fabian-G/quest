@@ -34,26 +34,29 @@ func (p Projector) Verify(projection []string, list *todotxt.List) error {
 	return nil
 }
 
-func (p Projector) MustProject(projection []string, list *todotxt.List, selection []*todotxt.Item) ([]string, [][]string) {
-	header, data, err := p.Project(projection, list, selection)
+func (p Projector) MustProject(projection []string, list *todotxt.List, selection []*todotxt.Item) ([]string, [][]string, [][]lipgloss.Style) {
+	header, data, styles, err := p.Project(projection, list, selection)
 	if err != nil {
 		panic(err)
 	}
 
-	return header, data
+	return header, data, styles
 }
 
-func (p Projector) Project(projection []string, list *todotxt.List, selection []*todotxt.Item) ([]string, [][]string, error) {
+func (p Projector) Project(projection []string, list *todotxt.List, selection []*todotxt.Item) ([]string, [][]string, [][]lipgloss.Style, error) {
 	headers, extractors, err := p.compile(projection, list)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	data := make([][]string, 0, len(selection))
+	styles := make([][]lipgloss.Style, 0, len(selection))
 	for _, i := range selection {
 		p.colorOverride = p.LineColors(list, i)
-		data = append(data, p.projectItem(list, i, extractors))
+		line, lineStyles := p.projectItem(list, i, extractors)
+		data = append(data, line)
+		styles = append(styles, lineStyles)
 	}
-	return headers, data, nil
+	return headers, data, styles, nil
 }
 
 func (p Projector) compile(projection []string, list *todotxt.List) ([]string, []exFunc, error) {
@@ -71,12 +74,19 @@ func (p Projector) compile(projection []string, list *todotxt.List) ([]string, [
 	return headers, extractors, nil
 }
 
-func (p Projector) projectItem(list *todotxt.List, item *todotxt.Item, columns []exFunc) []string {
+func (p Projector) projectItem(list *todotxt.List, item *todotxt.Item, columns []exFunc) ([]string, []lipgloss.Style) {
 	data := make([]string, 0, len(columns))
+	styles := make([]lipgloss.Style, 0, len(columns))
 	for _, c := range columns {
-		data = append(data, c(p, list, item))
+		val, style := c(p, list, item)
+		data = append(data, val)
+		if p.colorOverride != nil {
+			styles = append(styles, lipgloss.NewStyle().Foreground(p.colorOverride))
+		} else {
+			styles = append(styles, lipgloss.NewStyle().Foreground(style))
+		}
 	}
-	return data
+	return data, styles
 }
 
 func (p Projector) findColumn(key string) (columnDef, error) {
@@ -106,19 +116,6 @@ func (p Projector) expandAliasColumns(projection []string, list *todotxt.List) [
 
 func (p Projector) expandClean(list *todotxt.List) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {
 	return ExpandCleanExpression(list, p.Clean)
-}
-
-func (p Projector) colorize(wantedColor lipgloss.Color, s string) string {
-	color := wantedColor
-	if p.colorOverride != nil {
-		color = *p.colorOverride
-	}
-
-	termColor := lipgloss.ColorProfile().Color(string(color))
-	if termColor == nil {
-		return s
-	}
-	return fmt.Sprintf("\x1b[%sm%s\x1b[39m", termColor.Sequence(false), s)
 }
 
 func ExpandCleanExpression(list *todotxt.List, clean []string) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {

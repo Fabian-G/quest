@@ -24,7 +24,7 @@ type matcher interface {
 	fmt.Stringer
 }
 
-type exFunc func(Projector, *todotxt.List, *todotxt.Item) string
+type exFunc func(Projector, *todotxt.List, *todotxt.Item) (string, lipgloss.Color)
 
 type columnDef struct {
 	matcher   matcher
@@ -60,7 +60,7 @@ var tagColumn = columnDef{
 	},
 	extractor: func(key string) exFunc {
 		tagKey := strings.Split(key, ":")[1]
-		return func(p Projector, l *todotxt.List, i *todotxt.Item) string {
+		return func(p Projector, l *todotxt.List, i *todotxt.Item) (string, lipgloss.Color) {
 			var tagValues []string
 			if p.TagTypes[tagKey] == qselect.QDate && slices.Contains(p.HumanizedTags, tagKey) {
 				for _, v := range i.Tags()[tagKey] {
@@ -80,7 +80,7 @@ var tagColumn = columnDef{
 					color = *c
 				}
 			}
-			return p.colorize(color, strings.Join(tagValues, ","))
+			return strings.Join(tagValues, ","), color
 		}
 	},
 }
@@ -88,28 +88,28 @@ var tagColumn = columnDef{
 var doneColumn = columnDef{
 	matcher: staticMatch("done"),
 	name:    staticName("Done"),
-	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) (string, lipgloss.Color) {
 		if item.Done() {
-			return p.colorize(p.defaultColor, "x")
+			return "x", p.defaultColor
 		}
-		return ""
+		return "", p.defaultColor
 	}),
 }
 
 var priorityColumn = columnDef{
 	matcher: staticMatch("priority"),
 	name:    staticName("Priority"),
-	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) (string, lipgloss.Color) {
 		prio := item.Priority().String()
 		switch item.Priority() {
 		case todotxt.PrioA:
-			return p.colorize(lipgloss.Color("1"), prio)
+			return prio, lipgloss.Color("1")
 		case todotxt.PrioB:
-			return p.colorize(lipgloss.Color("2"), prio)
+			return prio, lipgloss.Color("2")
 		case todotxt.PrioC:
-			return p.colorize(lipgloss.Color("3"), prio)
+			return prio, lipgloss.Color("3")
 		default:
-			return p.colorize(p.defaultColor, prio)
+			return prio, p.defaultColor
 		}
 	}),
 }
@@ -117,50 +117,50 @@ var priorityColumn = columnDef{
 var creationColumn = columnDef{
 	matcher: staticMatch("creation"),
 	name:    staticName("Created On"),
-	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) (string, lipgloss.Color) {
 		date := item.CreationDate()
 		if date == nil {
-			return ""
+			return "", p.defaultColor
 		}
-		return p.colorize(p.defaultColor, date.Format(time.DateOnly))
+		return date.Format(time.DateOnly), p.defaultColor
 	}),
 }
 
 var completionColumn = columnDef{
 	matcher: staticMatch("completion"),
 	name:    staticName("Completed On"),
-	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) (string, lipgloss.Color) {
 		date := item.CompletionDate()
 		if date == nil {
-			return ""
+			return "", p.defaultColor
 		}
-		return p.colorize(p.defaultColor, date.Format(time.DateOnly))
+		return date.Format(time.DateOnly), p.defaultColor
 	}),
 }
 
 var projectsColumn = columnDef{
 	matcher: staticMatch("projects"),
 	name:    staticName("Projects"),
-	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) (string, lipgloss.Color) {
 		projects := item.Projects()
 		projectStrings := make([]string, 0, len(projects))
 		for _, p := range projects {
 			projectStrings = append(projectStrings, p.String())
 		}
-		return p.colorize(p.defaultColor, strings.Join(projectStrings, ","))
+		return strings.Join(projectStrings, ","), p.defaultColor
 	}),
 }
 
 var contextsColumn = columnDef{
 	matcher: staticMatch("contexts"),
 	name:    staticName("Contexts"),
-	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) string {
+	extractor: staticColumn(func(p Projector, list *todotxt.List, item *todotxt.Item) (string, lipgloss.Color) {
 		contexts := item.Contexts()
 		contextStrings := make([]string, 0, len(contexts))
 		for _, p := range contexts {
 			contextStrings = append(contextStrings, p.String())
 		}
-		return p.colorize(p.defaultColor, strings.Join(contextStrings, ","))
+		return strings.Join(contextStrings, ","), p.defaultColor
 	}),
 }
 
@@ -168,8 +168,8 @@ var lineColumn = columnDef{
 	matcher: staticMatch("line"),
 	name:    staticName("#"),
 	extractor: func(key string) exFunc {
-		return func(p Projector, list *todotxt.List, item *todotxt.Item) string {
-			return p.colorize(p.defaultColor, strconv.Itoa(list.LineOf(item)))
+		return func(p Projector, list *todotxt.List, item *todotxt.Item) (string, lipgloss.Color) {
+			return strconv.Itoa(list.LineOf(item)), p.defaultColor
 		}
 	},
 }
@@ -187,8 +187,8 @@ var descriptionColumn = columnDef{
 				panic(err) // can not happen, because matcher ensures that there is a valid number
 			}
 		}
-		return func(p Projector, l *todotxt.List, item *todotxt.Item) string {
-			return p.colorize(p.defaultColor, runewidth.Truncate(item.CleanDescription(p.expandClean(l)), width, "..."))
+		return func(p Projector, l *todotxt.List, item *todotxt.Item) (string, lipgloss.Color) {
+			return runewidth.Truncate(item.CleanDescription(p.expandClean(l)), width, "..."), p.defaultColor
 		}
 	},
 }
@@ -196,7 +196,7 @@ var descriptionColumn = columnDef{
 var questScoreColumn = columnDef{
 	matcher: staticMatch("score"),
 	name:    staticName("Score"),
-	extractor: staticColumn(func(p Projector, l *todotxt.List, i *todotxt.Item) string {
+	extractor: staticColumn(func(p Projector, l *todotxt.List, i *todotxt.Item) (string, lipgloss.Color) {
 		result := p.ScoreCalc.ScoreOf(i)
 		var score string
 		switch {
@@ -214,7 +214,7 @@ var questScoreColumn = columnDef{
 		case result.IsUrgent():
 			color = lipgloss.Color("1")
 		}
-		return p.colorize(color, score)
+		return score, color
 	}),
 }
 

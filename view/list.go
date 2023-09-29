@@ -60,10 +60,10 @@ func NewList(proj qprojection.Projector, interactive bool) (List, error) {
 	return l, nil
 }
 
-func (l List) mapToColumns() ([]table.Row, []table.Column) {
-	headings, data := l.projector.MustProject(l.projection, l.list, l.selection) // It is the callers job to verify the projection
+func (l List) mapToColumns() ([]table.Row, []table.Column, func(table.Model, string, table.CellPosition) string) {
+	headings, data, styles := l.projector.MustProject(l.projection, l.list, l.selection) // It is the callers job to verify the projection
 	if len(headings) == 0 || len(data) == 0 {
-		return nil, nil
+		return nil, nil, func(m table.Model, s string, cp table.CellPosition) string { return s }
 	}
 	columns := make([]table.Column, 0, len(headings))
 	rows := make([]table.Row, len(data))
@@ -83,7 +83,11 @@ func (l List) mapToColumns() ([]table.Row, []table.Column) {
 			rows[i] = append(rows[i], v)
 		}
 	}
-	return rows, columns
+	return rows, columns, func(m table.Model, s string, cp table.CellPosition) string {
+		style := styles[cp.RowID][cp.Column]
+		val := style.Padding(0, 1).Render(s)
+		return strings.ReplaceAll(val, "\x1b[0m", "\x1b[39m")
+	}
 }
 
 func (l List) Init() tea.Cmd {
@@ -133,7 +137,7 @@ func (l List) renderDetails(writer io.StringWriter) {
 	if selectedItem == nil {
 		return
 	}
-	headings, data := l.projector.MustProject(detailsProjection, l.list, []*todotxt.Item{selectedItem})
+	headings, data, _ := l.projector.MustProject(detailsProjection, l.list, []*todotxt.Item{selectedItem})
 	var maxTitleWidth int
 	for _, c := range headings {
 		maxTitleWidth = max(maxTitleWidth, len(c))
@@ -155,7 +159,8 @@ func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projec
 	l.list = list
 	l.selection = selection
 	l.projection = projection
-	rows, columns := l.mapToColumns()
+	rows, columns, renderCell := l.mapToColumns()
+	l.table.SetStyles(l.styles(renderCell))
 	l.table.SetRows(nil)
 	l.table.SetColumns(nil)
 	l.table.SetColumns(columns)
@@ -164,12 +169,21 @@ func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projec
 		l = l.updateSize()
 		l = l.moveCursorToItem(previous)
 		l.table.Focus()
-		l.table.SetStyles(interactiveStyles)
 	} else {
 		l.table.SetHeight(len(rows))
-		l.table.SetStyles(nonInteractiveStyles)
 	}
 	return l
+}
+
+func (l List) styles(renderCell func(table.Model, string, table.CellPosition) string) table.Styles {
+	if l.interactive {
+		styles := interactiveStyles
+		styles.RenderCell = renderCell
+		return styles
+	}
+	styles := nonInteractiveStyles
+	styles.RenderCell = renderCell
+	return styles
 }
 
 func (l List) itemAtCursor() *todotxt.Item {
