@@ -103,10 +103,10 @@ func (c Config) TagColors() map[string]qprojection.ColorFunc {
 	for t, tagDef := range c.Tags {
 		tagDef := tagDef
 		ifs := make([]qselect.Func, 0)
-		for _, s := range tagDef.Styles {
+		for i, s := range tagDef.Styles {
 			f, err := qselect.CompileQQL(s.If)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatal(fmt.Errorf("could not compile tag-color condition for %s #%d: %w", t, i, err))
 			}
 			ifs = append(ifs, f)
 		}
@@ -125,10 +125,10 @@ func (c Config) TagColors() map[string]qprojection.ColorFunc {
 
 func (c Config) LineColors() qprojection.ColorFunc {
 	ifs := make([]qselect.Func, 0)
-	for _, s := range c.Styles {
+	for i, s := range c.Styles {
 		f, err := qselect.CompileQQL(s.If)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(fmt.Errorf("could not compile line color condition #%d: %w", i, err))
 		}
 		ifs = append(ifs, f)
 	}

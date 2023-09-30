@@ -125,7 +125,7 @@ func RegisterMacros(cmd *cobra.Command, args []string) error {
 	for _, macro := range di.Config().Macros {
 		err := qselect.RegisterMacro(macro.Name, macro.Query, macro.InDTypes(), qselect.DType(macro.ResultType), macro.InjectIt)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not register macro %s: %w", macro.Name, err)
 		}
 	}
 	return nil
