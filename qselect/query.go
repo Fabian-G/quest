@@ -33,25 +33,82 @@ func And(fns ...Func) Func {
 }
 
 var defaultFreeVars = idSet{
-	"it":      QItem,
-	"items":   QItemSlice,
-	"today":   QDate,
-	"maxInt":  QInt,
-	"minInt":  QInt,
-	"maxDate": QDate,
-	"minDate": QDate,
+	"it":       QItem,
+	"items":    QItemSlice,
+	"today":    QDate,
+	"maxInt":   QInt,
+	"minInt":   QInt,
+	"maxDate":  QDate,
+	"minDate":  QDate,
+	"prioA":    QPriority,
+	"prioB":    QPriority,
+	"prioC":    QPriority,
+	"prioD":    QPriority,
+	"prioE":    QPriority,
+	"prioF":    QPriority,
+	"prioG":    QPriority,
+	"prioH":    QPriority,
+	"prioI":    QPriority,
+	"prioJ":    QPriority,
+	"prioK":    QPriority,
+	"prioL":    QPriority,
+	"prioM":    QPriority,
+	"prioN":    QPriority,
+	"prioO":    QPriority,
+	"prioP":    QPriority,
+	"prioQ":    QPriority,
+	"prioR":    QPriority,
+	"prioS":    QPriority,
+	"prioT":    QPriority,
+	"prioU":    QPriority,
+	"prioV":    QPriority,
+	"prioW":    QPriority,
+	"prioX":    QPriority,
+	"prioY":    QPriority,
+	"prioZ":    QPriority,
+	"prioNone": QPriority,
+}
+
+var constants = map[string]any{
+	"maxInt":   math.MaxInt,
+	"minInt":   math.MinInt,
+	"maxDate":  maxTime,
+	"minDate":  time.Time{},
+	"prioA":    todotxt.PrioA,
+	"prioB":    todotxt.PrioB,
+	"prioC":    todotxt.PrioC,
+	"prioD":    todotxt.PrioD,
+	"prioE":    todotxt.PrioE,
+	"prioF":    todotxt.PrioF,
+	"prioG":    todotxt.PrioG,
+	"prioH":    todotxt.PrioH,
+	"prioI":    todotxt.PrioI,
+	"prioJ":    todotxt.PrioJ,
+	"prioK":    todotxt.PrioK,
+	"prioL":    todotxt.PrioL,
+	"prioM":    todotxt.PrioM,
+	"prioN":    todotxt.PrioN,
+	"prioO":    todotxt.PrioO,
+	"prioP":    todotxt.PrioP,
+	"prioQ":    todotxt.PrioQ,
+	"prioR":    todotxt.PrioR,
+	"prioS":    todotxt.PrioS,
+	"prioT":    todotxt.PrioT,
+	"prioU":    todotxt.PrioU,
+	"prioV":    todotxt.PrioV,
+	"prioW":    todotxt.PrioW,
+	"prioX":    todotxt.PrioX,
+	"prioY":    todotxt.PrioY,
+	"prioZ":    todotxt.PrioZ,
+	"prioNone": todotxt.PrioNone,
 }
 
 func buildFreeVars(universe *todotxt.List, item *todotxt.Item) map[string]any {
-	alpha := make(map[string]any)
+	alpha := maps.Clone(constants)
 	alpha["it"] = item
 	alpha["items"] = toAnySlice(universe.Tasks())
 	now := time.Now()
 	alpha["today"] = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	alpha["maxInt"] = math.MaxInt
-	alpha["minInt"] = math.MinInt
-	alpha["minDate"] = time.Time{}
-	alpha["maxDate"] = maxTime
 	alpha["_list"] = universe
 	return alpha
 }

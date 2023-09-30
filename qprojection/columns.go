@@ -219,7 +219,7 @@ var questScoreColumn = columnDef{
 }
 
 func regexMatch(columnRegex string) matcher {
-	regex := regexp.MustCompile(columnRegex)
+	regex := regexp.MustCompile("^" + columnRegex + "$")
 	return regexMatcher{regex}
 }
 

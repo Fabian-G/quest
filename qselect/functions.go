@@ -107,6 +107,14 @@ var functions = map[string]queryFunc{
 		injectIt:         true,
 		wantsContext:     false,
 	},
+	"priority": {
+		fn:               priority,
+		resultType:       QPriority,
+		argTypes:         []DType{QItem},
+		trailingOptional: false,
+		injectIt:         true,
+		wantsContext:     false,
+	},
 	"dotPrefix": {
 		fn:               dotPrefix,
 		resultType:       QBool,
@@ -275,6 +283,11 @@ func contexts(args []any) any {
 		contextStrings = append(contextStrings, p.String())
 	}
 	return contextStrings
+}
+
+func priority(args []any) any {
+	item := args[0].(*todotxt.Item)
+	return item.Priority()
 }
 
 func dotPrefix(args []any) any {

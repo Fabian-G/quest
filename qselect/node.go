@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Fabian-G/quest/qduration"
+	"github.com/Fabian-G/quest/todotxt"
 )
 
 type DType string
@@ -18,6 +19,7 @@ const (
 	QError       DType = "error"
 	QInt         DType = "int"
 	QDate        DType = "date"
+	QPriority    DType = "priority"
 	QDuration    DType = "duration"
 	QString      DType = "string"
 	QStringSlice DType = "[]string"
@@ -26,7 +28,7 @@ const (
 	QItemSlice   DType = "[]item"
 )
 
-var AllDTypes = []DType{QInt, QDate, QDuration, QString, QStringSlice, QBool, QItem, QItemSlice}
+var AllDTypes = []DType{QInt, QDate, QDuration, QString, QStringSlice, QBool, QItem, QItemSlice, QPriority}
 
 func (d DType) isSliceType() bool {
 	return slices.Contains([]DType{QStringSlice, QItemSlice}, d)
@@ -327,6 +329,33 @@ func (e *comparison) eval(alpha varMap) any {
 	return compare(e.comparator, lType, rType, left, right)
 }
 
+func (e *comparison) validate(knownIds idSet) (DType, error) {
+	leftType, err := e.leftChild.validate(knownIds)
+	if err != nil {
+		return QError, err
+	}
+	rightType, err := e.rightChild.validate(knownIds)
+	if err != nil {
+		return QError, err
+	}
+	if leftType != rightType {
+		return QError, fmt.Errorf("can not compare %s with %s", leftType, rightType)
+	}
+	if leftType.isSliceType() || rightType.isSliceType() {
+		return QError, errors.New("comparing slice types is not allowed")
+	}
+	if leftType == QItem && e.comparator != itemEq {
+		return QError, errors.New("items can only be compared using ==")
+	}
+	allowedTypes := []DType{QString, QItem, QDate, QInt, QBool, QPriority}
+	if !slices.Contains(allowedTypes, leftType) || !slices.Contains(allowedTypes, rightType) {
+		return QError, fmt.Errorf("can not compare %s with %s. Allowed types are: %v", leftType, rightType, allowedTypes)
+	}
+	e.lType = leftType
+	e.rType = rightType
+	return QBool, nil
+}
+
 func compare(op itemType, t1 DType, t2 DType, left, right any) bool {
 	switch t1 {
 	case QString:
@@ -354,6 +383,10 @@ func compare(op itemType, t1 DType, t2 DType, left, right any) bool {
 			v2i = 1
 		}
 		return compareComparable(op, v1i, v2i)
+	case QPriority:
+		v1 := left.(todotxt.Priority)
+		v2 := right.(todotxt.Priority)
+		return compareComparable(op, v1, v2)
 	default:
 		panic(fmt.Errorf("comparing uncomparable types %s and %s", t1, t2))
 	}
@@ -407,33 +440,6 @@ func (e *comparison) String() string {
 		opString = ">="
 	}
 	return fmt.Sprintf("(%s %s %s)", e.leftChild.String(), opString, e.rightChild.String())
-}
-
-func (e *comparison) validate(knownIds idSet) (DType, error) {
-	leftType, err := e.leftChild.validate(knownIds)
-	if err != nil {
-		return QError, err
-	}
-	rightType, err := e.rightChild.validate(knownIds)
-	if err != nil {
-		return QError, err
-	}
-	if leftType != rightType {
-		return QError, fmt.Errorf("can not compare %s with %s", leftType, rightType)
-	}
-	if leftType.isSliceType() || rightType.isSliceType() {
-		return QError, errors.New("comparing slice types is not allowed")
-	}
-	if leftType == QItem && e.comparator != itemEq {
-		return QError, errors.New("items can only be compared using ==")
-	}
-	allowedTypes := []DType{QString, QItem, QDate, QDuration, QInt, QBool}
-	if !slices.Contains(allowedTypes, leftType) || !slices.Contains(allowedTypes, rightType) {
-		return QError, fmt.Errorf("can not compare %s with %s. Allowed types are: %v", leftType, rightType, allowedTypes)
-	}
-	e.lType = leftType
-	e.rType = rightType
-	return QBool, nil
 }
 
 type or struct {

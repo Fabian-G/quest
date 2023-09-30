@@ -75,6 +75,7 @@ func (l List) mapToColumns() ([]table.Row, []table.Column, func(table.Model, str
 			maxWidth = max(maxWidth, len(val[i]))
 		}
 		if maxWidth == 0 {
+			styles = deleteColumn(styles, i)
 			continue
 		}
 
@@ -88,6 +89,13 @@ func (l List) mapToColumns() ([]table.Row, []table.Column, func(table.Model, str
 		val := style.Padding(0, 1).Render(s)
 		return strings.ReplaceAll(val, "\x1b[0m", "\x1b[39m")
 	}
+}
+
+func deleteColumn(styles [][]lipgloss.Style, idx int) [][]lipgloss.Style {
+	for i := 0; i < len(styles); i++ {
+		styles[i] = slices.Delete(styles[i], idx, idx+1)
+	}
+	return styles
 }
 
 func (l List) Init() tea.Cmd {

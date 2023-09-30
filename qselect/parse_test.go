@@ -347,6 +347,15 @@ func Test_eval(t *testing.T) {
 			itemNumber: 1,
 			result:     true,
 		},
+		"can compare priorities": {
+			list: listFromString(t, `
+			(A) a task with prio A
+			(B) a task with prio B
+			`),
+			query:      `priority >= prioB`,
+			itemNumber: 1,
+			result:     true,
+		},
 	}
 
 	for name, tc := range testCases {
