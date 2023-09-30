@@ -166,8 +166,16 @@ var functions = map[string]queryFunc{
 	"shell": {
 		fn:               shell,
 		resultType:       QString,
-		argTypes:         []DType{QItem, QString, QString},
-		trailingOptional: true,
+		argTypes:         []DType{QItem, QString},
+		trailingOptional: false,
+		injectIt:         true,
+		wantsContext:     true,
+	},
+	"command": {
+		fn:               command,
+		resultType:       QString,
+		argTypes:         []DType{QItem, QString},
+		trailingOptional: false,
 		injectIt:         true,
 		wantsContext:     true,
 	},
@@ -394,10 +402,6 @@ func shell(args []any) any {
 	alpha := args[0].(map[string]any)
 	item := args[1].(*todotxt.Item)
 	command := args[2].(string)
-	defaultOutput := ""
-	if len(args) >= 4 {
-		defaultOutput = args[3].(string)
-	}
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "bash"
@@ -408,13 +412,38 @@ func shell(args []any) any {
 	itemJson := strings.Trim(strings.TrimSpace(buffer.String()), "[]")
 	cmd.Stdin = strings.NewReader(itemJson)
 	outBuffer := strings.Builder{}
+	errBuffer := strings.Builder{}
+	cmd.Stdout = &outBuffer
+	cmd.Stderr = &errBuffer
+
+	err := cmd.Run()
+	if err != nil {
+		panic(fmt.Errorf("shell command returned an error: %s\nErrOut: %s", err, errBuffer.String()))
+	}
+	return strings.TrimSpace(outBuffer.String())
+}
+
+func command(args []any) any {
+	alpha := args[0].(map[string]any)
+	item := args[1].(*todotxt.Item)
+	command := args[2].(string)
+	fullCommand, err := exec.LookPath(command)
+	if err != nil {
+		panic(fmt.Errorf("could not run command function in query, because executable was not found: %w", err))
+	}
+	cmd := exec.Command(fullCommand)
+	buffer := strings.Builder{}
+	todotxt.DefaultJsonEncoder.Encode(&buffer, alpha["_list"].(*todotxt.List), []*todotxt.Item{item})
+	itemJson := strings.Trim(strings.TrimSpace(buffer.String()), "[]")
+	cmd.Stdin = strings.NewReader(itemJson)
+	outBuffer := strings.Builder{}
 	errBUffer := strings.Builder{}
 	cmd.Stdout = &outBuffer
 	cmd.Stderr = &errBUffer
 
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
-		return defaultOutput
+		panic(fmt.Errorf("command returned an error: %w\nErrOut: %s", err, errBUffer.String()))
 	}
-	return outBuffer.String()
+	return strings.TrimSpace(outBuffer.String())
 }
