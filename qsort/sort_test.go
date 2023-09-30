@@ -131,6 +131,30 @@ func Test_Sort(t *testing.T) {
 			second:        todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("B hello:world foo:abc")),
 			expectedOrder: same,
 		},
+		"multiple projects sort correctly": {
+			sortString:    "+project",
+			first:         todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("+b +a T1")),
+			second:        todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("+b +c T1")),
+			expectedOrder: firstSmaller,
+		},
+		"multiple projects sort correctly (2)": {
+			sortString:    "-project",
+			first:         todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("+b +a T1")),
+			second:        todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("+b +c T1")),
+			expectedOrder: secondSmaller,
+		},
+		"multiple contexts sort correctly": {
+			sortString:    "+context",
+			first:         todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("@b @a T1")),
+			second:        todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("@b @c T1")),
+			expectedOrder: firstSmaller,
+		},
+		"multiple contexts sort correctly (2)": {
+			sortString:    "-context",
+			first:         todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("@b @a T1")),
+			second:        todotxt.MustBuildItem(todotxt.WithDone(false), todotxt.WithDescription("@b @c T1")),
+			expectedOrder: secondSmaller,
+		},
 	}
 
 	for name, tc := range testCases {

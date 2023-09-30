@@ -3,6 +3,7 @@ package qsort
 import (
 	"cmp"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -39,6 +40,10 @@ func (c Compiler) CompileSortFunc(sortingKeys []string) (func(*todotxt.Item, *to
 			compareFuncs = append(compareFuncs, order.comparePriority)
 		case "description":
 			compareFuncs = append(compareFuncs, order.compareDescription)
+		case "project", "projects":
+			compareFuncs = append(compareFuncs, order.compareProject)
+		case "context", "contexts":
+			compareFuncs = append(compareFuncs, order.compareContext)
 		case "score":
 			compareFuncs = append(compareFuncs, order.compareScores(c.ScoreCalculator))
 		default:
@@ -151,6 +156,50 @@ func (o sortOrder) compareScores(calc qscore.Calculator) func(*todotxt.Item, *to
 		score2 := calc.ScoreOf(i2)
 		return int(o) * cmp.Compare(score1.Score, score2.Score)
 	}
+}
+
+func (o sortOrder) compareProject(i1 *todotxt.Item, i2 *todotxt.Item) int {
+	i1Projects := i1.Projects()
+	i2Projects := i2.Projects()
+	slices.SortFunc(i1Projects, func(a, b todotxt.Project) int {
+		return int(o) * strings.Compare(string(a), string(b))
+	})
+	slices.SortFunc(i2Projects, func(a, b todotxt.Project) int {
+		return int(o) * strings.Compare(string(a), string(b))
+	})
+	var p1 *string
+	var p2 *string
+	if len(i1Projects) > 0 {
+		p1String := string(i1Projects[0])
+		p1 = &p1String
+	}
+	if len(i2Projects) > 0 {
+		p2String := string(i2Projects[0])
+		p2 = &p2String
+	}
+	return int(o) * compareOptionals(p1, p2)
+}
+
+func (o sortOrder) compareContext(i1 *todotxt.Item, i2 *todotxt.Item) int {
+	i1Contexts := i1.Contexts()
+	i2Contexts := i2.Contexts()
+	slices.SortFunc(i1Contexts, func(a, b todotxt.Context) int {
+		return int(o) * strings.Compare(string(a), string(b))
+	})
+	slices.SortFunc(i2Contexts, func(a, b todotxt.Context) int {
+		return int(o) * strings.Compare(string(a), string(b))
+	})
+	var p1 *string
+	var p2 *string
+	if len(i1Contexts) > 0 {
+		p1String := string(i1Contexts[0])
+		p1 = &p1String
+	}
+	if len(i2Contexts) > 0 {
+		p2String := string(i2Contexts[0])
+		p2 = &p2String
+	}
+	return int(o) * compareOptionals(p1, p2)
 }
 
 func compareOptionals[T cmp.Ordered](a *T, b *T) int {
