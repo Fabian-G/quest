@@ -58,6 +58,14 @@ func (q queryFunc) validate(actual []DType) error {
 }
 
 var functions = map[string]queryFunc{
+	"line": {
+		fn:               line,
+		argTypes:         []DType{QItem},
+		resultType:       QInt,
+		trailingOptional: false,
+		injectIt:         true,
+		wantsContext:     true,
+	},
 	"done": {
 		fn:               done,
 		argTypes:         []DType{QItem},
@@ -226,6 +234,12 @@ func RegisterMacro(name, qql string, inTypes []DType, outType DType, injectIt bo
 	}
 	functions[name] = qFunc
 	return nil
+}
+
+func line(args []any) any {
+	list := args[0].(map[string]any)["_list"].(*todotxt.List)
+	item := args[1].(*todotxt.Item)
+	return list.LineOf(item)
 }
 
 func done(args []any) any {
