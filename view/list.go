@@ -75,7 +75,7 @@ func (l List) mapToColumns() ([]table.Row, []table.Column, func(table.Model, str
 			maxWidth = max(maxWidth, len(val[i]))
 		}
 		if maxWidth == 0 {
-			styles = deleteColumn(styles, i)
+			styles = deleteColumn(styles, len(columns))
 			continue
 		}
 

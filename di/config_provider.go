@@ -192,7 +192,7 @@ func buildConfig(file string) (Config, error) {
 func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
 	v.SetDefault("todo-file", path.Join(dataHome, "quest/todo.txt"))
 	v.SetDefault("done-file", path.Join(dataHome, "quest/done.txt"))
-	v.SetDefault("backup", 5)
+	v.SetDefault("backup", 0)
 	v.SetDefault("editor", getDefaultEditor())
 	v.SetDefault("unknown-tags", true)
 	v.SetDefault("quest-score.urgency-tag", "due")
@@ -208,6 +208,7 @@ func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
 	v.SetDefault("default-view.interactive", true)
 	v.SetDefault("default-view.add-prefix", "")
 	v.SetDefault("default-view.add-suffix", "")
+	v.SetDefault("tags", make(map[string]TagDef))
 
 	for viewName := range v.GetStringMap("view") {
 		v.SetDefault("view."+viewName+".query", v.GetString("default-view.query"))
