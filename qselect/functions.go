@@ -3,7 +3,6 @@ package qselect
 import (
 	"fmt"
 	"maps"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -415,11 +414,7 @@ func shell(args []any) any {
 	alpha := args[0].(map[string]any)
 	item := args[1].(*todotxt.Item)
 	command := args[2].(string)
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		shell = "bash"
-	}
-	cmd := exec.Command(shell, "-c", command)
+	cmd := exec.Command("bash", "-c", command)
 	buffer := strings.Builder{}
 	todotxt.DefaultJsonEncoder.Encode(&buffer, alpha["_list"].(*todotxt.List), []*todotxt.Item{item})
 	itemJson := strings.Trim(strings.TrimSpace(buffer.String()), "[]")
