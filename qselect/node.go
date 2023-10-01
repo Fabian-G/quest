@@ -347,6 +347,9 @@ func (e *comparison) validate(knownIds idSet) (DType, error) {
 	if leftType == QItem && e.comparator != itemEq {
 		return QError, errors.New("items can only be compared using ==")
 	}
+	if leftType == QBool && e.comparator != itemEq {
+		return QError, errors.New("bool values can only be compared using ==")
+	}
 	allowedTypes := []DType{QString, QItem, QDate, QInt, QBool, QPriority}
 	if !slices.Contains(allowedTypes, leftType) || !slices.Contains(allowedTypes, rightType) {
 		return QError, fmt.Errorf("can not compare %s with %s. Allowed types are: %v", leftType, rightType, allowedTypes)
@@ -375,14 +378,7 @@ func compare(op itemType, t1 DType, t2 DType, left, right any) bool {
 	case QBool:
 		v1 := left.(bool)
 		v2 := right.(bool)
-		var v1i, v2i int
-		if v1 {
-			v1i = 1
-		}
-		if v2 {
-			v2i = 1
-		}
-		return compareComparable(op, v1i, v2i)
+		return v1 == v2
 	case QPriority:
 		v1 := left.(todotxt.Priority)
 		v2 := right.(todotxt.Priority)

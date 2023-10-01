@@ -34,7 +34,7 @@ func ParseTaskSelection(defaultQuery string, guess, qqlSearch, rngSearch, string
 	for _, f := range qqlSearch {
 		q, err := qselect.CompileQQL(f)
 		if err != nil {
-			return nil, fmt.Errorf("could not compile FOL query %s: %w", f, err)
+			return nil, fmt.Errorf("could not compile QQL query %s: %w", f, err)
 		}
 		selectors = append(selectors, q)
 	}
