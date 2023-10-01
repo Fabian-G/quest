@@ -136,7 +136,7 @@ func SyncConflictProtection(cmd *cobra.Command, args []string) error {
 	file := v.TodoFile
 	filesInDir, err := os.ReadDir(path.Dir(file))
 	if err != nil {
-		return fmt.Errorf("could check for sync conflicts: %w", err)
+		return fmt.Errorf("could not check for sync conflicts: %w", err)
 	}
 
 	base := path.Base(file)
@@ -158,11 +158,6 @@ func SyncConflictProtection(cmd *cobra.Command, args []string) error {
 	for _, c := range conflicts {
 		fmt.Fprintf(cmd.OutOrStdout(), "- %s\n", c)
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "\nContinue anyway? (y/N) ")
-	var response string
-	fmt.Fscanln(cmd.InOrStdin(), &response)
-	if strings.ToUpper(strings.TrimSpace(response)) == "Y" {
-		return nil
-	}
-	return fmt.Errorf("cancelled by user")
+	fmt.Fprintln(cmd.OutOrStdout(), "\nPlease merge manually and then remove the specified files.")
+	return errors.New("sync conflict")
 }
