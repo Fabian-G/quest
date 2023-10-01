@@ -22,7 +22,7 @@ func Test_RunsWithEmptyConfigurationFile(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-// This test only really makes sense in the CI/CD environment, becasue locally there probably is a configuration file present
+// This test only really makes sense in the CI/CD environment, because locally there probably is a configuration file present
 func Test_RunsWithoutConfigurationFile(t *testing.T) {
 	cmd, ctx := cmd.Root(&di.Container{})
 	cmd.SetArgs([]string{"--json"})

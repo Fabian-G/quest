@@ -6,6 +6,7 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"time"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/di"
@@ -75,7 +76,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 		if err = editor.Edit(filePath); err != nil {
 			return err
 		}
-		additions, changes, removals, err := e.applyChanges(filePath, list, selection)
+		additions, changes, removals, err := e.applyChanges(filePath, list, selection, di.Config().NowFunc)
 		if err == nil {
 			fmt.Fprintf(cmd.OutOrStdout(), "Items Added:   %d\nItems changed: %d\nItems removed: %d\n", additions, changes, removals)
 			return nil
@@ -110,7 +111,7 @@ func (e *editCommand) dumpDescriptionsToTempFile(list *todotxt.List, items []*to
 	return tmpFile.Name(), writer.Flush()
 }
 
-func (e *editCommand) applyChanges(tmpFile string, list *todotxt.List, selection []*todotxt.Item) (added int, changed int, removed int, err error) {
+func (e *editCommand) applyChanges(tmpFile string, list *todotxt.List, selection []*todotxt.Item, now func() time.Time) (added int, changed int, removed int, err error) {
 	file, err := os.Open(tmpFile)
 	if err != nil {
 		return 0, 0, 0, err
@@ -130,6 +131,11 @@ func (e *editCommand) applyChanges(tmpFile string, list *todotxt.List, selection
 	copy(deletedItems, selection)
 	for _, item := range changedItems {
 		if item.id == -1 {
+			if item.item.CreationDate() == nil {
+				if err := item.item.SetCreation(now()); err != nil {
+					return 0, 0, 0, err
+				}
+			}
 			err := list.Add(item.item)
 			if err != nil {
 				return 0, 0, 0, err

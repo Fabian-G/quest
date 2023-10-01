@@ -44,6 +44,13 @@ func (i *Item) CreationDate() *time.Time {
 	return i.creationDate
 }
 
+func (i *Item) SetCreation(creation time.Time) error {
+	return i.modify(func() {
+		day := time.Date(creation.Year(), creation.Month(), creation.Day(), 0, 0, 0, 0, time.UTC)
+		i.creationDate = &day
+	})
+}
+
 func (i *Item) Description() string {
 	return i.description
 }

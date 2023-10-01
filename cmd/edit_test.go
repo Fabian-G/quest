@@ -113,7 +113,7 @@ func Test_TagExpansionIsEvaluatedInOrderOfTheEditFileEvenEvenWhenThereAreNewItem
 	assert.ElementsMatch(t, ReadLines(t, todoFile), []string{
 		"+P1 T1 order:10",
 		"+P1 T2 order:20",
-		"+P1 T3 order:30",
+		"2022-02-02 +P1 T3 order:30",
 	})
 }
 
