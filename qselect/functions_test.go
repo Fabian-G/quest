@@ -108,7 +108,7 @@ func TestQueryFunc_validate(t *testing.T) {
 
 func Test_CanRegisterMacros(t *testing.T) {
 	err := RegisterMacro("blocked",
-		`exists i in items: (exists pre in stringListTag(arg0, "after"): tag(i, "id") == pre) && !done(i)`,
+		`exists i in items: (exists pre in list(tag(arg0, "after")): tag(i, "id") == pre) && !done(i)`,
 		[]DType{QItem},
 		QBool,
 		true,

@@ -138,20 +138,20 @@ var functions = map[string]queryFunc{
 		injectIt:         false,
 		wantsContext:     false,
 	},
-	"date": {
-		fn:               date,
+	"ymd": {
+		fn:               ymd,
 		resultType:       QDate,
 		argTypes:         []DType{QInt, QInt, QInt},
 		trailingOptional: false,
 		injectIt:         false,
 		wantsContext:     false,
 	},
-	"dateTag": {
-		fn:               dateTag,
+	"date": {
+		fn:               toDate,
 		resultType:       QDate,
-		argTypes:         []DType{QItem, QString, QDate},
+		argTypes:         []DType{QString, QDate},
 		trailingOptional: true,
-		injectIt:         true,
+		injectIt:         false,
 		wantsContext:     false,
 	},
 	"tag": {
@@ -162,19 +162,11 @@ var functions = map[string]queryFunc{
 		injectIt:         true,
 		wantsContext:     false,
 	},
-	"intTag": {
-		fn:               intTag,
-		resultType:       QInt,
-		argTypes:         []DType{QItem, QString, QInt},
-		trailingOptional: true,
-		injectIt:         true,
-		wantsContext:     false,
-	},
-	"stringListTag": {
-		fn:               stringListTag,
+	"list": {
+		fn:               toList,
 		resultType:       QStringSlice,
-		argTypes:         []DType{QItem, QString, QStringSlice},
-		trailingOptional: true,
+		argTypes:         []DType{QString},
+		trailingOptional: false,
 		injectIt:         true,
 		wantsContext:     false,
 	},
@@ -323,34 +315,13 @@ func substring(args []any) any {
 	return strings.Contains(s1, s2)
 }
 
-func date(args []any) any {
+func ymd(args []any) any {
 	year := args[0].(int)
 	month := args[1].(int)
 	day := args[2].(int)
 
 	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
 
-}
-
-func dateTag(args []any) any {
-	item := args[0].(*todotxt.Item)
-	key := args[1].(string)
-	defaultDate := time.Time{}
-	if len(args) == 3 {
-		defaultDate = args[2].(time.Time)
-	}
-
-	tags := item.Tags()
-	tagValues := tags[key]
-	if len(tagValues) == 0 {
-		return defaultDate
-	}
-	dateString := tagValues[0]
-	date, err := time.Parse(time.DateOnly, dateString)
-	if err != nil {
-		return defaultDate
-	}
-	return date
 }
 
 func tag(args []any) any {
@@ -369,46 +340,12 @@ func tag(args []any) any {
 	return tagValues[0]
 }
 
-func intTag(args []any) any {
-	item := args[0].(*todotxt.Item)
-	key := args[1].(string)
-	defaultInt := 0
-	if len(args) == 3 {
-		defaultInt = args[2].(int)
+func toList(args []any) any {
+	list := args[0].(string)
+	if len(strings.TrimSpace(list)) == 0 {
+		return []any{}
 	}
-
-	tags := item.Tags()
-	tagValues := tags[key]
-	if len(tagValues) == 0 {
-		return defaultInt
-	}
-	intString := tagValues[0]
-	i, err := strconv.Atoi(intString)
-	if err != nil {
-		return defaultInt
-	}
-	return i
-}
-
-func stringListTag(args []any) any {
-	item := args[0].(*todotxt.Item)
-	key := args[1].(string)
-	var defaultStringSlice []any = nil
-	if len(args) == 3 {
-		defaultStringSlice = args[2].([]any)
-	}
-
-	tags := item.Tags()
-	tagValues := tags[key]
-	if len(tagValues) == 0 {
-		return defaultStringSlice
-	}
-
-	allValues := make([]string, 0, len(tagValues))
-	for _, v := range tagValues {
-		allValues = append(allValues, strings.Split(v, ",")...)
-	}
-	return toAnySlice(allValues)
+	return toAnySlice(strings.Split(list, ","))
 }
 
 func toInt(args []any) any {
@@ -420,6 +357,19 @@ func toInt(args []any) any {
 	result, err := strconv.Atoi(intString)
 	if err != nil {
 		return defaultInt
+	}
+	return result
+}
+
+func toDate(args []any) any {
+	dateString := args[0].(string)
+	defaultDate := time.Time{}
+	if len(args) == 2 {
+		defaultDate = args[1].(time.Time)
+	}
+	result, err := time.Parse(time.DateOnly, dateString)
+	if err != nil {
+		return defaultDate
 	}
 	return result
 }

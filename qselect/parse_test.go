@@ -275,35 +275,35 @@ func Test_eval(t *testing.T) {
 			list: listFromString(t, `
 			dummy item (does not matter)	
 			`),
-			query:  `date(2022, 02, 02) > date(2022, 02, 01)`,
+			query:  `ymd(2022, 02, 02) > ymd(2022, 02, 01)`,
 			result: true,
 		},
 		"date after (false)": {
 			list: listFromString(t, `
 			dummy item (does not matter)	
 			`),
-			query:  `date(2022, 02, 02) > date(2022, 02, 02)`,
+			query:  `ymd(2022, 02, 02) > ymd(2022, 02, 02)`,
 			result: false,
 		},
 		"date before": {
 			list: listFromString(t, `
 			dummy item (does not matter)	
 			`),
-			query:  `date(2022, 02, 01) < date(2022, 02, 02)`,
+			query:  `ymd(2022, 02, 01) < ymd(2022, 02, 02)`,
 			result: true,
 		},
 		"date before (false)": {
 			list: listFromString(t, `
 			dummy item (does not matter)	
 			`),
-			query:  `date(2022, 02, 01) < date(2022, 02, 01)`,
+			query:  `ymd(2022, 02, 01) < ymd(2022, 02, 01)`,
 			result: false,
 		},
 		"date equal": {
 			list: listFromString(t, `
 			dummy item (does not matter)	
 			`),
-			query:  `date(2022, 02, 01) == date(2022, 02, 01)`,
+			query:  `ymd(2022, 02, 01) == ymd(2022, 02, 01)`,
 			result: true,
 		},
 		"blocked": {
@@ -311,7 +311,7 @@ func Test_eval(t *testing.T) {
 			a precondition id:pre
 			a blocked task after:pre
 			`),
-			query:      `forall i in items: (exists pre in stringListTag("after"): tag(i, "id") == pre) -> done(i)`,
+			query:      `forall i in items: (exists pre in list(tag("after")): tag(i, "id") == pre) -> done(i)`,
 			itemNumber: 2,
 			result:     false,
 		},
@@ -319,7 +319,7 @@ func Test_eval(t *testing.T) {
 			list: listFromString(t, `
 			a date due:2020-01-01
 			`),
-			query:      `dateTag("due")+1d==date(2020,01,02)`,
+			query:      `date(tag("due"))+1d==ymd(2020,01,02)`,
 			itemNumber: 1,
 			result:     true,
 		},
@@ -327,7 +327,7 @@ func Test_eval(t *testing.T) {
 			list: listFromString(t, `
 			a date due:2020-01-02
 			`),
-			query:      `dateTag("due")-1d==date(2020,01,01)`,
+			query:      `date(tag("due"))-1d==ymd(2020,01,01)`,
 			itemNumber: 1,
 			result:     true,
 		},
