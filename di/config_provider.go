@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"time"
 
 	"github.com/Fabian-G/quest/qprojection"
@@ -150,10 +151,8 @@ func buildConfig(file string) (Config, error) {
 		log.Fatal(fmt.Errorf("could not determine users home directory: %w", err))
 	}
 
-	configHome := os.Getenv("XDG_CONFIG_HOME")
-	if len(configHome) == 0 {
-		configHome = path.Join(homeDir, ".config")
-	}
+	configHome := getConfigHome(homeDir)
+	dataHome := getDataHome(homeDir)
 
 	v.SetConfigType("toml")
 	if file != "" {
@@ -161,11 +160,6 @@ func buildConfig(file string) (Config, error) {
 	} else {
 		v.SetConfigName("config")
 		v.AddConfigPath(path.Join(configHome, "quest"))
-		v.AddConfigPath("$HOME/.quest/")
-	}
-	dataHome := os.Getenv("XDG_DATA_HOME")
-	if len(dataHome) == 0 {
-		dataHome = path.Join(homeDir, ".local/share")
 	}
 
 	err = v.ReadInConfig()
@@ -187,6 +181,44 @@ func buildConfig(file string) (Config, error) {
 	}
 
 	return config, nil
+}
+
+func getConfigHome(home string) string {
+	switch runtime.GOOS {
+	case "linux":
+		if cHome, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
+			return cHome
+		}
+		return path.Join(home, ".config")
+	case "windows":
+		if cHome, ok := os.LookupEnv("APPDATA"); ok {
+			return cHome
+		}
+		return path.Join(home, "AppData", "Roaming")
+	case "darwin":
+		return path.Join(home, "Library", "Application Support")
+	}
+	log.Fatalln("os not supported")
+	return ""
+}
+
+func getDataHome(home string) string {
+	switch runtime.GOOS {
+	case "linux":
+		if dHome, ok := os.LookupEnv("XDG_DATA_HOME"); ok {
+			return dHome
+		}
+		return path.Join(home, ".local", "share")
+	case "windows":
+		if dHome, ok := os.LookupEnv("LOCALAPPDATA"); ok {
+			return dHome
+		}
+		return path.Join(home, "AppData", "Local")
+	case "darwin":
+		return path.Join(home, "Library")
+	}
+	log.Fatalln("os not supported")
+	return ""
 }
 
 func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
