@@ -12,7 +12,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"
-	"golang.org/x/term"
 )
 
 var interactiveStyles = table.Styles{
@@ -45,15 +44,9 @@ type RefreshListMsg struct {
 }
 
 func NewList(proj qprojection.Projector, interactive bool) (List, error) {
-	width, height, err := term.GetSize(0)
-	if err != nil {
-		return List{}, err
-	}
 	l := List{
-		projector:       proj,
-		interactive:     interactive,
-		availableWidth:  width,
-		availableHeight: height,
+		projector:   proj,
+		interactive: interactive,
 	}
 
 	l.table = table.New()
