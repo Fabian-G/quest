@@ -241,6 +241,7 @@ func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
 	v.SetDefault("default-view.add-prefix", "")
 	v.SetDefault("default-view.add-suffix", "")
 	v.SetDefault("tags", make(map[string]TagDef))
+	v.SetDefault("now-func", time.Now)
 
 	for viewName := range v.GetStringMap("view") {
 		v.SetDefault("view."+viewName+".query", v.GetString("default-view.query"))
