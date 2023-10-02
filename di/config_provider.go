@@ -75,7 +75,7 @@ type Config struct {
 	} `mapstructure:"recurrence,omitempty"`
 	Styles      []StyleDef         `mapstructure:"styles"`
 	DefaultView ViewDef            `mapstructure:"default-view,omitempty"`
-	Views       map[string]ViewDef `mapstructure:"view,omitempty"`
+	Views       map[string]ViewDef `mapstructure:"views,omitempty"`
 	Macros      []MacroDef         `mapstructure:"macro,omitempty"`
 	Tags        map[string]TagDef  `mapstructure:"tags,omitempty"`
 	NowFunc     func() time.Time   `mapstructure:"now-func,omitempty"` // Manually set only in testing, but defaults to time.Now
@@ -243,14 +243,14 @@ func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
 	v.SetDefault("tags", make(map[string]TagDef))
 	v.SetDefault("now-func", time.Now)
 
-	for viewName := range v.GetStringMap("view") {
-		v.SetDefault("view."+viewName+".query", v.GetString("default-view.query"))
-		v.SetDefault("view."+viewName+".projection", v.GetStringSlice("default-view.projection"))
-		v.SetDefault("view."+viewName+".sort", v.GetStringSlice("default-view.sort"))
-		v.SetDefault("view."+viewName+".clean", v.GetStringSlice("default-view.clean"))
-		v.SetDefault("view."+viewName+".interactive", v.GetBool("default-view.interactive"))
-		v.SetDefault("view."+viewName+".add-prefix", v.GetString("default-view.add-prefix"))
-		v.SetDefault("view."+viewName+".add-suffix", v.GetString("default-view.add-suffix"))
+	for viewName := range v.GetStringMap("views") {
+		v.SetDefault("views."+viewName+".query", v.GetString("default-view.query"))
+		v.SetDefault("views."+viewName+".projection", v.GetStringSlice("default-view.projection"))
+		v.SetDefault("views."+viewName+".sort", v.GetStringSlice("default-view.sort"))
+		v.SetDefault("views."+viewName+".clean", v.GetStringSlice("default-view.clean"))
+		v.SetDefault("views."+viewName+".interactive", v.GetBool("default-view.interactive"))
+		v.SetDefault("views."+viewName+".add-prefix", v.GetString("default-view.add-prefix"))
+		v.SetDefault("views."+viewName+".add-suffix", v.GetString("default-view.add-suffix"))
 	}
 }
 
