@@ -78,7 +78,7 @@ type Config struct {
 	Views       map[string]ViewDef `mapstructure:"view,omitempty"`
 	Macros      []MacroDef         `mapstructure:"macro,omitempty"`
 	Tags        map[string]TagDef  `mapstructure:"tags,omitempty"`
-	NowFunc     func() time.Time   `mapstructure:"now-func,omitempty"`
+	NowFunc     func() time.Time   `mapstructure:"now-func,omitempty"` // Manually set only in testing, but defaults to time.Now
 }
 
 func (c Config) HumanizedTags() []string {
