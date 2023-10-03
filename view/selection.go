@@ -101,7 +101,7 @@ func (d listItemDelegate) Render(w io.Writer, m list.Model, index int, item list
 	} else {
 		line = d.styles.NormalTitle.Render(line)
 	}
-	fmt.Fprint(w, line)
+	_, _ = fmt.Fprint(w, line) // Ignore error, because this can hardly ever happen and if it does we can't do anything about it.
 }
 
 func (d listItemDelegate) Height() int {

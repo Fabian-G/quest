@@ -2,7 +2,6 @@ package view
 
 import (
 	"fmt"
-	"io"
 	"slices"
 	"strings"
 
@@ -133,7 +132,7 @@ func (l List) View() string {
 	return builder.String()
 }
 
-func (l List) renderDetails(writer io.StringWriter) {
+func (l List) renderDetails(writer *strings.Builder) {
 	selectedItem := l.itemAtCursor()
 	if selectedItem == nil {
 		return

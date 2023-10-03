@@ -47,7 +47,7 @@ func (e *editCommand) command() *cobra.Command {
 	return editCommand
 }
 
-func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
+func (e *editCommand) edit(cmd *cobra.Command, args []string) (err error) {
 	di := cmd.Context().Value(cmdutil.DiKey).(*di.Container)
 	editor := di.Editor()
 	list := cmd.Context().Value(cmdutil.ListKey).(*todotxt.List)
@@ -57,7 +57,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 	}
 	selection := selector.Filter(list)
 	if len(selection) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "no matches")
+		fmt.Println("no matches")
 		return nil
 	}
 	sortCompiler := di.SortCompiler()
@@ -71,7 +71,9 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(filePath)
+	defer func() {
+		err = errors.Join(err, os.Remove(filePath))
+	}()
 	list.Snapshot()
 	for {
 		if err = editor.Edit(filePath); err != nil {
@@ -79,7 +81,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 		}
 		additions, changes, removals, err := e.applyChanges(filePath, list, selection, di.Config().NowFunc)
 		if err == nil {
-			fmt.Fprintf(cmd.OutOrStdout(), "Items Added:   %d\nItems changed: %d\nItems removed: %d\n", additions, changes, removals)
+			fmt.Printf("Items Added:   %d\nItems changed: %d\nItems removed: %d\n", additions, changes, removals)
 			return nil
 		}
 		if !cmdutil.AskRetry(cmd, err) {
@@ -221,7 +223,9 @@ func mapToIds(items []*todotxt.Item, maxId int) ([]itemWithId, error) {
 			return nil, fmt.Errorf("encountered duplicate id %d. Do not change the %s tag", id, di.InternalEditTag)
 		} else {
 			idMap = append(idMap, itemWithId{id: id, item: item})
-			item.SetTag(di.InternalEditTag, "")
+			if err := item.SetTag(di.InternalEditTag, ""); err != nil {
+				return nil, err
+			}
 		}
 	}
 	return idMap, nil

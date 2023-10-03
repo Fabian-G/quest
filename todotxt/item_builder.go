@@ -24,7 +24,9 @@ func MustBuildItem(m ...BuildFunc) *Item {
 
 func WithDescription(desc string) BuildFunc {
 	return func(i *Item) *Item {
-		i.EditDescription(desc)
+		if err := i.EditDescription(desc); err != nil {
+			panic(err) // can not happen, because the item does not have any hooks yet
+		}
 		return i
 	}
 }

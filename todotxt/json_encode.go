@@ -44,7 +44,9 @@ func (f JsonEncoder) Encode(w io.Writer, list *List, tasks []*Item) error {
 			CleanDescription: t.CleanDescription(t.Projects(), t.Contexts(), tags.Keys()),
 		})
 	}
-	json.NewEncoder(out).Encode(jsonItems)
+	if err := json.NewEncoder(out).Encode(jsonItems); err != nil {
+		return err
+	}
 	return out.Flush()
 }
 

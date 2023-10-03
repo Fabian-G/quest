@@ -114,7 +114,7 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	default:
-		fmt.Fprint(cmd.OutOrStdout(), model.View())
+		fmt.Print(model.View())
 	}
 	return nil
 }

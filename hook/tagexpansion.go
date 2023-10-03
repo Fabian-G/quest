@@ -58,20 +58,23 @@ func (t TagExpansion) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
 	}
 	for itemTag := range event.Current.Tags() {
 		if typ, ok := t.tags[itemTag]; ok {
-			t.expandTag(list, typ, itemTag, event.Current)
+			if err := t.expandTag(list, typ, itemTag, event.Current); err != nil {
+				return err
+			}
 		}
 	}
 	return t.validateItem(event.Current)
 }
 
-func (t TagExpansion) expandTag(list *todotxt.List, typ qselect.DType, tag string, i *todotxt.Item) {
+func (t TagExpansion) expandTag(list *todotxt.List, typ qselect.DType, tag string, i *todotxt.Item) error {
 	tagValue := i.Tags()[tag][0]
 	switch typ {
 	case qselect.QDate:
-		i.SetTag(tag, t.expandDate(tagValue))
+		return i.SetTag(tag, t.expandDate(tagValue))
 	case qselect.QInt:
-		i.SetTag(tag, t.expandInt(list, i, tag, tagValue))
+		return i.SetTag(tag, t.expandInt(list, i, tag, tagValue))
 	}
+	return nil
 }
 
 func (t TagExpansion) expandDate(v string) string {

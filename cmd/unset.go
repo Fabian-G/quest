@@ -65,7 +65,7 @@ func (u *unsetCommand) unset(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if len(confirmedSelection) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "no matches")
+		fmt.Println("no matches")
 		return nil
 	}
 

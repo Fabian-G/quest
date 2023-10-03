@@ -380,7 +380,9 @@ func shell(args []any) any {
 	command := args[2].(string)
 	cmd := exec.Command("bash", "-c", command)
 	buffer := strings.Builder{}
-	todotxt.DefaultJsonEncoder.Encode(&buffer, alpha["_list"].(*todotxt.List), []*todotxt.Item{item})
+	if err := todotxt.DefaultJsonEncoder.Encode(&buffer, alpha["_list"].(*todotxt.List), []*todotxt.Item{item}); err != nil {
+		panic(err) // should never happen, because we write to a buffer
+	}
 	itemJson := strings.Trim(strings.TrimSpace(buffer.String()), "[]")
 	cmd.Stdin = strings.NewReader(itemJson)
 	outBuffer := strings.Builder{}
@@ -405,7 +407,9 @@ func command(args []any) any {
 	}
 	cmd := exec.Command(fullCommand)
 	buffer := strings.Builder{}
-	todotxt.DefaultJsonEncoder.Encode(&buffer, alpha["_list"].(*todotxt.List), []*todotxt.Item{item})
+	if err = todotxt.DefaultJsonEncoder.Encode(&buffer, alpha["_list"].(*todotxt.List), []*todotxt.Item{item}); err != nil {
+		panic(err) // should never happen, because we write to a buffer
+	}
 	itemJson := strings.Trim(strings.TrimSpace(buffer.String()), "[]")
 	cmd.Stdin = strings.NewReader(itemJson)
 	outBuffer := strings.Builder{}

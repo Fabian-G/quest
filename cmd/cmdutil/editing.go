@@ -9,10 +9,10 @@ import (
 )
 
 func AskRetry(cmd *cobra.Command, err error) bool {
-	fmt.Fprintf(cmd.OutOrStdout(), "your changes are invalid: %s\n", err)
-	fmt.Fprint(cmd.OutOrStdout(), "Retry? (Y/n) ")
+	fmt.Printf("your changes are invalid: %s\n", err)
+	fmt.Print("Retry? (Y/n) ")
 	var answer string
-	fmt.Fscanln(cmd.InOrStdin(), &answer)
+	_, _ = fmt.Fscanln(cmd.InOrStdin(), &answer)
 	return strings.ToLower(answer) != "n"
 }
 

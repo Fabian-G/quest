@@ -152,10 +152,10 @@ func SyncConflictProtection(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "The following sync conflicts have been detected:\n")
+	fmt.Printf("The following sync conflicts have been detected:\n")
 	for _, c := range conflicts {
-		fmt.Fprintf(cmd.OutOrStdout(), "- %s\n", c)
+		fmt.Printf("- %s\n", c)
 	}
-	fmt.Fprintln(cmd.OutOrStdout(), "\nPlease merge manually and then remove the specified files.")
+	fmt.Println("\nPlease merge manually and then remove the specified files.")
 	return errors.New("sync conflict")
 }
