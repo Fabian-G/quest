@@ -20,10 +20,10 @@ func BuildTestConfig(t *testing.T, opts ...func(di.Config) di.Config) di.Config 
 	})
 	testTodoFile, err := os.CreateTemp(testTodoDir, "*.todo.txt")
 	assert.Nil(t, err)
-	defer testTodoFile.Close()
+	assert.Nil(t, testTodoFile.Close())
 	testDoneFile, err := os.CreateTemp(testTodoDir, "*.done.txt")
 	assert.Nil(t, err)
-	defer testDoneFile.Close()
+	assert.Nil(t, testDoneFile.Close())
 
 	cfg := di.Config{}
 	cfg.TodoFile = testTodoFile.Name()

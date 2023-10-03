@@ -86,7 +86,9 @@ func Test_WatchSendsNotificationOnFileChanges(t *testing.T) {
 	repo := todotxt.NewRepo(file)
 
 	c, rm, err := repo.Watch()
-	defer repo.Close()
+	defer func() {
+		assert.Nil(t, repo.Close())
+	}()
 	defer rm()
 	assert.Nil(t, err)
 
@@ -168,7 +170,9 @@ func createTestFile(t *testing.T, content string) string {
 
 	f, err := os.OpenFile(path.Join(p, "todo.txt"), os.O_CREATE|os.O_RDWR, 0644)
 	assert.Nil(t, err)
-	defer f.Close()
+	defer func() {
+		assert.Nil(t, f.Close())
+	}()
 	io.Copy(f, strings.NewReader(content))
 	return f.Name()
 }
@@ -186,7 +190,9 @@ func createTmpDir(t *testing.T) string {
 func appendNewTask(t *testing.T, file string, new string) {
 	f, err := os.OpenFile(file, os.O_APPEND|os.O_RDWR, 0644)
 	assert.Nil(t, err)
-	defer f.Close()
+	defer func() {
+		assert.Nil(t, f.Close())
+	}()
 	f.WriteString("\n")
 	io.Copy(f, strings.NewReader(new))
 	f.WriteString("\n")

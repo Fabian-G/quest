@@ -80,7 +80,7 @@ func (t *Repo) handleOptimisticLocking(l *List) error {
 	return nil
 }
 
-func (t *Repo) writeToAlternativeLocation(l *List) error {
+func (t *Repo) writeToAlternativeLocation(l *List) (err error) {
 	extension := path.Ext(t.file)
 	fileName := strings.TrimSuffix(path.Base(t.file), extension)
 	tmp, err := os.CreateTemp(path.Dir(t.file), fmt.Sprintf("%s.quest-conflict-*%s", fileName, extension))
@@ -88,7 +88,7 @@ func (t *Repo) writeToAlternativeLocation(l *List) error {
 		return fmt.Errorf("could not write file to alternative location")
 	}
 	defer func() {
-		tmp.Close()
+		err = errors.Join(err, tmp.Close())
 	}()
 	err = t.encoder().Encode(tmp, l.Tasks())
 	if err != nil {
@@ -113,6 +113,7 @@ func (t *Repo) write(l *List) error {
 	buffer := bytes.Buffer{}
 	err = t.encoder().Encode(io.MultiWriter(tmp, &buffer), l.Tasks())
 	if err != nil {
+		_ = tmp.Close()
 		return fmt.Errorf("could not write txt file %s: %w", t.file, err)
 	}
 	if err = tmp.Close(); err != nil {
@@ -171,12 +172,14 @@ func (t *Repo) Read() (*List, error) {
 	return list, list.validate()
 }
 
-func (t *Repo) load() ([]byte, error) {
+func (t *Repo) load() (data []byte, err error) {
 	file, err := os.Open(t.file)
 	if err != nil {
 		return nil, fmt.Errorf("could not open txt file %s for reading: %w", t.file, err)
 	}
-	defer file.Close()
+	defer func() {
+		err = errors.Join(err, file.Close())
+	}()
 
 	rawData, err := io.ReadAll(file)
 	if err != nil {
@@ -217,7 +220,7 @@ func (t *Repo) Watch() (<-chan ReadFunc, func(), error) {
 
 func (t *Repo) fileWatcher() {
 	defer func() {
-		t.watcher.Close()
+		_ = t.watcher.Close()
 		t.watcher = nil
 	}()
 	for {
@@ -253,17 +256,18 @@ func (t *Repo) notify() {
 	}
 }
 
-func (t *Repo) Close() {
+func (t *Repo) Close() error {
 	t.watchLock.Lock()
 	defer t.watchLock.Unlock()
 	if t.watcher == nil {
-		return
+		return nil
 	}
-	t.watcher.Close()
+	err := t.watcher.Close()
 	for _, c := range t.updateChan {
 		close(c)
 	}
 	t.updateChan = nil
+	return err
 }
 
 func (t *Repo) encoder() *Encoder {

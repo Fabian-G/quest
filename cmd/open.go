@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"os"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
@@ -32,7 +33,7 @@ However, special features like recurrence or tag expansion will not be triggered
 	return openCommand
 }
 
-func (o *openCommand) open(cmd *cobra.Command, args []string) error {
+func (o *openCommand) open(cmd *cobra.Command, args []string) (err error) {
 	di := cmd.Context().Value(cmdutil.DiKey).(*di.Container)
 	cfg := di.Config()
 	repo := di.TodoTxtRepo()
@@ -46,7 +47,9 @@ func (o *openCommand) open(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		defer todoFile.Close()
+		defer func() {
+			err = errors.Join(err, todoFile.Close())
+		}()
 		if _, err = repo.Read(); err == nil {
 			return nil
 		}

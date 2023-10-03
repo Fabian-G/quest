@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"slices"
@@ -88,7 +89,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func (e *editCommand) dumpDescriptionsToTempFile(list *todotxt.List, items []*todotxt.Item) (string, error) {
+func (e *editCommand) dumpDescriptionsToTempFile(list *todotxt.List, items []*todotxt.Item) (file string, err error) {
 	if err := setObjectIdTag(list, items); err != nil {
 		return "", err
 	}
@@ -97,7 +98,7 @@ func (e *editCommand) dumpDescriptionsToTempFile(list *todotxt.List, items []*to
 		return "", fmt.Errorf("could not create tmp file: %w", err)
 	}
 	defer func() {
-		tmpFile.Close()
+		err = errors.Join(err, tmpFile.Close())
 	}()
 	writer := bufio.NewWriter(tmpFile)
 	if err = todotxt.DefaultEncoder.Encode(writer, items); err != nil {
@@ -116,7 +117,9 @@ func (e *editCommand) applyChanges(tmpFile string, list *todotxt.List, selection
 	if err != nil {
 		return 0, 0, 0, err
 	}
-	defer file.Close()
+	defer func() {
+		err = errors.Join(err, file.Close())
+	}()
 	changeList, err := todotxt.DefaultDecoder.Decode(file)
 	if err != nil {
 		return 0, 0, 0, err

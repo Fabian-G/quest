@@ -64,8 +64,7 @@ func SaveList(cmd *cobra.Command, args []string) error {
 	if err := repo.Save(list); err != nil {
 		return fmt.Errorf("could not save todo file: %w", err)
 	}
-	repo.Close()
-	return nil
+	return repo.Close()
 }
 
 func LoadDoneList(cmd *cobra.Command, args []string) error {
@@ -84,8 +83,7 @@ func SaveDoneList(cmd *cobra.Command, args []string) error {
 	if err := repo.Save(list); err != nil {
 		return fmt.Errorf("could not save done file: %w", err)
 	}
-	repo.Close()
-	return nil
+	return repo.Close()
 }
 
 func createFileIfNotExists(file string) error {
@@ -99,7 +97,7 @@ func createFileIfNotExists(file string) error {
 		if err != nil {
 			return err
 		}
-		f.Close()
+		return f.Close()
 	case err != nil:
 		return err
 	case !stat.Mode().IsRegular():
