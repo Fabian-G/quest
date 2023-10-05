@@ -11,6 +11,9 @@ Make sure `"$(go env GOPATH)/bin` is in your `PATH`.
 
 or download the precompiled binary from the [Release Page](https://github.com/Fabian-G/quest/releases).
 
+## Documentation
+
+Documentation can be found [here](https://fabian-g.github.io)
 ## Basic Usage
 
 ![basic usage](examples/demo/basic.gif)
