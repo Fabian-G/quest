@@ -1,6 +1,4 @@
-# <span style="color:red">// </span><span style="color:yellow">Under Construction</span>
-
-# Quest todo.txt CLI
+# Quest todo.txt CLI <span style="color:red">// </span><span style="color:yellow">Under Construction</span>
 
 ## Getting Started
 
