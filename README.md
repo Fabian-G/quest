@@ -1,5 +1,7 @@
 Note: This software is pre v1. Config file format, CLI or query language may change at any time without warning.
 
+![test badge](https://github.com/Fabian_G/quest/actions/workflows/test/badge.svg)
+
 # Installation
 
 ```bash
