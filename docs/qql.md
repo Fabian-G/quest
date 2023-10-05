@@ -1,4 +1,26 @@
-# Quest Query Language (QQL)
+# Selecting Tasks
+
+When selecting tasks you can decide between 3 options: Range Query, String Search or Quest Query Language (QQL).
+QQl can do everything the other two can do, but might be slightly less convenient.
+You can specify which type of query your are using on the command line with the `-q`, `-r` and `-w` options. 
+If you don't and simply pass your query as an argument, quest will try to guess what type of query you are using.
+"Guessing" means in this case that it tries to parse it as a QQL query, if that fails it tries to parse it as a range query and if that fails it finally treats it like a string search.
+While this is convenient most of the time, this can behave unexpectedly if you are intending to write a QQL query, but have a syntax error, which is then silently ignored. 
+In that case you should be explicit about the query type and use `-q`.
+
+
+## Range Query
+
+You can select items by their line number using simple range expressions like:
+- `1,2,3`: selects tasks 1, 2 and 3
+- `1-3`: Also selects tasks 1, 2 and 3
+- `1,3-`: Selects tasks 1 and all tasks after and including task 3
+
+## String search
+
+The string search (usually `-w` flag in the CLI) will do a simple case-insensitive substring search in the task description.
+
+## Quest Query Language (QQL)
 
 Quest comes with a powerful query language, which is based on first-order logic (FOL). 
 If you are already familiar with FOL you should be able to get started in no time.
@@ -12,7 +34,7 @@ Quest will run your query against each item in the list and checks if it matches
 The query will receive the current item through the `it` variable.
 Therefore the above query matches all items that are not done, have a priority higher or equal to (C) and contain the word "foo" in the description.
 
-## Syntax and Semantics
+### Syntax and Semantics
 
 The syntax will not be explained in great detail here, because it is basically what you would expect from any programming language.
 
@@ -52,7 +74,7 @@ There are multiple ways to obtain a collection to quantify over:
 A common pattern is to make a statement about all items that fulfil a certain precondition. This is where the implication operator comes in handy. 
 For example if we wanted to check if `it` is the last not done item in a group of items we could write: `!done(it) && forall other in items: tag(it, "group") == tag(other, "group") && !(it == other) -> done(other)` "match it if: it is not done and all other items that have the same group-tag as it are done".
 
-### Syntactic Sugar
+#### Syntactic Sugar
 
 Function calls come with two rules that make the average usage of QQL a little more convenient:
 
@@ -69,7 +91,7 @@ Example: `@foo && +bar` matches all items that are in a (sub) context of foo (e.
 Note that the project matcher syntax introduces a slight ambiguity between the numeric operation `+` and the project matching.
 To make sure that a `+` is interpreted as the numeric operation make sure to put a space behind it (e.g. `5+ aNumber`).
 
-### Constants
+#### Constants
 
 The following constants are available:
 
@@ -96,7 +118,7 @@ A duration literal follows the syntax `span unit`, where *span* is a (possibly n
 
 Examples: `+5y`, `-5days`, ...
 
-### Functions
+#### Functions
 
 A short explanation for the notation: If in the following table the function definition says for example `func(a: int, b: date = minDate): bool`, 
 this means that the function with the name `func` takes two arguments. The first one must be of type `int` and the second of type `date`.
@@ -122,7 +144,7 @@ The second argument is optional and can be omitted. If it is omitted it will be 
 | shell(i: item, cmd: string): string | Runs *cmd* using bash. See ([shell and command](#shell-and-command)) |
 | command(i: item, cmd: string): string | Same as shell, but runs the cmd directly without bash |
 
-#### Shell and Command
+##### Shell and Command
 
 If you want to write really exotic queries you can resort to shell and command, but be aware that using these functions comes with a high performance penalty.
 The way this works is that the command will receive a json representation of the specified task (like the one you get with `--json`) on stdin.
@@ -136,7 +158,7 @@ int(shell("jq -r .creation\ \|\ sub\(\"-\"\;\"\"\;\"g\"\)+\"00\" | xargs pom | s
 As you can see in the above example, properly escaping the string is not fun. Therefore I would recommend to always put the command in a separate file and 
 then use the `command` function instead.
  
-## Macros
+### Macros
 
 Macros are a way to give a name to parts of your query so that your queries can be reused and look cleaner.
 An simple macro definition in your `config.toml` might look like this:
@@ -155,7 +177,7 @@ Note that if you reference other macros from within your macro definition, the o
 
 With this definition in place you can then just write queries like: `!done && !blocked` to find not completed tasks that are not blocked.
 
-## A Word on Performance
+### A Word on Performance
 
 Since QQL is effectively a model checker for first-order logic (which is a PSPACE-Complete Problem) and 
 since this implementation is certainly not the breakthrough we have been waiting for, the performance 

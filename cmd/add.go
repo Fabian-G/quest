@@ -27,11 +27,10 @@ func newAddCommand(def di.ViewDef) *addCommand {
 
 func (a *addCommand) command() *cobra.Command {
 	var addCmd = &cobra.Command{
-		Use:      "add",
+		Use:      "add [-p prio] description",
 		GroupID:  "view-cmd",
-		Short:    "TODO",
-		Long:     `TODO `,
-		Example:  "TODO",
+		Short:    "Adds a task to the todo list",
+		Example:  "quest add do the dishes",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList),
 		RunE:     a.add,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),

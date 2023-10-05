@@ -32,10 +32,8 @@ func newArchiveCommand(def di.ViewDef) *archiveCommand {
 
 func (a *archiveCommand) command() *cobra.Command {
 	var archiveCommand = &cobra.Command{
-		Use:      "archive",
-		Short:    "TODO",
-		Long:     `TODO `,
-		Example:  "TODO",
+		Use:      "archive [selectors...]",
+		Short:    "Archives all matching tasks (this will only ever match done tasks)",
 		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList, cmdutil.LoadDoneList),
 		RunE:     a.archive,

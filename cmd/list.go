@@ -35,11 +35,9 @@ func newViewCommand(def di.ViewDef) *viewCommand {
 
 func (v *viewCommand) command(name string) *cobra.Command {
 	var listCmd = &cobra.Command{
-		Use:     name,
-		Short:   "TODO",
+		Use:     name + " [selectors...]",
+		Short:   "Lists all tasks that match the view query",
 		GroupID: "view",
-		Long:    `TODO `,
-		Example: "TODO",
 		PreRunE: cmdutil.Steps(cmdutil.LoadList),
 		RunE:    v.list,
 	}
