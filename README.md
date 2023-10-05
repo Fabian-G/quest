@@ -13,7 +13,7 @@ or download the precompiled binary from the [Release Page](https://github.com/Fa
 
 ## Documentation
 
-Documentation can be found [here](https://fabian-g.github.io)
+Documentation can be found [here](https://fabian-g.github.io/quest)
 ## Basic Usage
 
 ![basic usage](examples/demo/basic.gif)
