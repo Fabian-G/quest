@@ -13,7 +13,7 @@ or download the precompiled binary from the [Release Page](https://github.com/Fa
 
 ![basic usage](examples/demo/basic.gif)
 
-# Edit subsets of you todo.txt file
+# Edit subsets
 
 ![edit](examples/demo/edit.gif)
 
