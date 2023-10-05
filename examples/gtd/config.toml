@@ -2,7 +2,7 @@
 # done-file = "$HOME/path/to/your/done.txt"
 backup = 10
 unknown-tags = false
-clear-on-done = ["do"]
+clear-on-done = []
 styles = [
 	{ if = 'blocked', fg = "3" },
 ]
@@ -34,12 +34,6 @@ styles = [
 	{ if = 'date(tag(it, "t"), maxDate) <= today + 1d', fg = "1" },
 	{ if = 'date(tag(it, "t"), maxDate) <= today + 3d', fg = "6" }
 ]
-[tags.do]
-type = "date"
-humanize = true
-styles = [
-	{ if = 'doToday', fg = "6" },
-]
 [tags.rec]
 type = "duration"
 [tags.delegated]
@@ -66,8 +60,8 @@ projection = ["line","creation","description"]
 [views.next]
 query = 'actionable'
 sort = ["-score"]
-clean = ["+ALL","@ALL","due","t","order","rec","id","do","after"]
-projection = ["line","score","priority","tag:due", "tag:do", "projects","contexts","description"]
+clean = ["+ALL","@ALL","due","t","order","rec","id","after"]
+projection = ["line","score","priority","tag:due", "projects","contexts","description"]
 add-prefix = ''
 
 [views.someday]
