@@ -1,8 +1,8 @@
+# Quest 
+
 Note: This software is pre v1. Config file format, CLI or query language may change at any time without warning.
 
-![test badge](https://github.com/Fabian_G/quest/actions/workflows/test/badge.svg)
-
-# Installation
+## Installation
 
 ```bash
 go install github.com/Fabian-G/quest@latest
@@ -11,15 +11,15 @@ Make sure `"$(go env GOPATH)/bin` is in your `PATH`.
 
 or download the precompiled binary from the [Release Page](https://github.com/Fabian-G/quest/releases).
 
-# Basic Usage
+## Basic Usage
 
 ![basic usage](examples/demo/basic.gif)
 
-# Edit subsets
+## Edit subsets
 
 ![edit](examples/demo/edit.gif)
 
-# Define Views
+## Define Views
 
 ```toml
 # ~/.config/quest/config.toml
