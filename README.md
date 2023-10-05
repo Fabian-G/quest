@@ -1,7 +1,36 @@
+Note: This software is pre v1. Config file format, CLI or query language may change at any time without warning.
+
 # Installation
 
-# Adding, Removing and Completing Tasks
+```bash
+go install github.com/Fabian-G/quest@latest
+```
+Make sure `"$(go env GOPATH)/bin` is in your `PATH`.
 
-# Editing subsets of your todo.txt in your editor with full support for recurrence and tag expansions
+or download the precompiled binary from the [Release Page](https://github.com/Fabian-G/quest/releases).
 
-# Define Views of your tasks that fit your workflow
+# Basic Usage
+
+![basic usage](examples/demo/basic.gif)
+
+# Edit subsets of you todo.txt file
+
+![edit](examples/demo/edit.gif)
+
+# Define Views
+
+```toml
+# ~/.config/quest/config.toml
+[views.important]
+query = 'priority >= prioC'
+sort = ["-priority", "project"]
+clean = ["+ALL","@ALL"]
+projection = ["line","priority","tag:do","projects","contexts","description"]
+```
+
+```bash
+$ quest important
+ #  Priority  Projects       Description         
+ 1  (A)       +destroy-ring  assemble fellowship
+ 3  (A)       +destroy-ring  Loose Gandalf to Balrog 
+```
