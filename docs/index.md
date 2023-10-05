@@ -2,4 +2,4 @@
 
 ## Getting Started
 
-To get started quickly, checkout the GTD example configuration [here](https://github.com/Fabian-G/quest/examples/gtd/config.toml)
+To get started quickly, checkout the GTD example configuration [here](https://github.com/Fabian-G/quest/blob/main/examples/gtd/config.toml)

@@ -1,7 +1,7 @@
 # Quest
 
-![Build status](https://img.shields.io/github/actions/workflow/status/Fabian-G/quest/test.yml)
-![Release](https://img.shields.io/github/downloads-pre/Fabian-G/quest/latest/total)
+[![Build status](https://img.shields.io/github/actions/workflow/status/Fabian-G/quest/test.yml)](https://github.com/Fabian-G/quest/actions)
+[![Release](https://img.shields.io/github/downloads-pre/Fabian-G/quest/latest/total)](https://github.com/Fabian-G/quest/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Fabian-G/quest)](https://goreportcard.com/report/github.com/Fabian-G/quest)
 
 Note: This software is pre v1. Config file format, CLI or query language may change at any time without warning.
