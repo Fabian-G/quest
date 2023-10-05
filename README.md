@@ -8,12 +8,7 @@ Note: This software is pre v1. Config file format, CLI or query language may cha
 
 ## Installation
 
-```bash
-go install github.com/Fabian-G/quest@latest
-```
-Make sure `"$(go env GOPATH)/bin` is in your `PATH`.
-
-or download the precompiled binary from the [Release Page](https://github.com/Fabian-G/quest/releases).
+Download the precompiled binary from the [Release Page](https://github.com/Fabian-G/quest/releases).
 
 ## Documentation
 
