@@ -12,6 +12,7 @@ In that case you should be explicit about the query type and use `-q`.
 ## Range Query
 
 You can select items by their line number using simple range expressions like:
+
 - `1,2,3`: selects tasks 1, 2 and 3
 - `1-3`: Also selects tasks 1, 2 and 3
 - `1,3-`: Selects tasks 1 and all tasks after and including task 3

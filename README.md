@@ -44,5 +44,5 @@ projection = ["line","priority","tag:do","projects","contexts","description"]
 $ quest important
  #  Priority  Projects       Description         
  1  (A)       +destroy-ring  assemble fellowship
- 3  (A)       +destroy-ring  Loose Gandalf to Balrog 
+ 3  (A)       +destroy-ring  Lose Gandalf to Balrog 
 ```
