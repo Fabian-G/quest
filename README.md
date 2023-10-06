@@ -9,8 +9,8 @@
 
 To build from soure:
 ```bash
-cd $(mktemp -d)
-git clone 'https://github.com/Fabian-G/quest' .
+git clone 'https://github.com/Fabian-G/quest'
+cd quest
 go install 
 ```
 
