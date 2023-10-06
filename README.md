@@ -5,8 +5,6 @@
 [![Release](https://img.shields.io/github/v/release/Fabian-G/quest)](https://github.com/Fabian-G/quest/releases)
 [![GitHub](https://img.shields.io/github/license/Fabian-G/quest)](https://github.com/Fabian-G/quest/blob/main/LICENSE)
 
-Note: This software is pre v1. Config file format, CLI or query language may change at any time without warning.
-
 ## Installation
 
 To build from soure:
