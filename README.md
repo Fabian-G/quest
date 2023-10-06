@@ -9,7 +9,14 @@ Note: This software is pre v1. Config file format, CLI or query language may cha
 
 ## Installation
 
-Download the precompiled binary from the [Release Page](https://github.com/Fabian-G/quest/releases).
+To build from soure:
+```bash
+cd $(mktemp -d)
+git clone 'https://github.com/Fabian-G/quest' .
+go install 
+```
+
+or download the precompiled binary from the [Release Page](https://github.com/Fabian-G/quest/releases).
 
 ## Documentation
 
