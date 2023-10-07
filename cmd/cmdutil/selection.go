@@ -12,9 +12,9 @@ import (
 )
 
 func RegisterSelectionFlags(cmd *cobra.Command, qql *[]string, rng *[]string, str *[]string) {
-	cmd.Flags().StringArrayVarP(qql, "qql", "q", nil, "TODO")
-	cmd.Flags().StringArrayVarP(rng, "range", "r", nil, "TODO")
-	cmd.Flags().StringArrayVarP(str, "word", "w", nil, "TODO")
+	cmd.Flags().StringArrayVarP(qql, "qql", "q", nil, "QQL Query")
+	cmd.Flags().StringArrayVarP(rng, "range", "r", nil, "Range Query")
+	cmd.Flags().StringArrayVarP(str, "word", "w", nil, "Case-Insensitive String Search")
 }
 
 func ParseTaskSelection(defaultQuery string, guess, qqlSearch, rngSearch, stringSearch []string) (qselect.Func, error) {
