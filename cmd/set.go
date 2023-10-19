@@ -124,7 +124,7 @@ func (s *setCommand) applyContexts(t *todotxt.Item, contextOps []todotxt.Context
 		if slices.Contains(contexts, context) {
 			continue
 		}
-		if err := t.EditDescription(fmt.Sprintf("%s %s", context, t.Description())); err != nil {
+		if err := t.EditDescription(fmt.Sprintf("%s %s", t.Description(), context)); err != nil {
 			return nil, err
 		}
 		contextAdded[context] = append(contextAdded[context], t)
@@ -139,7 +139,7 @@ func (s *setCommand) applyProjects(t *todotxt.Item, projectsOps []todotxt.Projec
 		if slices.Contains(projects, project) {
 			continue
 		}
-		if err := t.EditDescription(fmt.Sprintf("%s %s", project, t.Description())); err != nil {
+		if err := t.EditDescription(fmt.Sprintf("%s %s", t.Description(), project)); err != nil {
 			return nil, err
 		}
 		projectsAdded[project] = append(projectsAdded[project], t)
