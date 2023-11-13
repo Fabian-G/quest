@@ -7,7 +7,7 @@ import (
 
 	"github.com/Fabian-G/quest/qprojection"
 	"github.com/Fabian-G/quest/todotxt"
-	"github.com/charmbracelet/bubbles/table"
+	"github.com/Fabian-G/quest/view/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"

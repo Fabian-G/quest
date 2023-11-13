@@ -45,5 +45,3 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/charmbracelet/bubbles => github.com/hedhyw/bubbles v0.0.4-0.20230726062933-fce5c231d586 // This should go as soon as the branch is merged
