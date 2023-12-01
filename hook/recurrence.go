@@ -46,8 +46,13 @@ func NewRecurrenceWithNowFunc(tags RecurrenceTags, now func() time.Time) todotxt
 }
 
 func (r Recurrence) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
-	if !event.IsCompleteEvent() || len(event.Current.Tags()[r.tags.Rec]) == 0 {
+	if event.Current == nil {
 		return nil
+	}
+	if !event.IsCompleteEvent() || len(event.Current.Tags()[r.tags.Rec]) == 0 {
+		return r.OnValidate(list, todotxt.ValidationEvent{
+			Item: event.Current,
+		})
 	}
 	param, err := r.parseRecurrenceParams(list, event.Current)
 	if err != nil {

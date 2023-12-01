@@ -266,3 +266,16 @@ func Test_RecurrenceValidationOnMissing(t *testing.T) {
 
 	assert.Error(t, err)
 }
+
+func Test_ValidationIsTriggeredOnModification(t *testing.T) {
+	list := todotxt.ListOf()
+	list.AddHook(hook.NewRecurrence(defaultTags))
+
+	err := list.Add(
+		todotxt.MustBuildItem(todotxt.WithDescription("Hello world")),
+	)
+	assert.Nil(t, err)
+
+	err = list.GetLine(1).EditDescription("Hello world rec:5y")
+	assert.Error(t, err)
+}
