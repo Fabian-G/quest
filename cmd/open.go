@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/di"
+	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/spf13/cobra"
 )
 
@@ -53,7 +55,7 @@ func (o *openCommand) open(cmd *cobra.Command, args []string) (err error) {
 		if _, err = repo.Read(); err == nil {
 			return nil
 		}
-		if !cmdutil.AskRetry(cmd, err) {
+		if result, perr := confirmation.New(fmt.Sprintf("Your changes are invalid: %s\nRetry?", err), confirmation.Yes).RunPrompt(); perr == nil && !result {
 			return err
 		}
 	}
