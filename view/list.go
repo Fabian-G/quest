@@ -197,6 +197,7 @@ func (l List) refreshTable(list *todotxt.List) List {
 	previous := l.itemAtCursor()
 	l.list = list
 	l.selection = l.query.Filter(list)
+	slices.SortStableFunc(l.selection, l.sortFunc)
 	rows, columns, renderCell := l.mapToColumns()
 	l.table.SetStyles(l.styles(renderCell))
 	l.table.SetRows(nil)
