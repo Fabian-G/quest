@@ -12,6 +12,7 @@ import (
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/erikgeiser/promptkit/confirmation"
 	"github.com/spf13/cobra"
 )
 
@@ -83,7 +84,7 @@ func (e *editCommand) edit(cmd *cobra.Command, args []string) (err error) {
 			fmt.Printf("Items Added:   %d\nItems changed: %d\nItems removed: %d\n", additions, changes, removals)
 			return nil
 		}
-		if !cmdutil.AskRetry(cmd, err) {
+		if result, perr := confirmation.New(fmt.Sprintf("Your changes are invalid: %s\nRetry?", err), confirmation.Yes).RunPrompt(); perr == nil && !result {
 			return err
 		}
 		list.Reset()

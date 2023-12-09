@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Fabian-G/quest/qprojection"
+	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/Fabian-G/quest/view/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -27,8 +28,11 @@ var detailsProjection = slices.DeleteFunc(slices.Clone(qprojection.StarProjectio
 
 type List struct {
 	list            *todotxt.List
+	repo            *todotxt.Repo
 	selection       []*todotxt.Item
 	projection      []string
+	query           qselect.Func
+	sortFunc        func(*todotxt.Item, *todotxt.Item) int
 	projector       qprojection.Projector
 	table           table.Model
 	interactive     bool
@@ -37,19 +41,54 @@ type List struct {
 }
 
 type RefreshListMsg struct {
-	List       *todotxt.List
-	Selection  []*todotxt.Item
-	Projection []string
+	List *todotxt.List
 }
 
-func NewList(proj qprojection.Projector, interactive bool) (List, error) {
+func NewList(repo *todotxt.Repo, proj qprojection.Projector, projection []string, query qselect.Func, sort func(*todotxt.Item, *todotxt.Item) int, interactive bool) List {
 	l := List{
+		repo:        repo,
 		projector:   proj,
+		projection:  projection,
+		query:       query,
+		sortFunc:    sort,
 		interactive: interactive,
 	}
 
 	l.table = table.New()
-	return l, nil
+	return l
+}
+
+func (l List) Run() error {
+	firstList, err := l.repo.Read()
+	if err != nil {
+		return err
+	}
+	model, _ := l.Update(RefreshListMsg{List: firstList})
+	l = model.(List)
+	switch l.interactive {
+	case true:
+		programme := tea.NewProgram(l)
+		data, end, err := l.repo.Watch()
+		if err != nil {
+			return err
+		}
+		defer end()
+		go func() {
+			for update := range data {
+				newList, err := update()
+				if err != nil {
+					continue
+				}
+				programme.Send(RefreshListMsg{List: newList})
+			}
+		}()
+		if _, err := programme.Run(); err != nil {
+			return err
+		}
+	default:
+		fmt.Print(l.View())
+	}
+	return nil
 }
 
 func (l List) mapToColumns() ([]table.Row, []table.Column, func(table.Model, string, table.CellPosition) string) {
@@ -101,7 +140,7 @@ func (l List) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return l, tea.Quit
 		}
 	case RefreshListMsg:
-		l = l.refreshTable(msg.List, msg.Selection, msg.Projection)
+		l = l.refreshTable(msg.List)
 	case tea.WindowSizeMsg:
 		l.availableWidth = msg.Width
 		l.availableHeight = msg.Height
@@ -154,11 +193,11 @@ func (l List) renderDetails(writer *strings.Builder) {
 	writer.WriteString(strings.Join(lines, "\n") + "\n")
 }
 
-func (l List) refreshTable(list *todotxt.List, selection []*todotxt.Item, projection []string) List {
+func (l List) refreshTable(list *todotxt.List) List {
 	previous := l.itemAtCursor()
 	l.list = list
-	l.selection = selection
-	l.projection = projection
+	l.selection = l.query.Filter(list)
+	slices.SortStableFunc(l.selection, l.sortFunc)
 	rows, columns, renderCell := l.mapToColumns()
 	l.table.SetStyles(l.styles(renderCell))
 	l.table.SetRows(nil)

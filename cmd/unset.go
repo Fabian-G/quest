@@ -9,6 +9,7 @@ import (
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/Fabian-G/quest/view"
 	"github.com/spf13/cobra"
 )
 
@@ -58,7 +59,7 @@ func (u *unsetCommand) unset(cmd *cobra.Command, args []string) error {
 	selection := selector.Filter(list)
 	var confirmedSelection []*todotxt.Item = selection
 	if !u.all {
-		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		confirmedSelection, err = view.NewSelection(selection).Run()
 		if err != nil {
 			return err
 		}
@@ -103,7 +104,7 @@ func (u *unsetCommand) unset(cmd *cobra.Command, args []string) error {
 func (u *unsetCommand) printTagChanges(list *todotxt.List, tagOps []string, removals map[string][]*todotxt.Item) {
 	for _, tag := range tagOps {
 		if len(removals[tag]) > 0 {
-			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed tag \"%s\" from", tag), list, removals[tag])
+			view.NewSuccessMessage(fmt.Sprintf("Removed tag \"%s\" from", tag), list, removals[tag]).Run()
 		}
 	}
 }
@@ -111,7 +112,7 @@ func (u *unsetCommand) printTagChanges(list *todotxt.List, tagOps []string, remo
 func (u *unsetCommand) printContextChanges(list *todotxt.List, contextOps []todotxt.Context, removals map[todotxt.Context][]*todotxt.Item) {
 	for _, context := range contextOps {
 		if len(removals[context]) > 0 {
-			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed context \"%s\" from", context), list, removals[context])
+			view.NewSuccessMessage(fmt.Sprintf("Removed context \"%s\" from", context), list, removals[context]).Run()
 		}
 	}
 }
@@ -119,7 +120,7 @@ func (u *unsetCommand) printContextChanges(list *todotxt.List, contextOps []todo
 func (u *unsetCommand) printProjectChanges(list *todotxt.List, projectOps []todotxt.Project, removals map[todotxt.Project][]*todotxt.Item) {
 	for _, project := range projectOps {
 		if len(removals[project]) > 0 {
-			cmdutil.PrintSuccessMessage(fmt.Sprintf("Removed Project \"%s\" from", project), list, removals[project])
+			view.NewSuccessMessage(fmt.Sprintf("Removed Project \"%s\" from", project), list, removals[project]).Run()
 		}
 	}
 }

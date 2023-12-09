@@ -7,6 +7,7 @@ import (
 	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/Fabian-G/quest/view"
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +57,7 @@ func (p *prioritizeCommand) prioritize(cmd *cobra.Command, args []string) error 
 	selection := qselect.And(notDoneFunc, selector).Filter(list)
 	var confirmedSelection []*todotxt.Item = selection
 	if !p.all {
-		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		confirmedSelection, err = view.NewSelection(selection).Run()
 		if err != nil {
 			return err
 		}
@@ -71,6 +72,6 @@ func (p *prioritizeCommand) prioritize(cmd *cobra.Command, args []string) error 
 			return err
 		}
 	}
-	cmdutil.PrintSuccessMessage(fmt.Sprintf("Prioritized as %s", priority.String()), list, confirmedSelection)
+	view.NewSuccessMessage(fmt.Sprintf("Prioritized as %s", priority.String()), list, confirmedSelection).Run()
 	return nil
 }

@@ -6,11 +6,9 @@ import (
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/di"
-	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/Fabian-G/quest/view"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 
@@ -94,49 +92,5 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), list, selection)
 	}
 
-	listView, err := view.NewList(projector, v.interactive)
-	if err != nil {
-		return fmt.Errorf("could not create list view: %w", err)
-	}
-	model, _ := listView.Update(view.RefreshListMsg{
-		List:       list,
-		Selection:  selection,
-		Projection: v.projection,
-	})
-	switch {
-	case v.interactive:
-		programme := tea.NewProgram(model, tea.WithOutput(cmd.OutOrStdout()))
-		end := startAutoUpdate(repo, programme, v.projection, query, sortFunc)
-		defer end()
-		if _, err := programme.Run(); err != nil {
-			return err
-		}
-	default:
-		fmt.Print(model.View())
-	}
-	return nil
-}
-
-func startAutoUpdate(repo *todotxt.Repo, prog *tea.Program, projection []string, query qselect.Func, sort func(*todotxt.Item, *todotxt.Item) int) func() {
-	news, end, err := repo.Watch()
-	if err != nil {
-		// Watching is not possible for whatever reason, but we ignore it to not interrupt the user
-		return func() {}
-	}
-	go func() {
-		for update := range news {
-			newList, err := update()
-			if err != nil {
-				continue
-			}
-			selection := query.Filter(newList)
-			slices.SortStableFunc(selection, sort)
-			prog.Send(view.RefreshListMsg{
-				List:       newList,
-				Selection:  selection,
-				Projection: projection,
-			})
-		}
-	}()
-	return end
+	return view.NewList(repo, projector, v.projection, query, sortFunc, v.interactive).Run()
 }

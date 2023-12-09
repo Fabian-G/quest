@@ -6,6 +6,7 @@ import (
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/Fabian-G/quest/view"
 	"github.com/spf13/cobra"
 )
 
@@ -48,7 +49,7 @@ func (r *removeCommand) remove(cmd *cobra.Command, args []string) error {
 	selection := selector.Filter(list)
 	var confirmedSelection []*todotxt.Item = selection
 	if !r.all {
-		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		confirmedSelection, err = view.NewSelection(selection).Run()
 		if err != nil {
 			return err
 		}
@@ -63,6 +64,6 @@ func (r *removeCommand) remove(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	cmdutil.PrintSuccessMessage("Removed", list, confirmedSelection)
+	view.NewSuccessMessage("Removed", list, confirmedSelection).Run()
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/Fabian-G/quest/view"
 	"github.com/spf13/cobra"
 )
 
@@ -54,7 +55,7 @@ func (a *archiveCommand) archive(cmd *cobra.Command, args []string) error {
 	selection := qselect.And(doneFunc, selector).Filter(list)
 	var confirmedSelection []*todotxt.Item = selection
 	if !a.all {
-		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		confirmedSelection, err = view.NewSelection(selection).Run()
 		if err != nil {
 			return err
 		}
@@ -73,6 +74,6 @@ func (a *archiveCommand) archive(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	cmdutil.PrintSuccessMessage("Archived", list, confirmedSelection)
+	view.NewSuccessMessage("Archived", list, confirmedSelection).Run()
 	return nil
 }
