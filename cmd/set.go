@@ -9,6 +9,7 @@ import (
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/Fabian-G/quest/view"
 	"github.com/spf13/cobra"
 )
 
@@ -92,16 +93,16 @@ func (s *setCommand) set(cmd *cobra.Command, args []string) error {
 	}
 
 	for key, value := range tagOps {
-		cmdutil.PrintSuccessMessage(fmt.Sprintf("Set tag \"%s\" to \"%s\" on", key, value), list, confirmedSelection)
+		view.NewSuccessMessage(fmt.Sprintf("Set tag \"%s\" to \"%s\" on", key, value), list, confirmedSelection).Run()
 	}
 	for _, context := range contextOps {
 		if len(contextAdded[context]) > 0 {
-			cmdutil.PrintSuccessMessage(fmt.Sprintf("Set context \"%s\" on", context), list, contextAdded[context])
+			view.NewSuccessMessage(fmt.Sprintf("Set context \"%s\" on", context), list, contextAdded[context]).Run()
 		}
 	}
 	for _, project := range projectsOps {
 		if len(projectAdded[project]) > 0 {
-			cmdutil.PrintSuccessMessage(fmt.Sprintf("Set Project \"%s\" on", project), list, projectAdded[project])
+			view.NewSuccessMessage(fmt.Sprintf("Set Project \"%s\" on", project), list, projectAdded[project]).Run()
 		}
 	}
 	if len(tagOps)+len(projectAdded)+len(contextAdded) == 0 {

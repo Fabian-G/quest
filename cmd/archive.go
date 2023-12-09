@@ -7,6 +7,7 @@ import (
 	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/Fabian-G/quest/view"
 	"github.com/spf13/cobra"
 )
 
@@ -73,6 +74,6 @@ func (a *archiveCommand) archive(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	cmdutil.PrintSuccessMessage("Archived", list, confirmedSelection)
+	view.NewSuccessMessage("Archived", list, confirmedSelection).Run()
 	return nil
 }

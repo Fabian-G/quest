@@ -62,12 +62,12 @@ func ConfirmSelection(selection []*todotxt.Item) ([]*todotxt.Item, error) {
 	}
 	selctionView := view.NewSelection(selection)
 	programme := tea.NewProgram(selctionView)
-	finalModal, err := programme.Run()
+	finalModel, err := programme.Run()
 	if err != nil {
 		return nil, err
 	}
-	if finalModal.(view.Selection).Cancelled {
+	if finalModel.(view.Selection).Cancelled {
 		return nil, errors.New("operation cancelled by user")
 	}
-	return finalModal.(view.Selection).Selection(), nil
+	return finalModel.(view.Selection).Selection(), nil
 }

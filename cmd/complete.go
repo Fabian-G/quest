@@ -7,6 +7,7 @@ import (
 	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/Fabian-G/quest/view"
 	"github.com/spf13/cobra"
 )
 
@@ -68,6 +69,6 @@ func (c *completeCommand) complete(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	cmdutil.PrintSuccessMessage("Completed", list, confirmedSelection)
+	view.NewSuccessMessage("Completed", list, confirmedSelection).Run()
 	return nil
 }

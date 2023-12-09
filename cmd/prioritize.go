@@ -7,6 +7,7 @@ import (
 	"github.com/Fabian-G/quest/di"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
+	"github.com/Fabian-G/quest/view"
 	"github.com/spf13/cobra"
 )
 
@@ -71,6 +72,6 @@ func (p *prioritizeCommand) prioritize(cmd *cobra.Command, args []string) error 
 			return err
 		}
 	}
-	cmdutil.PrintSuccessMessage(fmt.Sprintf("Prioritized as %s", priority.String()), list, confirmedSelection)
+	view.NewSuccessMessage(fmt.Sprintf("Prioritized as %s", priority.String()), list, confirmedSelection).Run()
 	return nil
 }
