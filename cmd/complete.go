@@ -54,7 +54,7 @@ func (c *completeCommand) complete(cmd *cobra.Command, args []string) error {
 	selection := qselect.And(notDoneFunc, selector).Filter(list)
 	var confirmedSelection []*todotxt.Item = selection
 	if !c.all {
-		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		confirmedSelection, err = view.NewSelection(selection).Run()
 		if err != nil {
 			return err
 		}

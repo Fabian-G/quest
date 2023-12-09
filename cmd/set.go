@@ -61,7 +61,7 @@ func (s *setCommand) set(cmd *cobra.Command, args []string) error {
 	selection := selector.Filter(list)
 	var confirmedSelection []*todotxt.Item = selection
 	if !s.all {
-		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		confirmedSelection, err = view.NewSelection(selection).Run()
 		if err != nil {
 			return err
 		}

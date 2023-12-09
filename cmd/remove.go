@@ -49,7 +49,7 @@ func (r *removeCommand) remove(cmd *cobra.Command, args []string) error {
 	selection := selector.Filter(list)
 	var confirmedSelection []*todotxt.Item = selection
 	if !r.all {
-		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		confirmedSelection, err = view.NewSelection(selection).Run()
 		if err != nil {
 			return err
 		}

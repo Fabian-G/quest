@@ -57,7 +57,7 @@ func (p *prioritizeCommand) prioritize(cmd *cobra.Command, args []string) error 
 	selection := qselect.And(notDoneFunc, selector).Filter(list)
 	var confirmedSelection []*todotxt.Item = selection
 	if !p.all {
-		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		confirmedSelection, err = view.NewSelection(selection).Run()
 		if err != nil {
 			return err
 		}

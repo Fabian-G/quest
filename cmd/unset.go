@@ -59,7 +59,7 @@ func (u *unsetCommand) unset(cmd *cobra.Command, args []string) error {
 	selection := selector.Filter(list)
 	var confirmedSelection []*todotxt.Item = selection
 	if !u.all {
-		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		confirmedSelection, err = view.NewSelection(selection).Run()
 		if err != nil {
 			return err
 		}

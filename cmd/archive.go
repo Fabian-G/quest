@@ -55,7 +55,7 @@ func (a *archiveCommand) archive(cmd *cobra.Command, args []string) error {
 	selection := qselect.And(doneFunc, selector).Filter(list)
 	var confirmedSelection []*todotxt.Item = selection
 	if !a.all {
-		confirmedSelection, err = cmdutil.ConfirmSelection(selection)
+		confirmedSelection, err = view.NewSelection(selection).Run()
 		if err != nil {
 			return err
 		}

@@ -1,6 +1,7 @@
 package view
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -65,6 +66,22 @@ func NewSelection(choices []*todotxt.Item) Selection {
 		list: l,
 		help: h,
 	}
+}
+
+func (s Selection) Run() ([]*todotxt.Item, error) {
+	if len(s.list.Items()) <= 1 {
+		s.selectAll()
+		return s.Selection(), nil
+	}
+	programme := tea.NewProgram(s)
+	finalModel, err := programme.Run()
+	if err != nil {
+		return nil, err
+	}
+	if finalModel.(Selection).Cancelled {
+		return nil, errors.New("operation cancelled by user")
+	}
+	return finalModel.(Selection).Selection(), nil
 }
 
 type listItem struct {
