@@ -57,10 +57,25 @@ type Selection struct {
 	Cancelled bool
 }
 
+var SelectionItemStyles list.DefaultItemStyles = list.NewDefaultItemStyles()
+var SelectionStyle list.Styles = list.DefaultStyles()
+
+func init() {
+	SelectionStyle.Title = lipgloss.NewStyle().
+		Bold(true).
+		Padding(0, 1)
+	SelectionItemStyles.SelectedTitle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("3")).
+		Padding(0, 0, 0, 2)
+}
+
 func NewSelection(choices []*todotxt.Item) Selection {
-	l := list.New(toListItem(choices), listItemDelegate{list.NewDefaultItemStyles()}, 0, 0)
+	l := list.New(toListItem(choices), listItemDelegate{SelectionItemStyles}, 0, 0)
 	l.SetShowHelp(false)
+	l.Styles = SelectionStyle
 	l.Title = "Confirm Selection:"
+	l.SetFilteringEnabled(false)
+	l.SetShowStatusBar(false)
 	h := help.New()
 	return Selection{
 		list: l,
