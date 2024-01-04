@@ -29,7 +29,7 @@ func newPrioritizeCommand(def di.ViewDef) *prioritizeCommand {
 
 func (p *prioritizeCommand) command() *cobra.Command {
 	var prioritizeCommand = &cobra.Command{
-		Use:      "prioritize <prio> [selectors...]",
+		Use:      AppName + " prioritize <prio> [selectors...]",
 		Aliases:  []string{"priority", "prio"},
 		Args:     cobra.MinimumNArgs(1),
 		Short:    "Prioritizes all matching tasks as prio",

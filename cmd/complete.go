@@ -33,7 +33,7 @@ func newCompleteCommand(def di.ViewDef) *completeCommand {
 
 func (c *completeCommand) command() *cobra.Command {
 	var completeCmd = &cobra.Command{
-		Use:      "complete [selectors...]",
+		Use:      AppName + " complete [selectors...]",
 		Short:    "Completes all matching tasks",
 		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList),

@@ -35,7 +35,7 @@ func newSetCommand(def di.ViewDef) *setCommand {
 
 func (s *setCommand) command() *cobra.Command {
 	var setCommand = &cobra.Command{
-		Use:      "set [attributes...] on [selectors...]",
+		Use:      AppName + " set [attributes...] on [selectors...]",
 		Args:     cobra.MinimumNArgs(1),
 		Short:    "Sets the given attributes (+project, @context, key:value) on the matching tasks.",
 		Example:  "quest set due:today @errands on 4,5",

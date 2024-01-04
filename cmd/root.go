@@ -8,9 +8,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const AppName = "quest"
+
 func Root(di *di.Container) (*cobra.Command, context.Context) {
 	defaultView := di.Config().DefaultView
 	rootCmd := newViewCommand(defaultView).command("")
+	rootCmd.Use = AppName + " [view] command"
+	rootCmd.Long = ""
 	rootCmd.PersistentFlags().String("config", "", "the config file to use") // This is just for the help message. Parsing happens in main.go
 	rootCmd.PersistentFlags().StringP("file", "f", "", "the todo.txt file")
 	rootCmd.PersistentPreRunE = cmdutil.Steps(
