@@ -22,7 +22,7 @@ func newOpenCommand() *openCommand {
 
 func (o *openCommand) command() *cobra.Command {
 	var openCommand = &cobra.Command{
-		Use:   AppName + " open",
+		Use:   "open",
 		Short: "Opens your todo file in the editor",
 		Long: `Open opens your todo file in your editor.
 Note that this is just as if you would open your todo.txt file in your editor directly, 

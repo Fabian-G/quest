@@ -28,7 +28,7 @@ func newRemoveCommand(def di.ViewDef) *removeCommand {
 
 func (r *removeCommand) command() *cobra.Command {
 	var removeCommand = &cobra.Command{
-		Use:      AppName + " remove [selectors...]",
+		Use:      "remove [selectors...]",
 		Short:    "Removes all matching tasks permanently",
 		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList),

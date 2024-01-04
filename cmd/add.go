@@ -27,7 +27,7 @@ func newAddCommand(def di.ViewDef) *addCommand {
 
 func (a *addCommand) command() *cobra.Command {
 	var addCmd = &cobra.Command{
-		Use:      AppName + " add [-p prio] description",
+		Use:      "add [-p prio] description",
 		GroupID:  "view-cmd",
 		Short:    "Adds a task to the todo list",
 		Example:  "quest add do the dishes",
