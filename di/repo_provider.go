@@ -22,10 +22,8 @@ func buildDoneTxtRepo(c Config, sortCompiler qsort.Compiler) *todotxt.Repo {
 func hooks(c Config) []todotxt.Hook {
 	hooks := make([]todotxt.Hook, 0)
 	tagTypes := c.TagTypes()
-	if len(tagTypes) > 0 {
-		hooks = append(hooks, hook.NewTagExpansion(c.UnknownTags, tagTypes))
+	hooks = append(hooks, hook.NewTagExpansion(c.UnknownTags, tagTypes))
 
-	}
 	if len(c.ClearOnDone) > 0 {
 		hooks = append(hooks, hook.ClearOnDone{Clear: c.ClearOnDone})
 	}

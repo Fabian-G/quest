@@ -9,9 +9,7 @@
 
 To build from soure:
 ```bash
-git clone 'https://github.com/Fabian-G/quest'
-cd quest
-go install 
+go install 'https://github.com/Fabian-G/quest@latest'
 ```
 
 or download the precompiled binary from the [Release Page](https://github.com/Fabian-G/quest/releases).

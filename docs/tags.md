@@ -18,7 +18,7 @@ The available options in a `[tags.my-tag]` section are:
 | --- | --- |
 | type | One of `date`, `int`, `duration` or `string`. This decides which validations apply and which tag expansions can be used. The "string" type does not have validation or any expansion. |
 | humanize | When this tag is displayed in a column it will be printed in human friendly format (currently this only has an effect with the date type) |
-| styles | A list of style definitions that apply only to this tag (see [Styling](/styling)) |
+| styles | A list of style definitions that apply only to this tag (see [Styling](styling.md)) |
 
 ## Int Type
 
@@ -32,10 +32,10 @@ The tag value can also be of the form `base[+-]x` where `x` is a valid integer a
 When the `date` tag is configured the validation will make sure that the value provided is a valid date of the format `YYYY-MM-dd`.
 Strings of the form `[base][+-]duration` or `base` will be expanded to the appropriate date (e.g. `tomorrow-2d` will get expanded to the date of yesterday).
 
-`Base` can be one of today, tomorrow, monday, tuesday, wednesday, thursday, friday, saturday, sunday and `duration` is a valid duration as defined by [QQL](/qql#Durations)
+`Base` can be one of today, tomorrow, monday, tuesday, wednesday, thursday, friday, saturday, sunday and `duration` is a valid duration as defined by [QQL](qql.md#Durations)
 
 When the date type is used with the `humanize` option, dates are printed like "in 2 days", instead of the full `YYYY-MM-dd` format
 
 ## Duration Type
 
-When the duration type is set it will be checked if the tag value is a valid duration according to [QQL](/qql#Durations).
+When the duration type is set it will be checked if the tag value is a valid duration according to [QQL](qql.md#Durations).
