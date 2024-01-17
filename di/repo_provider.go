@@ -28,11 +28,11 @@ func hooks(c Config) []todotxt.Hook {
 		hooks = append(hooks, hook.ClearOnDone{Clear: c.ClearOnDone})
 	}
 	if recTag := c.Recurrence.RecTag; recTag != "" {
-		hooks = append(hooks, hook.NewRecurrenceWithNowFunc(hook.RecurrenceTags{
+		hooks = append(hooks, hook.NewRecurrence(hook.RecurrenceTags{
 			Rec:       c.Recurrence.RecTag,
 			Due:       c.Recurrence.DueTag,
 			Threshold: c.Recurrence.ThresholdTag,
-		}, c.NowFunc))
+		}, hook.WithNowFunc(c.NowFunc), hook.WithPreservePriority(c.Recurrence.PreservePriority)))
 	}
 	return hooks
 }

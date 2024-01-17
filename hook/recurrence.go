@@ -22,8 +22,9 @@ type recurrenceParams struct {
 }
 
 type Recurrence struct {
-	tags    RecurrenceTags
-	nowFunc func() time.Time
+	tags             RecurrenceTags
+	preservePriority bool
+	nowFunc          func() time.Time
 }
 
 type RecurrenceTags struct {
@@ -32,16 +33,27 @@ type RecurrenceTags struct {
 	Threshold string
 }
 
-func NewRecurrence(tags RecurrenceTags) todotxt.Hook {
-	return &Recurrence{
+func NewRecurrence(tags RecurrenceTags, opts ...func(Recurrence) Recurrence) todotxt.Hook {
+	rec := Recurrence{
 		tags: tags,
+	}
+	for _, o := range opts {
+		rec = o(rec)
+	}
+	return rec
+}
+
+func WithPreservePriority(preserve bool) func(r Recurrence) Recurrence {
+	return func(r Recurrence) Recurrence {
+		r.preservePriority = preserve
+		return r
 	}
 }
 
-func NewRecurrenceWithNowFunc(tags RecurrenceTags, now func() time.Time) todotxt.Hook {
-	return &Recurrence{
-		nowFunc: now,
-		tags:    tags,
+func WithNowFunc(now func() time.Time) func(r Recurrence) Recurrence {
+	return func(r Recurrence) Recurrence {
+		r.nowFunc = now
+		return r
 	}
 }
 
@@ -54,7 +66,7 @@ func (r Recurrence) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
 			Item: event.Current,
 		})
 	}
-	param, err := r.parseRecurrenceParams(list, event.Current)
+	param, err := r.parseRecurrenceParams(list, event)
 	if err != nil {
 		return err
 	}
@@ -69,7 +81,7 @@ func (r Recurrence) OnValidate(list *todotxt.List, event todotxt.ValidationEvent
 	if len(event.Item.Tags()[r.tags.Rec]) == 0 {
 		return nil
 	}
-	_, err := r.parseRecurrenceParams(list, event.Item)
+	_, err := r.parseRecurrenceParams(list, todotxt.ModEvent{Previous: nil, Current: event.Item})
 	if err != nil {
 		return fmt.Errorf("recurrent task contains error: %w", err)
 	}
@@ -77,15 +89,7 @@ func (r Recurrence) OnValidate(list *todotxt.List, event todotxt.ValidationEvent
 }
 
 func (r Recurrence) spawnRelative(params recurrenceParams) error {
-	newItem, err := todotxt.BuildItem(
-		todotxt.CopyOf(params.base),
-		todotxt.WithDone(false),
-		todotxt.WithCreationDate(r.now()),
-		todotxt.WithoutCompletionDate(),
-	)
-	if err != nil {
-		return fmt.Errorf("could not spawn new recurrent task: %w", err)
-	}
+	newItem := params.base
 	var zeroTime = time.Time{}
 	var completionDate time.Time
 	if params.base.CompletionDate() != nil {
@@ -123,15 +127,7 @@ func (r Recurrence) spawnRelative(params recurrenceParams) error {
 }
 
 func (r Recurrence) spawnAbsolute(params recurrenceParams) error {
-	newItem, err := todotxt.BuildItem(
-		todotxt.CopyOf(params.base),
-		todotxt.WithDone(false),
-		todotxt.WithCreationDate(r.now()),
-		todotxt.WithoutCompletionDate(),
-	)
-	if err != nil {
-		return fmt.Errorf("could not spawn new recurrent task: %w", err)
-	}
+	newItem := params.base
 	var zeroTime = time.Time{}
 	if params.due != zeroTime {
 		err := newItem.SetTag(r.tags.Due, params.duration.AddTo(params.due).Format(time.DateOnly))
@@ -148,12 +144,27 @@ func (r Recurrence) spawnAbsolute(params recurrenceParams) error {
 	return params.list.Add(newItem)
 }
 
-func (r Recurrence) parseRecurrenceParams(list *todotxt.List, current *todotxt.Item) (recurrenceParams, error) {
+func (r Recurrence) parseRecurrenceParams(list *todotxt.List, event todotxt.ModEvent) (recurrenceParams, error) {
+	newPrio := todotxt.PrioNone
+	if r.preservePriority && event.Previous != nil {
+		newPrio = event.Previous.Priority()
+	}
+	base, err := todotxt.BuildItem(
+		todotxt.CopyOf(event.Current),
+		todotxt.WithDone(false),
+		todotxt.WithCreationDate(r.now()),
+		todotxt.WithoutCompletionDate(),
+		todotxt.WithPriority(newPrio),
+	)
+	if err != nil {
+		return recurrenceParams{}, fmt.Errorf("could not spawn new recurrent task: %w", err)
+	}
+
 	params := recurrenceParams{
-		base: current,
+		base: base,
 		list: list,
 	}
-	tags := current.Tags()
+	tags := event.Current.Tags()
 	recTag := r.tags.Rec
 	rec := tags[recTag][0] // Cannot be 0 length, because it was checked before
 	due := tags[r.tags.Due]

@@ -69,9 +69,10 @@ type Config struct {
 		UrgencyBegin int    `mapstructure:"urgency-begin,omitempty"`
 	} `mapstructure:"quest-score,omitempty"`
 	Recurrence struct {
-		RecTag       string `mapstructure:"rec-tag,omitempty"`
-		DueTag       string `mapstructure:"due-tag,omitempty"`
-		ThresholdTag string `mapstructure:"threshold-tag,omitempty"`
+		RecTag           string `mapstructure:"rec-tag,omitempty"`
+		DueTag           string `mapstructure:"due-tag,omitempty"`
+		ThresholdTag     string `mapstructure:"threshold-tag,omitempty"`
+		PreservePriority bool   `mapstructure:"preserve-priority,omitempty"`
 	} `mapstructure:"recurrence,omitempty"`
 	Styles      []StyleDef         `mapstructure:"styles"`
 	DefaultView ViewDef            `mapstructure:"default-view,omitempty"`
@@ -233,6 +234,7 @@ func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
 	v.SetDefault("clear-on-done", nil)
 	v.SetDefault("recurrence.due-tag", "due")
 	v.SetDefault("recurrence.threshold-tag", "t")
+	v.SetDefault("recurrence.preserve-priority", false)
 	v.SetDefault("default-view.query", "")
 	v.SetDefault("default-view.projection", qprojection.StarProjection)
 	v.SetDefault("default-view.sort", nil)

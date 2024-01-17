@@ -90,7 +90,7 @@ func Test_dueDateRecurrence(t *testing.T) {
 				todotxt.WithNowFunc(nowFunc),
 			)
 			list := todotxt.ListOf(recurrentItem)
-			list.AddHook(hook.NewRecurrenceWithNowFunc(defaultTags, nowFunc))
+			list.AddHook(hook.NewRecurrence(defaultTags, hook.WithNowFunc(nowFunc)))
 
 			err := recurrentItem.Complete()
 
@@ -173,7 +173,7 @@ func Test_thresholdDateRecurrence(t *testing.T) {
 				todotxt.WithNowFunc(nowFunc),
 			)
 			list := todotxt.ListOf(recurrentItem)
-			list.AddHook(hook.NewRecurrenceWithNowFunc(defaultTags, nowFunc))
+			list.AddHook(hook.NewRecurrence(defaultTags, hook.WithNowFunc(nowFunc)))
 
 			err := recurrentItem.Complete()
 
@@ -227,7 +227,7 @@ func Test_bothDateRecurrence(t *testing.T) {
 				todotxt.WithNowFunc(nowFunc),
 			)
 			list := todotxt.ListOf(recurrentItem)
-			list.AddHook(hook.NewRecurrenceWithNowFunc(defaultTags, nowFunc))
+			list.AddHook(hook.NewRecurrence(defaultTags, hook.WithNowFunc(nowFunc)))
 
 			err := recurrentItem.Complete()
 
@@ -246,7 +246,7 @@ func Test_CreationDateGetsUpdatedToToday(t *testing.T) {
 		todotxt.WithDescription("A recurrent item rec:+5d due:2023-01-01"),
 	)
 	list := todotxt.ListOf(recurrentItem)
-	list.AddHook(hook.NewRecurrenceWithNowFunc(defaultTags, func() time.Time { return time.Date(1990, 5, 5, 10, 2, 3, 4, time.UTC) }))
+	list.AddHook(hook.NewRecurrence(defaultTags, hook.WithNowFunc(func() time.Time { return time.Date(1990, 5, 5, 10, 2, 3, 4, time.UTC) })))
 
 	err := recurrentItem.Complete()
 
@@ -278,4 +278,20 @@ func Test_ValidationIsTriggeredOnModification(t *testing.T) {
 
 	err = list.GetLine(1).EditDescription("Hello world rec:5y")
 	assert.Error(t, err)
+}
+
+func Test_PriorityIsReserved(t *testing.T) {
+	list := todotxt.ListOf()
+	list.AddHook(hook.NewRecurrence(defaultTags, hook.WithPreservePriority(true)))
+
+	err := list.Add(
+		todotxt.MustBuildItem(todotxt.WithDescription("Hello world rec:5y due:2020-01-01"), todotxt.WithPriority(todotxt.PrioB)),
+	)
+	assert.Nil(t, err)
+
+	err = list.GetLine(1).Complete()
+	assert.Nil(t, err)
+
+	assert.True(t, list.GetLine(1).Done())
+	assert.Equal(t, todotxt.PrioB, list.GetLine(2).Priority())
 }

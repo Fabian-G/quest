@@ -61,6 +61,10 @@ due-tag = "due"
 # Date tag that defined the threshold date
 threshold-tag = "t" 
 
+# When this option is set to true an item that is spawned by completing a
+# recurrent item will be assigned the same priority as the original.
+preserve-priority = false
+
 # List of tag definitions to enable tag expansions and styling
 [tags]
 [tags.due]
