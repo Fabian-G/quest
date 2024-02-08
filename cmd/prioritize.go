@@ -72,6 +72,10 @@ func (p *prioritizeCommand) prioritize(cmd *cobra.Command, args []string) error 
 			return err
 		}
 	}
-	view.NewSuccessMessage(fmt.Sprintf("Prioritized as %s", priority.String()), list, confirmedSelection).Run()
+	if priority != todotxt.PrioNone {
+		view.NewSuccessMessage(fmt.Sprintf("Prioritized as %s", priority.String()), list, confirmedSelection).Run()
+	} else {
+		view.NewSuccessMessage("Cleared priority on", list, confirmedSelection).Run()
+	}
 	return nil
 }
