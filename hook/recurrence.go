@@ -188,9 +188,7 @@ func (r Recurrence) parseRecurrenceParams(list *todotxt.List, event todotxt.ModE
 		params.threshold = thresholdDate
 	}
 
-	if !strings.HasPrefix(rec, "+") {
-		params.relative = true
-	}
+	params.relative = !strings.HasPrefix(rec, "+")
 	duration, err := qduration.Parse(rec)
 	if err != nil {
 		return params, fmt.Errorf("could not parse duration %s: %w", rec, err)
