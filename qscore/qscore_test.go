@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Fabian-G/quest/qduration"
 	"github.com/Fabian-G/quest/qscore"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,7 @@ import (
 
 var today = time.Date(2022, 2, 2, 0, 0, 0, 0, time.UTC)
 var testCalculator = qscore.Calculator{
-	UrgencyTag:   "due",
+	UrgencyTags:  []qscore.UrgencyTag{{Tag: "due"}},
 	UrgencyBegin: 10,
 	MinPriority:  todotxt.PrioE,
 	NowFunc: func() time.Time {
@@ -131,6 +132,47 @@ func Test_ScoreIsMarkedImportantAppropriately(t *testing.T) {
 	assert.False(t, testScore.IsImportant())
 }
 
+func Test_ScoreFallsBackToDefaultUrgencyWhenDueIsUnset(t *testing.T) {
+	defaultUrgency, err := qduration.Parse("5d")
+	assert.NoError(t, err)
+	testCalculator := qscore.Calculator{
+		UrgencyTags:    []qscore.UrgencyTag{{Tag: "due"}},
+		UrgencyBegin:   10,
+		DefaultUrgency: defaultUrgency,
+		MinPriority:    todotxt.PrioE,
+		NowFunc: func() time.Time {
+			return today
+		},
+	}
+	item := todotxt.MustBuildItem(todotxt.WithDescription("Hello World"), todotxt.WithCreationDate(today))
+	score := testCalculator.ScoreOf(item)
+	expected := qscore.Score{
+		Urgency:    5.5,
+		Importance: 0,
+	}
+	assertApproximatelyEqual(t, expected, score)
+}
+
+func Test_ScoreUsesOffsetCorrectly(t *testing.T) {
+	offset, err := qduration.Parse("4d")
+	assert.NoError(t, err)
+	testCalculator := qscore.Calculator{
+		UrgencyTags:  []qscore.UrgencyTag{{Tag: "due", Offset: offset}},
+		UrgencyBegin: 10,
+		MinPriority:  todotxt.PrioE,
+		NowFunc: func() time.Time {
+			return today
+		},
+	}
+	item := todotxt.MustBuildItem(todotxt.WithDescription(dueDateInDays(1, "Hello World")))
+	score := testCalculator.ScoreOf(item)
+	expected := qscore.Score{
+		Urgency:    5.5,
+		Importance: 0,
+	}
+	assertApproximatelyEqual(t, expected, score)
+}
+
 func Test_EmptyCalculatorReturnsZeroValue(t *testing.T) {
 	item := todotxt.MustBuildItem(todotxt.WithPriority(todotxt.PrioA), todotxt.WithDescription("Test due:1990-09-09"))
 	assert.Equal(t, qscore.Score{}, qscore.Calculator{}.ScoreOf(item))
@@ -151,7 +193,7 @@ func Test_AnAlmostDueTaskShouldYieldAHightUrgency(t *testing.T) {
 }
 
 func assertApproximatelyEqual(t *testing.T, expected qscore.Score, actual qscore.Score) {
-	epsilon := 0.1
+	epsilon := 0.01
 	urgencyDiff := math.Abs(float64(expected.Urgency - actual.Urgency))
 	importanceDiff := math.Abs(float64(expected.Importance - actual.Importance))
 	assert.LessOrEqual(t, urgencyDiff, epsilon, "urgency diverges more than epsilon")

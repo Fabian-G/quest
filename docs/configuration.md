@@ -40,11 +40,18 @@ styles = [
 # High urgency and high priority results in a high quest-score.
 # DEFAULT: empty (therefore disabled)
 [quest-score]
-# The date tag that defined the urgency of a task
-urgency-tag = "due" 
+# The date tags that define the urgency of a task.
+# Might also be offset by a duration value.
+# Only the first existing tag is considered for urgency calculation.
+urgency-tags = [ "due", "t+3m" ]
 
 # When a task will start to be considered as urgent (in days). 
 urgency-begin = 45 
+
+# If the urgency-tag is unset on a task the urgency will be calculated by
+# adding this duration to the creation date.
+# This is useful to avoid low priority tasks being left undone forever.
+urgency-default = "3m"
 
 # The minimal priority. All lower priorities are considered unimportant.
 min-priority = "E" 

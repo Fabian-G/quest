@@ -65,9 +65,10 @@ type Config struct {
 	UnknownTags bool     `mapstructure:"unknown-tags,omitempty"`
 	ClearOnDone []string `mapstructure:"clear-on-done,omitempty"`
 	QuestScore  struct {
-		MinPriority  string `mapstructure:"min-priority,omitempty"`
-		UrgencyTag   string `mapstructure:"urgency-tag,omitempty"`
-		UrgencyBegin int    `mapstructure:"urgency-begin,omitempty"`
+		MinPriority    string   `mapstructure:"min-priority,omitempty"`
+		UrgencyTags    []string `mapstructure:"urgency-tags,omitempty"`
+		UrgencyBegin   int      `mapstructure:"urgency-begin,omitempty"`
+		UrgencyDefault string   `mapstructure:"urgency-default,omitempty"`
 	} `mapstructure:"quest-score,omitempty"`
 	Recurrence struct {
 		RecTag           string `mapstructure:"rec-tag,omitempty"`
@@ -229,9 +230,10 @@ func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
 	v.SetDefault("backup", 0)
 	v.SetDefault("editor", getDefaultEditor())
 	v.SetDefault("unknown-tags", true)
-	v.SetDefault("quest-score.urgency-tag", "due")
+	v.SetDefault("quest-score.urgency-tags", []string{"due"})
 	v.SetDefault("quest-score.urgency-begin", 90)
 	v.SetDefault("quest-score.min-priority", "E")
+	v.SetDefault("quest-score.urgency-default", "0d")
 	v.SetDefault("clear-on-done", nil)
 	v.SetDefault("recurrence.due-tag", "due")
 	v.SetDefault("recurrence.threshold-tag", "t")

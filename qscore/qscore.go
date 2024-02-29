@@ -1,9 +1,11 @@
 package qscore
 
 import (
+	"errors"
 	"math"
 	"time"
 
+	"github.com/Fabian-G/quest/qduration"
 	"github.com/Fabian-G/quest/todotxt"
 )
 
@@ -11,6 +13,11 @@ const (
 	urgencyThreshold    = 3 / 5.0 * 10
 	importanceThreshold = 3/5.0*10 - 1
 )
+
+type UrgencyTag struct {
+	Tag    string
+	Offset qduration.Duration
+}
 
 type Score struct {
 	Score      float32
@@ -27,10 +34,11 @@ func (s Score) IsImportant() bool {
 }
 
 type Calculator struct {
-	UrgencyTag   string
-	UrgencyBegin int
-	MinPriority  todotxt.Priority
-	NowFunc      func() time.Time
+	UrgencyTags    []UrgencyTag
+	UrgencyBegin   int
+	DefaultUrgency qduration.Duration
+	MinPriority    todotxt.Priority
+	NowFunc        func() time.Time
 }
 
 func (c Calculator) ScoreOf(item *todotxt.Item) Score {
@@ -60,11 +68,7 @@ func (c Calculator) importance(item *todotxt.Item) float32 {
 }
 
 func (c Calculator) urgency(item *todotxt.Item) float32 {
-	dateTag := item.Tags()[c.UrgencyTag]
-	if len(dateTag) == 0 {
-		return 0
-	}
-	date, err := time.Parse(time.DateOnly, dateTag[0])
+	date, err := c.urgencyDate(item)
 	if err != nil {
 		return 0
 	}
@@ -79,6 +83,23 @@ func (c Calculator) urgency(item *todotxt.Item) float32 {
 	maxUrgency := float32(10.0)
 	minUrgency := float32(1.0)
 	return maxUrgency + days*(minUrgency-maxUrgency)/float32(c.UrgencyBegin)
+}
+
+func (c Calculator) urgencyDate(item *todotxt.Item) (time.Time, error) {
+	itemTags := item.Tags()
+	for _, tag := range c.UrgencyTags {
+		if len(itemTags[tag.Tag]) > 0 {
+			date, err := time.Parse(time.DateOnly, itemTags[tag.Tag][0])
+			if err != nil {
+				return time.Time{}, err
+			}
+			return tag.Offset.AddTo(date), nil
+		}
+	}
+	if item.CreationDate() != nil && c.DefaultUrgency.Days() > 0 {
+		return c.DefaultUrgency.AddTo(*item.CreationDate()), nil
+	}
+	return time.Time{}, errors.New("No urgency date found")
 }
 
 func (c Calculator) score(urgency, importance float32) float32 {

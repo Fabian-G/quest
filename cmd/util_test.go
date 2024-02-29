@@ -34,7 +34,7 @@ func BuildTestConfig(t *testing.T, opts ...func(di.Config) di.Config) di.Config 
 
 	cfg.QuestScore.MinPriority = "E"
 	cfg.QuestScore.UrgencyBegin = 90
-	cfg.QuestScore.UrgencyTag = "due"
+	cfg.QuestScore.UrgencyTags = []string{"due"}
 	cfg.UnknownTags = true
 	cfg.Tags = map[string]di.TagDef{
 		di.InternalEditTag: {
