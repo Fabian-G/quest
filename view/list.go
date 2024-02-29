@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/Fabian-G/quest/qprojection"
-	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/Fabian-G/quest/view/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -31,9 +30,8 @@ type List struct {
 	repo            *todotxt.Repo
 	selection       []*todotxt.Item
 	projection      []string
-	query           qselect.Func
-	sortFunc        func(*todotxt.Item, *todotxt.Item) int
 	projector       qprojection.Projector
+	getTasks        func(*todotxt.List) []*todotxt.Item
 	table           table.Model
 	interactive     bool
 	availableWidth  int
@@ -44,13 +42,12 @@ type RefreshListMsg struct {
 	List *todotxt.List
 }
 
-func NewList(repo *todotxt.Repo, proj qprojection.Projector, projection []string, query qselect.Func, sort func(*todotxt.Item, *todotxt.Item) int, interactive bool) List {
+func NewList(repo *todotxt.Repo, proj qprojection.Projector, projection []string, getTasks func(*todotxt.List) []*todotxt.Item, interactive bool) List {
 	l := List{
 		repo:        repo,
 		projector:   proj,
 		projection:  projection,
-		query:       query,
-		sortFunc:    sort,
+		getTasks:    getTasks,
 		interactive: interactive,
 	}
 
@@ -196,8 +193,7 @@ func (l List) renderDetails(writer *strings.Builder) {
 func (l List) refreshTable(list *todotxt.List) List {
 	previous := l.itemAtCursor()
 	l.list = list
-	l.selection = l.query.Filter(list)
-	slices.SortStableFunc(l.selection, l.sortFunc)
+	l.selection = l.getTasks(list)
 	rows, columns, renderCell := l.mapToColumns()
 	l.table.SetStyles(l.styles(renderCell))
 	l.table.SetRows(nil)

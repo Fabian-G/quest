@@ -103,6 +103,10 @@ interactive = false
 # automatically prepended.
 add-prefix = '@inbox'
 
+# Limits the amount of tasks that will be outputted to 10.
+# Set to -1 to show all tasks
+limit = 10
+
 # A view definition with the name inbox.
 [views.inbox]
 query = '!done && @inbox'

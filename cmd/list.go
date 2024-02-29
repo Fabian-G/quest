@@ -16,6 +16,7 @@ type viewCommand struct {
 	def          di.ViewDef
 	projection   []string
 	sortOrder    []string
+	limit        int
 	qqlSearch    []string
 	rngSearch    []string
 	stringSearch []string
@@ -44,9 +45,10 @@ func (v *viewCommand) command(name string) *cobra.Command {
 		Title: "View Commands",
 	})
 
-	listCmd.Flags().StringSliceVarP(&v.projection, "projection", "p", v.def.Projection, "TODO")
-	listCmd.Flags().StringSliceVarP(&v.sortOrder, "sort", "s", v.def.Sort, "TODO")
-	listCmd.Flags().BoolVar(&v.json, "json", false, "TODO")
+	listCmd.Flags().StringSliceVarP(&v.projection, "projection", "p", v.def.Projection, "A list of fields to display in the output")
+	listCmd.Flags().StringSliceVarP(&v.sortOrder, "sort", "s", v.def.Sort, "A list of sort keys to sort by")
+	listCmd.Flags().IntVarP(&v.limit, "limit", "l", v.def.Limit, "Show only the first l items. Set to -1 to show all items")
+	listCmd.Flags().BoolVar(&v.json, "json", false, "Output the result in json format. This ignores -p")
 	listCmd.Flags().BoolVarP(&v.interactive, "interactive", "i", v.def.Interactive, "set to false to make the list non-interactive")
 	cmdutil.RegisterSelectionFlags(listCmd, &v.qqlSearch, &v.rngSearch, &v.stringSearch)
 
@@ -85,12 +87,18 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid projection: %w", err)
 	}
 
-	selection := query.Filter(list)
-	slices.SortStableFunc(selection, sortFunc)
-
-	if v.json {
-		return todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), list, selection)
+	getTasks := func(l *todotxt.List) []*todotxt.Item {
+		selection := query.Filter(l)
+		slices.SortStableFunc(selection, sortFunc)
+		if v.limit > 0 {
+			selection = selection[:min(len(selection), v.limit)]
+		}
+		return selection
 	}
 
-	return view.NewList(repo, projector, v.projection, query, sortFunc, v.interactive).Run()
+	if v.json {
+		return todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), list, getTasks(list))
+	}
+
+	return view.NewList(repo, projector, v.projection, getTasks, v.interactive).Run()
 }

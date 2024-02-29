@@ -51,6 +51,7 @@ type ViewDef struct {
 	Projection  []string `mapstructure:"projection,omitempty"`
 	Sort        []string `mapstructure:"sort,omitempty"`
 	Clean       []string `mapstructure:"clean,omitempty"`
+	Limit       int      `mapstructure:"limit,omitempty"`
 	Interactive bool     `mapstructure:"interactive,omitempty"`
 	AddPrefix   string   `mapstructure:"add-prefix,omitempty"`
 	AddSuffix   string   `mapstructure:"add-suffix,omitempty"`
@@ -239,6 +240,7 @@ func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
 	v.SetDefault("default-view.projection", qprojection.StarProjection)
 	v.SetDefault("default-view.sort", nil)
 	v.SetDefault("default-view.clean", nil)
+	v.SetDefault("default-view.limit", -1)
 	v.SetDefault("default-view.interactive", true)
 	v.SetDefault("default-view.add-prefix", "")
 	v.SetDefault("default-view.add-suffix", "")
@@ -250,6 +252,7 @@ func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
 		v.SetDefault("views."+viewName+".projection", v.GetStringSlice("default-view.projection"))
 		v.SetDefault("views."+viewName+".sort", v.GetStringSlice("default-view.sort"))
 		v.SetDefault("views."+viewName+".clean", v.GetStringSlice("default-view.clean"))
+		v.SetDefault("views."+viewName+".limit", v.GetInt("default-view.limit"))
 		v.SetDefault("views."+viewName+".interactive", v.GetBool("default-view.interactive"))
 		v.SetDefault("views."+viewName+".add-prefix", v.GetString("default-view.add-prefix"))
 		v.SetDefault("views."+viewName+".add-suffix", v.GetString("default-view.add-suffix"))
