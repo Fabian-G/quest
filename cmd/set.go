@@ -162,7 +162,7 @@ func (s *setCommand) parseArgs(args []string) (projects []todotxt.Project, conte
 
 	if idx := slices.Index(args, "on"); idx != -1 {
 		selectors = args[idx+1:]
-		args = slices.Delete(args, idx, len(args))
+		args = args[:idx]
 	}
 
 	for _, arg := range args {

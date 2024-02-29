@@ -173,7 +173,7 @@ func (u *unsetCommand) applyContexts(t *todotxt.Item, contextOps []todotxt.Conte
 func (u *unsetCommand) parseArgs(args []string) (projects []todotxt.Project, contexts []todotxt.Context, tags []string, selectors []string) {
 	if idx := slices.Index(args, "on"); idx != -1 {
 		selectors = args[idx+1:]
-		args = slices.Delete(args, idx, len(args))
+		args = args[:idx]
 	}
 
 	for _, arg := range args {
