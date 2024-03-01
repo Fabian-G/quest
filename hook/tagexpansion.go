@@ -136,11 +136,6 @@ func (t TagExpansion) findNext(day time.Weekday) time.Time {
 }
 
 func (t TagExpansion) expandInt(list *todotxt.List, i *todotxt.Item, tag string, value string) string {
-	if _, err := strconv.Atoi(value); err == nil {
-		// This is already a proper integer
-		return value
-	}
-
 	var base int
 	var remainingValue string
 	switch {
@@ -156,6 +151,10 @@ func (t TagExpansion) expandInt(list *todotxt.List, i *todotxt.Item, tag string,
 	case strings.HasPrefix(value, "pmin"):
 		base = t.projectMinValue(list, i.Projects(), tag)
 		remainingValue = strings.TrimPrefix(value, "pmin")
+	default:
+		// Assume that this is already a properly formatted integer.
+		// If it is not this error will be caught by validation.
+		return value
 	}
 	if len(strings.TrimSpace(remainingValue)) == 0 {
 		return strconv.Itoa(base)
