@@ -35,8 +35,7 @@ func (r *removeCommand) command() *cobra.Command {
 		RunE:     r.remove,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
-	removeCommand.Flags().BoolVarP(&r.all, "all", "a", false, "TODO")
-	cmdutil.RegisterSelectionFlags(removeCommand, &r.qql, &r.rng, &r.str)
+	cmdutil.RegisterSelectionFlags(removeCommand, &r.qql, &r.rng, &r.str, &r.all)
 	return removeCommand
 }
 

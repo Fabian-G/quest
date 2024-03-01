@@ -42,8 +42,7 @@ func (u *unsetCommand) command() *cobra.Command {
 		RunE:     u.unset,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
-	unsetCommand.Flags().BoolVarP(&u.all, "all", "a", false, "TODO")
-	cmdutil.RegisterSelectionFlags(unsetCommand, &u.qql, &u.rng, &u.str)
+	cmdutil.RegisterSelectionFlags(unsetCommand, &u.qql, &u.rng, &u.str, &u.all)
 	return unsetCommand
 }
 

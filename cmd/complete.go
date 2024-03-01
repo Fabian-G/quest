@@ -40,8 +40,7 @@ func (c *completeCommand) command() *cobra.Command {
 		RunE:     c.complete,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
-	completeCmd.Flags().BoolVarP(&c.all, "all", "a", false, "TODO")
-	cmdutil.RegisterSelectionFlags(completeCmd, &c.qql, &c.rng, &c.str)
+	cmdutil.RegisterSelectionFlags(completeCmd, &c.qql, &c.rng, &c.str, &c.all)
 	return completeCmd
 }
 
