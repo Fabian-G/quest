@@ -188,3 +188,37 @@ func Test_NotChangingTheTrackingTagDoesNotRestartTrackingOnChange(t *testing.T) 
 	assert.False(t, mock.active)
 	assert.Equal(t, 0, len(mock.startCalls))
 }
+
+func Test_CompletingATaskStopsTracking(t *testing.T) {
+	mock := &trackerMock{}
+	list := todotxt.ListOf(
+		todotxt.MustBuildItem(todotxt.WithDescription("Item 1")),
+	)
+	list.AddHook(hook.NewTracking(mock))
+
+	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	assert.NoError(t, err)
+	err = list.Tasks()[0].Complete()
+	assert.NoError(t, err)
+
+	assert.False(t, mock.active)
+	assert.Equal(t, 1, len(mock.startCalls))
+	assert.Equal(t, 1, mock.stopCalls)
+}
+
+func Test_RemovingATaskStopsTracking(t *testing.T) {
+	mock := &trackerMock{}
+	list := todotxt.ListOf(
+		todotxt.MustBuildItem(todotxt.WithDescription("Item 1")),
+	)
+	list.AddHook(hook.NewTracking(mock))
+
+	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	assert.NoError(t, err)
+	err = list.Remove(1)
+	assert.NoError(t, err)
+
+	assert.False(t, mock.active)
+	assert.Equal(t, 1, len(mock.startCalls))
+	assert.Equal(t, 1, mock.stopCalls)
+}

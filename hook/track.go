@@ -29,8 +29,8 @@ type Tracking struct {
 }
 
 func (t Tracking) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
-	prevTracked := event.Previous != nil && isTrackedTask(event.Previous)
-	curTracked := event.Current != nil && isTrackedTask(event.Current)
+	prevTracked := event.Previous != nil && !event.Previous.Done() && isTrackedTask(event.Previous)
+	curTracked := event.Current != nil && !event.Current.Done() && isTrackedTask(event.Current)
 	switch {
 	case !prevTracked && !curTracked:
 		// Nothing interesting in this case
