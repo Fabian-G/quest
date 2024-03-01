@@ -100,5 +100,5 @@ func (v *viewCommand) list(cmd *cobra.Command, args []string) error {
 		return todotxt.DefaultJsonEncoder.Encode(cmd.OutOrStdout(), list, getTasks(list))
 	}
 
-	return view.NewList(repo, projector, v.projection, getTasks, v.interactive).Run()
+	return view.NewList(repo, projector, v.projection, getTasks, v.interactive).Run(list)
 }

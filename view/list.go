@@ -55,12 +55,8 @@ func NewList(repo *todotxt.Repo, proj qprojection.Projector, projection []string
 	return l
 }
 
-func (l List) Run() error {
-	firstList, err := l.repo.Read()
-	if err != nil {
-		return err
-	}
-	model, _ := l.Update(RefreshListMsg{List: firstList})
+func (l List) Run(initial *todotxt.List) error {
+	model, _ := l.Update(RefreshListMsg{List: initial})
 	l = model.(List)
 	switch l.interactive {
 	case true:
