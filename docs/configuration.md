@@ -56,6 +56,12 @@ urgency-default = "3m"
 # The minimal priority. All lower priorities are considered unimportant.
 min-priority = "E" 
 
+# Properties for configuring the timewarrior integration.
+# The Projects, Contexts and description are used for tags
+[tracking]
+trim-project-prefix = false # If the + should be removed from projects
+trim-context-prefix = false # If the @ should be removed from contexts
+
 # Tag configuration for the recurrence feature
 # DEFAULT: empty (therefore disabled)
 [recurrence]

@@ -25,7 +25,9 @@ func NewTracking(tracker Tracker) *Tracking {
 }
 
 type Tracking struct {
-	tracker Tracker
+	tracker           Tracker
+	TrimProjectPrefix bool
+	TrimContextPrefix bool
 }
 
 func (t Tracking) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
@@ -37,7 +39,7 @@ func (t Tracking) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
 		return nil
 	case !prevTracked && curTracked:
 		clearTrackingTag(list, event.Current)
-		return t.tracker.Start(trackingTags(event.Current))
+		return t.tracker.Start(t.trackingTags(event.Current))
 	case prevTracked && !curTracked:
 		active, err := t.stillActive(event.Previous)
 		if err != nil {
@@ -52,16 +54,16 @@ func (t Tracking) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
 			return err
 		}
 		if active {
-			return t.tracker.SetTags(trackingTags(event.Current))
+			return t.tracker.SetTags(t.trackingTags(event.Current))
 		} else if event.Previous.Tags()[TrackingTag][0] != event.Current.Tags()[TrackingTag][0] {
-			return t.tracker.Start(trackingTags(event.Current))
+			return t.tracker.Start(t.trackingTags(event.Current))
 		}
 	}
 	return nil
 }
 
 func (t Tracking) stillActive(item *todotxt.Item) (bool, error) {
-	tTags := trackingTags(item)
+	tTags := t.trackingTags(item)
 	activeTags, err := t.tracker.ActiveTags()
 	if errors.Is(err, ErrNoActiveTracking) {
 		return false, nil
@@ -97,17 +99,25 @@ func clearTrackingTag(list *todotxt.List, item *todotxt.Item) {
 	}
 }
 
-func trackingTags(item *todotxt.Item) []string {
+func (t Tracking) trackingTags(item *todotxt.Item) []string {
 	projects := item.Projects()
 	contexts := item.Contexts()
 	tags := item.Tags()
 	description := item.CleanDescription(projects, contexts, tags.Keys())
 	trackingTags := make([]string, 0, len(projects)+len(contexts)+1)
 	for _, p := range projects {
-		trackingTags = append(trackingTags, p.String())
+		if t.TrimProjectPrefix {
+			trackingTags = append(trackingTags, p.String()[1:])
+		} else {
+			trackingTags = append(trackingTags, p.String())
+		}
 	}
 	for _, c := range contexts {
-		trackingTags = append(trackingTags, c.String())
+		if t.TrimContextPrefix {
+			trackingTags = append(trackingTags, c.String()[1:])
+		} else {
+			trackingTags = append(trackingTags, c.String())
+		}
 	}
 	trackingTags = append(trackingTags, description)
 	return trackingTags

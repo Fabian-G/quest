@@ -78,6 +78,24 @@ func Test_TrackingCallsStartWhenAddingTheTrackingTag(t *testing.T) {
 	assert.Equal(t, []string{"+aProject", "@aContext", "Item 1"}, mock.startCalls[0])
 }
 
+func Test_TrackingTrimsContextAndProjectPrefixes(t *testing.T) {
+	mock := &trackerMock{}
+	list := todotxt.ListOf(
+		todotxt.MustBuildItem(todotxt.WithDescription("@aContext Item 1 +aProject an:ignored-tag")),
+	)
+	tracking := hook.NewTracking(mock)
+	tracking.TrimContextPrefix = true
+	tracking.TrimProjectPrefix = true
+	list.AddHook(tracking)
+
+	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	assert.NoError(t, err)
+
+	assert.True(t, mock.active)
+	assert.Equal(t, 1, len(mock.startCalls))
+	assert.Equal(t, []string{"aProject", "aContext", "Item 1"}, mock.startCalls[0])
+}
+
 func Test_RemovingTheTrackingTagStopsTheTracking(t *testing.T) {
 	mock := &trackerMock{}
 	list := todotxt.ListOf(
