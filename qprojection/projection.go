@@ -21,6 +21,15 @@ type Projector struct {
 	LineColors    ColorFunc
 	colorOverride *lipgloss.Color
 	defaultColor  lipgloss.Color
+	cache         *cacheStorage
+}
+
+type cacheStorage struct {
+	expandedClean *struct {
+		projects []todotxt.Project
+		contexts []todotxt.Context
+		tags     []string
+	}
 }
 
 func (p Projector) Verify(projection []string, list *todotxt.List) error {
@@ -44,6 +53,8 @@ func (p Projector) MustProject(projection []string, list *todotxt.List, selectio
 }
 
 func (p Projector) Project(projection []string, list *todotxt.List, selection []*todotxt.Item) ([]string, [][]string, [][]lipgloss.Style, error) {
+	p.cache = &cacheStorage{}
+	defer func() { p.cache = nil }()
 	headers, extractors, err := p.compile(projection, list)
 	if err != nil {
 		return nil, nil, nil, err
@@ -115,7 +126,20 @@ func (p Projector) expandAliasColumns(projection []string, list *todotxt.List) [
 }
 
 func (p Projector) expandClean(list *todotxt.List) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {
-	return ExpandCleanExpression(list, p.Clean)
+	if p.cache.expandedClean != nil {
+		return p.cache.expandedClean.projects, p.cache.expandedClean.contexts, p.cache.expandedClean.tags
+	}
+	projects, contexts, tags := ExpandCleanExpression(list, p.Clean)
+	p.cache.expandedClean = &struct {
+		projects []todotxt.Project
+		contexts []todotxt.Context
+		tags     []string
+	}{
+		projects: projects,
+		contexts: contexts,
+		tags:     tags,
+	}
+	return projects, contexts, tags
 }
 
 func ExpandCleanExpression(list *todotxt.List, clean []string) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {
