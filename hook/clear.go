@@ -11,7 +11,7 @@ type ClearOnDone struct {
 
 func (c ClearOnDone) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
 	if event.IsCompleteEvent() {
-		return event.Current.EditDescription(event.Current.CleanDescription(qprojection.ExpandCleanExpression(list, c.Clear)))
+		return event.Current.EditDescription(event.Current.CleanDescription(qprojection.ExpandCleanExpression(event.Current, c.Clear)))
 	}
 	return nil
 }

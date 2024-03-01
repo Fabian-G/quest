@@ -188,7 +188,7 @@ var descriptionColumn = columnDef{
 			}
 		}
 		return func(p Projector, l *todotxt.List, item *todotxt.Item) (string, lipgloss.Color) {
-			return runewidth.Truncate(item.CleanDescription(p.expandClean(l)), width, "..."), p.defaultColor
+			return runewidth.Truncate(item.CleanDescription(p.expandClean(item)), width, "..."), p.defaultColor
 		}
 	},
 }
