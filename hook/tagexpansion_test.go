@@ -223,7 +223,7 @@ func Test_TagExpansionsError(t *testing.T) {
 			description: "hello unknown:tag abc",
 		},
 		"wrong expansion": {
-			description: "a wrong int someint:expansion",
+			description: "a wrong int someInt:expansion",
 		},
 	}
 
