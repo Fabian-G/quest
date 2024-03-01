@@ -114,14 +114,5 @@ func trackingTags(item *todotxt.Item) []string {
 }
 
 func (Tracking) OnValidate(list *todotxt.List, event todotxt.ValidationEvent) error {
-	var trTags int
-	for _, item := range list.Tasks() {
-		if _, ok := item.Tags()[TrackingTag]; ok {
-			trTags++
-		}
-		if trTags > 1 {
-			return fmt.Errorf("Found multiple tracking tags %s.\nThis should never happen unless you edit them manually.", TrackingTag)
-		}
-	}
 	return nil
 }

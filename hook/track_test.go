@@ -1,7 +1,6 @@
 package hook_test
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/Fabian-G/quest/hook"
@@ -47,20 +46,6 @@ func (t *trackerMock) Stop() error {
 	t.active = false
 	t.currentTags = nil
 	return nil
-}
-
-func Test_TrackingErrorsOnMultipleTrackingTags(t *testing.T) {
-	list := todotxt.ListOf(
-		todotxt.MustBuildItem(todotxt.WithDescription("Item 1 "+hook.TrackingTag+":latest")),
-		todotxt.MustBuildItem(todotxt.WithDescription("Item 2 ")),
-		todotxt.MustBuildItem(todotxt.WithDescription("Item 3 "+hook.TrackingTag+":latest")),
-	)
-	list.AddHook(hook.NewTracking(&trackerMock{}))
-
-	// Trigger validation by serializing
-	err := todotxt.DefaultEncoder.Encode(&bytes.Buffer{}, list.Tasks())
-
-	assert.Error(t, err)
 }
 
 func Test_TrackingClearsTrackingTagOnOthersAfterStarting(t *testing.T) {
