@@ -114,20 +114,20 @@ func (p Projector) expandAliasColumns(projection []string, list *todotxt.List) [
 	return realProjection
 }
 
-func (p Projector) expandClean(list *todotxt.List) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {
-	return ExpandCleanExpression(list, p.Clean)
+func (p Projector) expandClean(item *todotxt.Item) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {
+	return ExpandCleanExpression(item, p.Clean)
 }
 
-func ExpandCleanExpression(list *todotxt.List, clean []string) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {
+func ExpandCleanExpression(item *todotxt.Item, clean []string) (proj []todotxt.Project, ctx []todotxt.Context, tags []string) {
 	for _, c := range clean {
 		c := strings.TrimSpace(c)
 		switch {
 		case c == "+ALL":
-			proj = append(proj, list.AllProjects()...)
+			proj = append(proj, item.Projects()...)
 		case c == "@ALL":
-			ctx = append(ctx, list.AllContexts()...)
+			ctx = append(ctx, item.Contexts()...)
 		case c == "ALL":
-			tags = append(tags, list.AllTags()...)
+			tags = append(tags, item.Tags().Keys()...)
 		case strings.HasPrefix(c, "@"):
 			ctx = append(ctx, todotxt.Context(c[1:]))
 		case strings.HasPrefix(c, "+"):
