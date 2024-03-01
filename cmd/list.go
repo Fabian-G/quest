@@ -50,7 +50,7 @@ func (v *viewCommand) command(name string) *cobra.Command {
 	listCmd.Flags().IntVarP(&v.limit, "limit", "l", v.def.Limit, "Show only the first l items. Set to -1 to show all items")
 	listCmd.Flags().BoolVar(&v.json, "json", false, "Output the result in json format. This ignores -p")
 	listCmd.Flags().BoolVarP(&v.interactive, "interactive", "i", v.def.Interactive, "set to false to make the list non-interactive")
-	cmdutil.RegisterSelectionFlags(listCmd, &v.qqlSearch, &v.rngSearch, &v.stringSearch)
+	cmdutil.RegisterSelectionFlags(listCmd, &v.qqlSearch, &v.rngSearch, &v.stringSearch, nil)
 
 	listCmd.AddCommand(newAddCommand(v.def).command())
 	listCmd.AddCommand(newCompleteCommand(v.def).command())
@@ -60,6 +60,7 @@ func (v *viewCommand) command(name string) *cobra.Command {
 	listCmd.AddCommand(newArchiveCommand(v.def).command())
 	listCmd.AddCommand(newSetCommand(v.def).command())
 	listCmd.AddCommand(newUnsetCommand(v.def).command())
+	listCmd.AddCommand(newTrackCommand(v.def).command())
 
 	return listCmd
 }

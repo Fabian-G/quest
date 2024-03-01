@@ -1,6 +1,11 @@
 package di
 
 import (
+	"encoding/json"
+	"fmt"
+	"os/exec"
+	"strings"
+
 	"github.com/Fabian-G/quest/hook"
 	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
@@ -34,5 +39,58 @@ func hooks(c Config) []todotxt.Hook {
 			Threshold: c.Recurrence.ThresholdTag,
 		}, hook.WithNowFunc(c.NowFunc), hook.WithPreservePriority(c.Recurrence.PreservePriority)))
 	}
+	if timew, err := exec.LookPath("timew"); err == nil {
+		hooks = append(hooks, hook.NewTracking(&timeWarrior{timew: timew}))
+	}
 	return hooks
+}
+
+type timeWarrior struct {
+	timew string
+}
+
+func (t *timeWarrior) ActiveTags() ([]string, error) {
+	activeCmd := exec.Command(t.timew, "get", "dom.active")
+	out, err := activeCmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("Could not determine timew active status: %w", err)
+	}
+	if strings.TrimSpace(string(out)) != "1" {
+		return nil, hook.ErrNoActiveTracking
+	}
+	dataCmd := exec.Command(t.timew, "get", "dom.active.json")
+	out, err = dataCmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("Could fetch properties of active timew interval: %w", err)
+	}
+
+	type activeJson struct {
+		Tags []string `json:"tags"`
+	}
+	activeData := &activeJson{}
+	if err := json.Unmarshal(out, activeData); err != nil {
+		return nil, fmt.Errorf("Could not parse timew response: %w", err)
+	}
+	return activeData.Tags, nil
+}
+
+func (t *timeWarrior) SetTags(tags []string) error {
+	_, err := t.ActiveTags()
+	if err != nil {
+		return err
+	}
+	args := append([]string{"retag"}, tags...)
+	cmd := exec.Command(t.timew, args...)
+	return cmd.Run()
+}
+
+func (t *timeWarrior) Start(tags []string) error {
+	args := append([]string{"start"}, tags...)
+	cmd := exec.Command(t.timew, args...)
+	return cmd.Run()
+}
+
+func (t *timeWarrior) Stop() error {
+	cmd := exec.Command(t.timew, "stop")
+	return cmd.Run()
 }

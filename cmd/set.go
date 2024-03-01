@@ -44,8 +44,7 @@ func (s *setCommand) command() *cobra.Command {
 		RunE:     s.set,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
-	setCommand.Flags().BoolVarP(&s.all, "all", "a", false, "TODO")
-	cmdutil.RegisterSelectionFlags(setCommand, &s.qql, &s.rng, &s.str)
+	cmdutil.RegisterSelectionFlags(setCommand, &s.qql, &s.rng, &s.str, &s.all)
 	return setCommand
 }
 

@@ -42,7 +42,7 @@ func (e *editCommand) command() *cobra.Command {
 		RunE:     e.edit,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
-	cmdutil.RegisterSelectionFlags(editCommand, &e.qql, &e.rng, &e.str)
+	cmdutil.RegisterSelectionFlags(editCommand, &e.qql, &e.rng, &e.str, nil)
 	editCommand.Flags().StringSliceVarP(&e.sortOrder, "sort", "s", e.viewDef.Sort, "TODO")
 	return editCommand
 }

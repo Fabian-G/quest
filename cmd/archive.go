@@ -40,8 +40,7 @@ func (a *archiveCommand) command() *cobra.Command {
 		RunE:     a.archive,
 		PostRunE: cmdutil.Steps(cmdutil.SaveDoneList, cmdutil.SaveList),
 	}
-	archiveCommand.Flags().BoolVarP(&a.all, "all", "a", false, "TODO")
-	cmdutil.RegisterSelectionFlags(archiveCommand, &a.qql, &a.rng, &a.str)
+	cmdutil.RegisterSelectionFlags(archiveCommand, &a.qql, &a.rng, &a.str, &a.all)
 	return archiveCommand
 }
 

@@ -7,10 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func RegisterSelectionFlags(cmd *cobra.Command, qql *[]string, rng *[]string, str *[]string) {
+func RegisterSelectionFlags(cmd *cobra.Command, qql *[]string, rng *[]string, str *[]string, all *bool) {
 	cmd.Flags().StringArrayVarP(qql, "qql", "q", nil, "QQL Query")
 	cmd.Flags().StringArrayVarP(rng, "range", "r", nil, "Range Query")
 	cmd.Flags().StringArrayVarP(str, "word", "w", nil, "Case-Insensitive String Search")
+	if all != nil {
+		cmd.Flags().BoolVarP(all, "all", "a", false, "Don't ask for confirmation when multiple results match")
+	}
 }
 
 func ParseTaskSelection(defaultQuery string, guess, qqlSearch, rngSearch, stringSearch []string) (qselect.Func, error) {
