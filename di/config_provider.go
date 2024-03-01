@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/Fabian-G/quest/hook"
 	"github.com/Fabian-G/quest/qprojection"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
@@ -180,6 +181,10 @@ func buildConfig(file string) (Config, error) {
 	config.DoneFile = os.ExpandEnv(config.DoneFile)
 	config.Tags[InternalEditTag] = TagDef{
 		Type:     "int",
+		Humanize: false,
+	}
+	config.Tags[hook.TrackingTag] = TagDef{
+		Type:     "string",
 		Humanize: false,
 	}
 

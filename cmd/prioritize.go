@@ -39,8 +39,7 @@ func (p *prioritizeCommand) command() *cobra.Command {
 		RunE:     p.prioritize,
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
-	prioritizeCommand.Flags().BoolVarP(&p.all, "all", "a", false, "TODO")
-	cmdutil.RegisterSelectionFlags(prioritizeCommand, &p.qql, &p.rng, &p.str)
+	cmdutil.RegisterSelectionFlags(prioritizeCommand, &p.qql, &p.rng, &p.str, &p.all)
 	return prioritizeCommand
 }
 

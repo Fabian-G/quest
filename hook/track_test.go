@@ -159,3 +159,32 @@ func Test_StartOverridesActiveTracking(t *testing.T) {
 	assert.Equal(t, 2, len(mock.startCalls))
 	assert.Equal(t, []string{"Item 1"}, mock.startCalls[1])
 }
+
+func Test_RestartingTrackingCanBeDoneBySettingADifferentValue(t *testing.T) {
+	mock := &trackerMock{}
+	list := todotxt.ListOf(
+		todotxt.MustBuildItem(todotxt.WithDescription("Item 1 " + hook.TrackingTag + ":latest")),
+	)
+	list.AddHook(hook.NewTracking(mock))
+
+	err := list.Tasks()[0].SetTag(hook.TrackingTag, "another-value")
+	assert.NoError(t, err)
+
+	assert.True(t, mock.active)
+	assert.Equal(t, 1, len(mock.startCalls))
+	assert.Equal(t, []string{"Item 1"}, mock.startCalls[0])
+}
+
+func Test_NotChangingTheTrackingTagDoesNotRestartTrackingOnChange(t *testing.T) {
+	mock := &trackerMock{}
+	list := todotxt.ListOf(
+		todotxt.MustBuildItem(todotxt.WithDescription("Item 1 " + hook.TrackingTag + ":latest")),
+	)
+	list.AddHook(hook.NewTracking(mock))
+
+	err := list.Tasks()[0].SetTag("some-tag", "some-value")
+	assert.NoError(t, err)
+
+	assert.False(t, mock.active)
+	assert.Equal(t, 0, len(mock.startCalls))
+}

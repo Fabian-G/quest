@@ -53,6 +53,8 @@ func (t Tracking) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
 		}
 		if active {
 			return t.tracker.SetTags(trackingTags(event.Current))
+		} else if event.Previous.Tags()[TrackingTag][0] != event.Current.Tags()[TrackingTag][0] {
+			return t.tracker.Start(trackingTags(event.Current))
 		}
 	}
 	return nil
@@ -118,7 +120,7 @@ func (Tracking) OnValidate(list *todotxt.List, event todotxt.ValidationEvent) er
 			trTags++
 		}
 		if trTags > 1 {
-			return fmt.Errorf("Found multiple tracking tags %s.\nThis should never happen unless you edit them manually (which you should not).", TrackingTag)
+			return fmt.Errorf("Found multiple tracking tags %s.\nThis should never happen unless you edit them manually.", TrackingTag)
 		}
 	}
 	return nil

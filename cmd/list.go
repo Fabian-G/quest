@@ -60,6 +60,7 @@ func (v *viewCommand) command(name string) *cobra.Command {
 	listCmd.AddCommand(newArchiveCommand(v.def).command())
 	listCmd.AddCommand(newSetCommand(v.def).command())
 	listCmd.AddCommand(newUnsetCommand(v.def).command())
+	listCmd.AddCommand(newTrackCommand(v.def).command())
 
 	return listCmd
 }
