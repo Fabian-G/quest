@@ -1,6 +1,7 @@
 package hook_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/Fabian-G/quest/hook"
@@ -15,6 +16,7 @@ type trackerMock struct {
 	stopCalls       int
 	active          bool
 	currentTags     []string
+	reverseTags     bool
 }
 
 func (t *trackerMock) ActiveTags() ([]string, error) {
@@ -22,7 +24,11 @@ func (t *trackerMock) ActiveTags() ([]string, error) {
 	if !t.active {
 		return nil, hook.ErrNoActiveTracking
 	}
-	return t.currentTags, nil
+	activeTags := slices.Clone(t.currentTags)
+	if t.reverseTags {
+		slices.Reverse(activeTags)
+	}
+	return activeTags, nil
 }
 
 func (t *trackerMock) SetTags(tags []string) error {
@@ -98,6 +104,24 @@ func Test_TrackingTrimsContextAndProjectPrefixes(t *testing.T) {
 
 func Test_RemovingTheTrackingTagStopsTheTracking(t *testing.T) {
 	mock := &trackerMock{}
+	list := todotxt.ListOf(
+		todotxt.MustBuildItem(todotxt.WithDescription("@aContext Item 1 +aProject an:ignored-tag")),
+	)
+	list.AddHook(hook.NewTracking(mock))
+
+	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	assert.NoError(t, err)
+	err = list.Tasks()[0].SetTag(hook.TrackingTag, "")
+	assert.NoError(t, err)
+
+	assert.False(t, mock.active)
+	assert.Equal(t, 1, mock.stopCalls)
+}
+
+func Test_DontRelyOnTagOrdering(t *testing.T) {
+	mock := &trackerMock{
+		reverseTags: true,
+	}
 	list := todotxt.ListOf(
 		todotxt.MustBuildItem(todotxt.WithDescription("@aContext Item 1 +aProject an:ignored-tag")),
 	)

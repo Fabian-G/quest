@@ -3,6 +3,7 @@ package hook
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/Fabian-G/quest/todotxt"
 )
@@ -74,6 +75,8 @@ func (t Tracking) stillActive(item *todotxt.Item) (bool, error) {
 	if len(tTags) != len(activeTags) {
 		return false, nil
 	}
+	slices.Sort(tTags)
+	slices.Sort(activeTags)
 	for i := range tTags {
 		if tTags[i] != activeTags[i] {
 			return false, nil
