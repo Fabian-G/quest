@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/Fabian-G/quest/hook"
 	"github.com/Fabian-G/quest/qprojection"
 	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
@@ -72,8 +71,9 @@ type Config struct {
 		UrgencyDefault string   `mapstructure:"urgency-default,omitempty"`
 	} `mapstructure:"quest-score,omitempty"`
 	Tracking struct {
-		TrimProjectPrefix bool `mapstructure:"trim-project-prefix,omitempty"`
-		TrimContextPrefix bool `mapstructure:"trim-context-prefix,omitempty"`
+		Tag               string `mapstructure:"tag,omitempty"`
+		TrimProjectPrefix bool   `mapstructure:"trim-project-prefix,omitempty"`
+		TrimContextPrefix bool   `mapstructure:"trim-context-prefix,omitempty"`
 	} `mapstructure:"tracking,omitempty"`
 	Recurrence struct {
 		RecTag           string `mapstructure:"rec-tag,omitempty"`
@@ -187,10 +187,6 @@ func buildConfig(file string) (Config, error) {
 		Type:     "int",
 		Humanize: false,
 	}
-	config.Tags[hook.TrackingTag] = TagDef{
-		Type:     "string",
-		Humanize: false,
-	}
 
 	return config, nil
 }
@@ -243,6 +239,7 @@ func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
 	v.SetDefault("quest-score.urgency-begin", 90)
 	v.SetDefault("quest-score.min-priority", "E")
 	v.SetDefault("quest-score.urgency-default", "0d")
+	v.SetDefault("tracking.tag", "")
 	v.SetDefault("tracking.trim-project-prefix", false)
 	v.SetDefault("tracking.trim-context-prefix", false)
 	v.SetDefault("clear-on-done", nil)

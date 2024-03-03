@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var testTrackingTag = "quest-test-tracking"
+
 type trackerMock struct {
 	activeTagsCalls int
 	setTagsCalls    [][]string
@@ -56,15 +58,15 @@ func (t *trackerMock) Stop() error {
 
 func Test_TrackingClearsTrackingTagOnOthersAfterStarting(t *testing.T) {
 	list := todotxt.ListOf(
-		todotxt.MustBuildItem(todotxt.WithDescription("Item 1 "+hook.TrackingTag+":latest")),
+		todotxt.MustBuildItem(todotxt.WithDescription("Item 1 "+testTrackingTag+":latest")),
 		todotxt.MustBuildItem(todotxt.WithDescription("Item 2 ")),
 	)
-	list.AddHook(hook.NewTracking(&trackerMock{}))
+	list.AddHook(hook.NewTracking(testTrackingTag, &trackerMock{}))
 
-	err := list.Tasks()[1].SetTag(hook.TrackingTag, "latest")
+	err := list.Tasks()[1].SetTag(testTrackingTag, "latest")
 	assert.NoError(t, err)
 
-	_, ok := list.Tasks()[0].Tags()[hook.TrackingTag]
+	_, ok := list.Tasks()[0].Tags()[testTrackingTag]
 	assert.False(t, ok)
 }
 
@@ -73,9 +75,9 @@ func Test_TrackingCallsStartWhenAddingTheTrackingTag(t *testing.T) {
 	list := todotxt.ListOf(
 		todotxt.MustBuildItem(todotxt.WithDescription("@aContext Item 1 +aProject an:ignored-tag")),
 	)
-	list.AddHook(hook.NewTracking(mock))
+	list.AddHook(hook.NewTracking(testTrackingTag, mock))
 
-	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	err := list.Tasks()[0].SetTag(testTrackingTag, "latest")
 	assert.NoError(t, err)
 
 	assert.True(t, mock.active)
@@ -89,12 +91,12 @@ func Test_TrackingTrimsContextAndProjectPrefixes(t *testing.T) {
 	list := todotxt.ListOf(
 		todotxt.MustBuildItem(todotxt.WithDescription("@aContext Item 1 +aProject an:ignored-tag")),
 	)
-	tracking := hook.NewTracking(mock)
+	tracking := hook.NewTracking(testTrackingTag, mock)
 	tracking.TrimContextPrefix = true
 	tracking.TrimProjectPrefix = true
 	list.AddHook(tracking)
 
-	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	err := list.Tasks()[0].SetTag(testTrackingTag, "latest")
 	assert.NoError(t, err)
 
 	assert.True(t, mock.active)
@@ -107,11 +109,11 @@ func Test_RemovingTheTrackingTagStopsTheTracking(t *testing.T) {
 	list := todotxt.ListOf(
 		todotxt.MustBuildItem(todotxt.WithDescription("@aContext Item 1 +aProject an:ignored-tag")),
 	)
-	list.AddHook(hook.NewTracking(mock))
+	list.AddHook(hook.NewTracking(testTrackingTag, mock))
 
-	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	err := list.Tasks()[0].SetTag(testTrackingTag, "latest")
 	assert.NoError(t, err)
-	err = list.Tasks()[0].SetTag(hook.TrackingTag, "")
+	err = list.Tasks()[0].SetTag(testTrackingTag, "")
 	assert.NoError(t, err)
 
 	assert.False(t, mock.active)
@@ -125,11 +127,11 @@ func Test_DontRelyOnTagOrdering(t *testing.T) {
 	list := todotxt.ListOf(
 		todotxt.MustBuildItem(todotxt.WithDescription("@aContext Item 1 +aProject an:ignored-tag")),
 	)
-	list.AddHook(hook.NewTracking(mock))
+	list.AddHook(hook.NewTracking(testTrackingTag, mock))
 
-	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	err := list.Tasks()[0].SetTag(testTrackingTag, "latest")
 	assert.NoError(t, err)
-	err = list.Tasks()[0].SetTag(hook.TrackingTag, "")
+	err = list.Tasks()[0].SetTag(testTrackingTag, "")
 	assert.NoError(t, err)
 
 	assert.False(t, mock.active)
@@ -141,9 +143,9 @@ func Test_ChangesWillPropagateToTheTracker(t *testing.T) {
 	list := todotxt.ListOf(
 		todotxt.MustBuildItem(todotxt.WithDescription("@aContext Item 1 +aProject an:ignored-tag")),
 	)
-	list.AddHook(hook.NewTracking(mock))
+	list.AddHook(hook.NewTracking(testTrackingTag, mock))
 
-	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	err := list.Tasks()[0].SetTag(testTrackingTag, "latest")
 	assert.NoError(t, err)
 	err = list.Tasks()[0].EditDescription(list.Tasks()[0].Description() + " @anotherContext")
 	assert.NoError(t, err)
@@ -159,9 +161,9 @@ func Test_OutOfBandChangesAreNotOverriden(t *testing.T) {
 	list := todotxt.ListOf(
 		todotxt.MustBuildItem(todotxt.WithDescription("@aContext Item 1 +aProject an:ignored-tag")),
 	)
-	list.AddHook(hook.NewTracking(mock))
+	list.AddHook(hook.NewTracking(testTrackingTag, mock))
 
-	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	err := list.Tasks()[0].SetTag(testTrackingTag, "latest")
 	assert.NoError(t, err)
 	mock.Start([]string{"Some", "Unrelated", "Tags"})
 	err = list.Tasks()[0].EditDescription(list.Tasks()[0].Description() + " @anotherContext")
@@ -177,9 +179,9 @@ func Test_StartOverridesActiveTracking(t *testing.T) {
 	list := todotxt.ListOf(
 		todotxt.MustBuildItem(todotxt.WithDescription("Item 1")),
 	)
-	list.AddHook(hook.NewTracking(mock))
+	list.AddHook(hook.NewTracking(testTrackingTag, mock))
 
-	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	err := list.Tasks()[0].SetTag(testTrackingTag, "latest")
 	assert.NoError(t, err)
 
 	assert.True(t, mock.active)
@@ -190,11 +192,11 @@ func Test_StartOverridesActiveTracking(t *testing.T) {
 func Test_RestartingTrackingCanBeDoneBySettingADifferentValue(t *testing.T) {
 	mock := &trackerMock{}
 	list := todotxt.ListOf(
-		todotxt.MustBuildItem(todotxt.WithDescription("Item 1 " + hook.TrackingTag + ":latest")),
+		todotxt.MustBuildItem(todotxt.WithDescription("Item 1 " + testTrackingTag + ":latest")),
 	)
-	list.AddHook(hook.NewTracking(mock))
+	list.AddHook(hook.NewTracking(testTrackingTag, mock))
 
-	err := list.Tasks()[0].SetTag(hook.TrackingTag, "another-value")
+	err := list.Tasks()[0].SetTag(testTrackingTag, "another-value")
 	assert.NoError(t, err)
 
 	assert.True(t, mock.active)
@@ -205,9 +207,9 @@ func Test_RestartingTrackingCanBeDoneBySettingADifferentValue(t *testing.T) {
 func Test_NotChangingTheTrackingTagDoesNotRestartTrackingOnChange(t *testing.T) {
 	mock := &trackerMock{}
 	list := todotxt.ListOf(
-		todotxt.MustBuildItem(todotxt.WithDescription("Item 1 " + hook.TrackingTag + ":latest")),
+		todotxt.MustBuildItem(todotxt.WithDescription("Item 1 " + testTrackingTag + ":latest")),
 	)
-	list.AddHook(hook.NewTracking(mock))
+	list.AddHook(hook.NewTracking(testTrackingTag, mock))
 
 	err := list.Tasks()[0].SetTag("some-tag", "some-value")
 	assert.NoError(t, err)
@@ -221,9 +223,9 @@ func Test_CompletingATaskStopsTracking(t *testing.T) {
 	list := todotxt.ListOf(
 		todotxt.MustBuildItem(todotxt.WithDescription("Item 1")),
 	)
-	list.AddHook(hook.NewTracking(mock))
+	list.AddHook(hook.NewTracking(testTrackingTag, mock))
 
-	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	err := list.Tasks()[0].SetTag(testTrackingTag, "latest")
 	assert.NoError(t, err)
 	err = list.Tasks()[0].Complete()
 	assert.NoError(t, err)
@@ -238,9 +240,9 @@ func Test_RemovingATaskStopsTracking(t *testing.T) {
 	list := todotxt.ListOf(
 		todotxt.MustBuildItem(todotxt.WithDescription("Item 1")),
 	)
-	list.AddHook(hook.NewTracking(mock))
+	list.AddHook(hook.NewTracking(testTrackingTag, mock))
 
-	err := list.Tasks()[0].SetTag(hook.TrackingTag, "latest")
+	err := list.Tasks()[0].SetTag(testTrackingTag, "latest")
 	assert.NoError(t, err)
 	err = list.Remove(1)
 	assert.NoError(t, err)
