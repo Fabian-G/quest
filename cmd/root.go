@@ -10,7 +10,7 @@ import (
 
 func Root(di *di.Container) (*cobra.Command, context.Context) {
 	defaultView := di.Config().DefaultView
-	rootCmd := newViewCommand(defaultView).command("")
+	rootCmd := newViewCommand(defaultView, di).command("")
 	rootCmd.PersistentFlags().String("config", "", "the config file to use") // This is just for the help message. Parsing happens in main.go
 	rootCmd.PersistentFlags().StringP("file", "f", "", "the todo.txt file")
 	rootCmd.PersistentPreRunE = cmdutil.Steps(
@@ -33,7 +33,7 @@ func Root(di *di.Container) (*cobra.Command, context.Context) {
 
 	rootCmd.AddCommand(newOpenCommand().command())
 	for name, def := range di.Config().Views {
-		viewCommand := newViewCommand(def)
+		viewCommand := newViewCommand(def, di)
 		rootCmd.AddCommand(viewCommand.command(name))
 	}
 
