@@ -14,6 +14,8 @@ import (
 
 var maxIdIterations = 1000
 
+var NoNoteIdsError = errors.New("could not find a new id in a reasonable amount of time. Try running \"quest notes clean\" or consider increasting id length")
+
 type NotesRepo struct {
 	dir      string
 	tag      string
@@ -56,7 +58,7 @@ func (n *NotesRepo) nextId() (string, error) {
 			return "", err
 		}
 	}
-	return "", errors.New("could not find a new id in a reasonable amount of time. Try running \"quest notes clean\" or consider increasting id length")
+	return "", NoNoteIdsError
 }
 
 func (n *NotesRepo) Get(item *Item) (string, error) {
@@ -79,7 +81,7 @@ func (n *NotesRepo) Get(item *Item) (string, error) {
 			return "", err
 		}
 		defer file.Close()
-		_, err = file.WriteString(fmt.Sprintf("# Notes for task \"%s\"\n",
+		_, err = file.WriteString(fmt.Sprintf("# Notes for task \"%s\"\n\n",
 			item.CleanDescription(item.Projects(), item.Contexts(), item.Tags().Keys())),
 		)
 		if err != nil {

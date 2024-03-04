@@ -11,6 +11,9 @@ import (
 
 func Test_RunsWithEmptyConfigurationFile(t *testing.T) {
 	tmpConfig, err := os.CreateTemp("", "empty-quest-test-config-*.toml")
+	t.Cleanup(func() {
+		os.Remove(tmpConfig.Name())
+	})
 	assert.Nil(t, err)
 	assert.Nil(t, tmpConfig.Close())
 
