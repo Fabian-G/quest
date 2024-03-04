@@ -118,6 +118,18 @@ func EnsureDoneFileExists(cmd *cobra.Command, args []string) error {
 	return createFileIfNotExists(file)
 }
 
+func EnsureNotesDirExists(cmd *cobra.Command, args []string) error {
+	di := cmd.Context().Value(DiKey).(*di.Container)
+	if di.NotesRepo() == nil {
+		return nil // Feature not activated (so don't bother)
+	}
+	err := os.Mkdir(di.Config().Notes.Dir, 0777)
+	if errors.Is(err, os.ErrExist) {
+		return nil
+	}
+	return err
+}
+
 func RegisterMacros(cmd *cobra.Command, args []string) error {
 	di := cmd.Context().Value(DiKey).(*di.Container)
 	for _, macro := range di.Config().Macros {

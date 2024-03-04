@@ -31,7 +31,7 @@ func Test_NewNoteIsCreatedIfNoneExists(t *testing.T) {
 	defer noteFile.Close()
 	content, err := io.ReadAll(noteFile)
 	assert.NoError(t, err)
-	assert.Equal(t, "# Notes for task \"Test item\"\n\n", string(content))
+	assert.Equal(t, "# Notes for task \"Test item\"\n", string(content))
 }
 
 func Test_ExistingNoteIsReturnedIfOneExists(t *testing.T) {

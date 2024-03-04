@@ -15,6 +15,7 @@ type Container struct {
 	config               *Config
 	repo                 *todotxt.Repo
 	doneRepo             *todotxt.Repo
+	notesRepo            *todotxt.NotesRepo
 	questScoreCalculator *qscore.Calculator
 	sortCompiler         *qsort.Compiler
 	projector            map[string]*qprojection.Projector
@@ -33,6 +34,13 @@ func (d *Container) DoneTxtRepo() *todotxt.Repo {
 		d.doneRepo = buildDoneTxtRepo(d.Config(), d.SortCompiler())
 	}
 	return d.doneRepo
+}
+
+func (d *Container) NotesRepo() *todotxt.NotesRepo {
+	if d.notesRepo == nil {
+		d.notesRepo = buildNotesRepo(d.Config())
+	}
+	return d.notesRepo
 }
 
 func (d *Container) Config() Config {

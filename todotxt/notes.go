@@ -70,7 +70,9 @@ func (n *NotesRepo) Get(item *Item) (string, error) {
 			return "", err
 		}
 		note = newNote
-		item.SetTag(n.tag, note)
+		if err := item.SetTag(n.tag, note); err != nil {
+			return "", fmt.Errorf("could not set reference to note: %w", err)
+		}
 	} else {
 		note = noteTags[0]
 	}
@@ -81,7 +83,7 @@ func (n *NotesRepo) Get(item *Item) (string, error) {
 			return "", err
 		}
 		defer file.Close()
-		_, err = file.WriteString(fmt.Sprintf("# Notes for task \"%s\"\n\n",
+		_, err = file.WriteString(fmt.Sprintf("# Notes for task \"%s\"\n",
 			item.CleanDescription(item.Projects(), item.Contexts(), item.Tags().Keys())),
 		)
 		if err != nil {
@@ -94,7 +96,7 @@ func (n *NotesRepo) Get(item *Item) (string, error) {
 	return n.idToPath(note), nil
 }
 
-func (n *NotesRepo) Clean(list *List) error {
+func (n *NotesRepo) Clean(lists ...*List) error {
 	files := os.DirFS(n.dir)
 	notes, err := fs.ReadDir(files, ".")
 	if err != nil {
@@ -102,12 +104,14 @@ func (n *NotesRepo) Clean(list *List) error {
 	}
 
 	referenced := make([]string, 0)
-	for _, item := range list.Tasks() {
-		noteTags, ok := item.Tags()[n.tag]
-		if !ok || len(noteTags) == 0 {
-			continue
+	for _, list := range lists {
+		for _, item := range list.Tasks() {
+			noteTags, ok := item.Tags()[n.tag]
+			if !ok || len(noteTags) == 0 {
+				continue
+			}
+			referenced = append(referenced, noteTags...)
 		}
-		referenced = append(referenced, noteTags...)
 	}
 	unreferencedNotes := slices.DeleteFunc(notes, func(entry fs.DirEntry) bool {
 		if !entry.Type().IsRegular() {

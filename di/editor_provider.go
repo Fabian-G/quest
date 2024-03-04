@@ -30,7 +30,7 @@ func buildEditor(c Config) Editor {
 		defer func() {
 			_ = os.Chdir(wdBackup)
 		}()
-		cmd := exec.Command(command, fileName)
+		cmd := exec.Command(command, path.Base(fileName))
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
