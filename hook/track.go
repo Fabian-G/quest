@@ -8,8 +8,6 @@ import (
 	"github.com/Fabian-G/quest/todotxt"
 )
 
-var TrackingTag = "quest-tr"
-
 var ErrNoActiveTracking = errors.New("No active tracking")
 
 type Tracker interface {
@@ -19,35 +17,37 @@ type Tracker interface {
 	SetTags(tags []string) error
 }
 
-func NewTracking(tracker Tracker) *Tracking {
+func NewTracking(tag string, tracker Tracker) *Tracking {
 	return &Tracking{
-		tracker: tracker,
+		Tracker: tracker,
+		Tag:     tag,
 	}
 }
 
 type Tracking struct {
-	tracker           Tracker
+	Tracker           Tracker
+	Tag               string
 	TrimProjectPrefix bool
 	TrimContextPrefix bool
 }
 
 func (t Tracking) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
-	prevTracked := event.Previous != nil && !event.Previous.Done() && isTrackedTask(event.Previous)
-	curTracked := event.Current != nil && !event.Current.Done() && isTrackedTask(event.Current)
+	prevTracked := event.Previous != nil && !event.Previous.Done() && t.isTrackedTask(event.Previous)
+	curTracked := event.Current != nil && !event.Current.Done() && t.isTrackedTask(event.Current)
 	switch {
 	case !prevTracked && !curTracked:
 		// Nothing interesting in this case
 		return nil
 	case !prevTracked && curTracked:
-		clearTrackingTag(list, event.Current)
-		return t.tracker.Start(t.trackingTags(event.Current))
+		t.clearTrackingTag(list, event.Current)
+		return t.Tracker.Start(t.trackingTags(event.Current))
 	case prevTracked && !curTracked:
 		active, err := t.stillActive(event.Previous)
 		if err != nil {
 			return err
 		}
 		if active {
-			return t.tracker.Stop()
+			return t.Tracker.Stop()
 		}
 	case prevTracked && curTracked:
 		active, err := t.stillActive(event.Previous)
@@ -55,9 +55,9 @@ func (t Tracking) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
 			return err
 		}
 		if active {
-			return t.tracker.SetTags(t.trackingTags(event.Current))
-		} else if event.Previous.Tags()[TrackingTag][0] != event.Current.Tags()[TrackingTag][0] {
-			return t.tracker.Start(t.trackingTags(event.Current))
+			return t.Tracker.SetTags(t.trackingTags(event.Current))
+		} else if event.Previous.Tags()[t.Tag][0] != event.Current.Tags()[t.Tag][0] {
+			return t.Tracker.Start(t.trackingTags(event.Current))
 		}
 	}
 	return nil
@@ -65,7 +65,7 @@ func (t Tracking) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
 
 func (t Tracking) stillActive(item *todotxt.Item) (bool, error) {
 	tTags := t.trackingTags(item)
-	activeTags, err := t.tracker.ActiveTags()
+	activeTags, err := t.Tracker.ActiveTags()
 	if errors.Is(err, ErrNoActiveTracking) {
 		return false, nil
 	}
@@ -85,18 +85,18 @@ func (t Tracking) stillActive(item *todotxt.Item) (bool, error) {
 	return true, nil
 }
 
-func isTrackedTask(item *todotxt.Item) bool {
-	_, ok := item.Tags()[TrackingTag]
+func (t Tracking) isTrackedTask(item *todotxt.Item) bool {
+	_, ok := item.Tags()[t.Tag]
 	return ok
 }
 
-func clearTrackingTag(list *todotxt.List, item *todotxt.Item) {
-	for _, t := range list.Tasks() {
-		if t == item {
+func (t Tracking) clearTrackingTag(list *todotxt.List, item *todotxt.Item) {
+	for _, task := range list.Tasks() {
+		if task == item {
 			continue
 		}
 		// This can not error, because hooks are disabled at this point
-		if err := t.SetTag(TrackingTag, ""); err != nil {
+		if err := task.SetTag(t.Tag, ""); err != nil {
 			panic(err)
 		}
 	}

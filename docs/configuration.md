@@ -59,6 +59,9 @@ min-priority = "E"
 # Properties for configuring the timewarrior integration.
 # The Projects, Contexts and description are used for tags
 [tracking]
+# The tag that should trigger tracking
+# DEFAULT: "" (therefore tracking is disabled by default)
+tag = "tr"
 trim-project-prefix = false # If the + should be removed from projects
 trim-context-prefix = false # If the @ should be removed from contexts
 

@@ -39,8 +39,8 @@ func hooks(c Config) []todotxt.Hook {
 			Threshold: c.Recurrence.ThresholdTag,
 		}, hook.WithNowFunc(c.NowFunc), hook.WithPreservePriority(c.Recurrence.PreservePriority)))
 	}
-	if timew, err := exec.LookPath("timew"); err == nil {
-		tracking := hook.NewTracking(&timeWarrior{timew: timew})
+	if timew, err := exec.LookPath("timew"); err == nil && len(c.Tracking.Tag) > 0 {
+		tracking := hook.NewTracking(c.Tracking.Tag, &timeWarrior{timew: timew})
 		tracking.TrimContextPrefix = c.Tracking.TrimContextPrefix
 		tracking.TrimProjectPrefix = c.Tracking.TrimProjectPrefix
 		hooks = append(hooks, tracking)

@@ -13,20 +13,22 @@ import (
 )
 
 type viewCommand struct {
-	def          di.ViewDef
-	projection   []string
-	sortOrder    []string
-	limit        int
-	qqlSearch    []string
-	rngSearch    []string
-	stringSearch []string
-	json         bool
-	interactive  bool
+	def             di.ViewDef
+	projection      []string
+	sortOrder       []string
+	limit           int
+	qqlSearch       []string
+	rngSearch       []string
+	stringSearch    []string
+	json            bool
+	interactive     bool
+	trackingEnabled bool
 }
 
-func newViewCommand(def di.ViewDef) *viewCommand {
+func newViewCommand(def di.ViewDef, container *di.Container) *viewCommand {
 	cmd := viewCommand{
-		def: def,
+		def:             def,
+		trackingEnabled: len(container.Config().Tracking.Tag) > 0,
 	}
 
 	return &cmd
@@ -60,7 +62,9 @@ func (v *viewCommand) command(name string) *cobra.Command {
 	listCmd.AddCommand(newArchiveCommand(v.def).command())
 	listCmd.AddCommand(newSetCommand(v.def).command())
 	listCmd.AddCommand(newUnsetCommand(v.def).command())
-	listCmd.AddCommand(newTrackCommand(v.def).command())
+	if v.trackingEnabled {
+		listCmd.AddCommand(newTrackCommand(v.def).command())
+	}
 
 	return listCmd
 }
