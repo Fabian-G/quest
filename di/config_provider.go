@@ -188,6 +188,7 @@ func buildConfig(file string) (Config, error) {
 	}
 	config.TodoFile = os.ExpandEnv(config.TodoFile)
 	config.DoneFile = os.ExpandEnv(config.DoneFile)
+	config.Notes.Dir = os.ExpandEnv(config.Notes.Dir)
 	config.Tags[InternalEditTag] = TagDef{
 		Type:     "int",
 		Humanize: false,
