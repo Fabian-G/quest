@@ -17,6 +17,7 @@ func Root(di *di.Container) (*cobra.Command, context.Context) {
 		cmdutil.ConfigOverrides,
 		cmdutil.EnsureTodoFileExits,
 		cmdutil.EnsureDoneFileExists,
+		cmdutil.EnsureNotesDirExists,
 		cmdutil.RegisterMacros,
 		cmdutil.SyncConflictProtection,
 	)

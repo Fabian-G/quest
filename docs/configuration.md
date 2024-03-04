@@ -62,8 +62,12 @@ min-priority = "E"
 # The tag that should trigger tracking
 # DEFAULT: "" (therefore tracking is disabled by default)
 tag = "tr"
-trim-project-prefix = false # If the + should be removed from projects
-trim-context-prefix = false # If the @ should be removed from contexts
+# If the + should be removed from projects
+# DEFAULT: false 
+trim-project-prefix = true 
+# If the @ should be removed from contexts
+# DEFAULT: false
+trim-context-prefix = true 
 
 # Tag configuration for the recurrence feature
 # DEFAULT: empty (therefore disabled)
@@ -80,6 +84,28 @@ threshold-tag = "t"
 # When this option is set to true an item that is spawned by completing a
 # recurrent item will be assigned the same priority as the original.
 preserve-priority = false
+
+# Configures quest's notes feature, which allows you to add free 
+# multi line notes to your todo.txt items
+[notes]
+# The tag which should store the reference to the note id
+# DEFAULT: "" (therefore notes are disabled by default)
+tag = "n" 
+# The length of the id.
+# Note ids are generated randomly from an alphabet of size 36.
+# Do not choose a value too low, because quest might fail 
+# to find a free id.
+# With an id length of 4 you shouldn't ever run out of ids.
+# DEFAULT: 4
+id-length = 4 
+# Directory where notes should be stored.
+# The base directory will be created if necessary, parents are not.
+# Note that this directory should be exclusively used by quest,
+# files in that directory that were not created by quest may be
+# deleted without warning (in particular by the "notes clean" command)
+# DEFAULT: $HOME/.local/share/quest/notes
+dir = "/path/to/the/notes/dir"
+
 
 # List of tag definitions to enable tag expansions and styling
 [tags]

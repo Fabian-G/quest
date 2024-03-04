@@ -36,7 +36,7 @@ func (a *addCommand) command() *cobra.Command {
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
 
-	addCmd.Flags().StringVarP(&a.prio, "priority", "p", "none", "TODO")
+	addCmd.Flags().StringVarP(&a.prio, "priority", "p", "none", "The priority for the new task.")
 
 	return addCmd
 }

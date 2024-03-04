@@ -43,7 +43,7 @@ func (e *editCommand) command() *cobra.Command {
 		PostRunE: cmdutil.Steps(cmdutil.SaveList),
 	}
 	cmdutil.RegisterSelectionFlags(editCommand, &e.qql, &e.rng, &e.str, nil)
-	editCommand.Flags().StringSliceVarP(&e.sortOrder, "sort", "s", e.viewDef.Sort, "TODO")
+	editCommand.Flags().StringSliceVarP(&e.sortOrder, "sort", "s", e.viewDef.Sort, "The order in which the todo items are loaded into your editor.")
 	return editCommand
 }
 

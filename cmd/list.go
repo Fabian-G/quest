@@ -23,12 +23,14 @@ type viewCommand struct {
 	json            bool
 	interactive     bool
 	trackingEnabled bool
+	notesEnabled    bool
 }
 
 func newViewCommand(def di.ViewDef, container *di.Container) *viewCommand {
 	cmd := viewCommand{
 		def:             def,
 		trackingEnabled: len(container.Config().Tracking.Tag) > 0,
+		notesEnabled:    container.NotesRepo() != nil,
 	}
 
 	return &cmd
@@ -62,6 +64,9 @@ func (v *viewCommand) command(name string) *cobra.Command {
 	listCmd.AddCommand(newArchiveCommand(v.def).command())
 	listCmd.AddCommand(newSetCommand(v.def).command())
 	listCmd.AddCommand(newUnsetCommand(v.def).command())
+	if v.notesEnabled {
+		listCmd.AddCommand(newNotesCommand(v.def).command())
+	}
 	if v.trackingEnabled {
 		listCmd.AddCommand(newTrackCommand(v.def).command())
 	}

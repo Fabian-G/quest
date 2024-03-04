@@ -81,6 +81,11 @@ type Config struct {
 		ThresholdTag     string `mapstructure:"threshold-tag,omitempty"`
 		PreservePriority bool   `mapstructure:"preserve-priority,omitempty"`
 	} `mapstructure:"recurrence,omitempty"`
+	Notes struct {
+		Tag      string `mapstructure:"tag,omitempty"`
+		Dir      string `mapstructure:"dir,omitempty"`
+		IdLength int    `mapstructure:"id-length,omitempty"`
+	} `mapstructure:"notes,omitempty"`
 	Styles      []StyleDef         `mapstructure:"styles"`
 	DefaultView ViewDef            `mapstructure:"default-view,omitempty"`
 	Views       map[string]ViewDef `mapstructure:"views,omitempty"`
@@ -246,6 +251,9 @@ func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
 	v.SetDefault("recurrence.due-tag", "due")
 	v.SetDefault("recurrence.threshold-tag", "t")
 	v.SetDefault("recurrence.preserve-priority", false)
+	v.SetDefault("notes.tag", "")
+	v.SetDefault("notes.id-length", 4)
+	v.SetDefault("notes.dir", path.Join(dataHome, "quest/notes"))
 	v.SetDefault("default-view.query", "")
 	v.SetDefault("default-view.projection", qprojection.StarProjection)
 	v.SetDefault("default-view.sort", nil)
