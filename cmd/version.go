@@ -59,6 +59,6 @@ func (v *versionCommand) version(cmd *cobra.Command, args []string) error {
 		cmdOut, _ := exec.Command(timewarrior, "--version").Output()
 		timewVersion = string(bytes.TrimSpace(cmdOut))
 	}
-	fmt.Printf("Timewarrior: %s (v%s)\n", timewarrior, timewVersion)
+	fmt.Printf("Timewarrior: %s (%s)\n", timewarrior, timewVersion)
 	return nil
 }
