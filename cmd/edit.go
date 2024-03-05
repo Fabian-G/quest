@@ -127,7 +127,7 @@ func (e *editCommand) applyChanges(tmpFile string, list *todotxt.List, selection
 		return 0, 0, 0, err
 	}
 
-	changedItems, err := mapToIds(changeList, len(selection))
+	changedItems, err := mapToIds(changeList)
 	if err != nil {
 		return 0, 0, 0, err
 	}
@@ -210,7 +210,7 @@ type itemWithId struct {
 	item *todotxt.Item
 }
 
-func mapToIds(items []*todotxt.Item, maxId int) ([]itemWithId, error) {
+func mapToIds(items []*todotxt.Item) ([]itemWithId, error) {
 	idMap := make([]itemWithId, 0) // slice instead of map, because we must retain the order
 	for _, item := range items {
 		id, err := getEditId(item)
