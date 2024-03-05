@@ -33,6 +33,7 @@ func Root(di *di.Container) (*cobra.Command, context.Context) {
 	})
 
 	rootCmd.AddCommand(newOpenCommand().command())
+	rootCmd.AddCommand(newVersionCommand().command())
 	for name, def := range di.Config().Views {
 		viewCommand := newViewCommand(def, di)
 		rootCmd.AddCommand(viewCommand.command(name))

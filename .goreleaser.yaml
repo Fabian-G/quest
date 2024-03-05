@@ -8,6 +8,8 @@ builds:
       - linux
       - windows
       - darwin
+    ldflags:
+      - -s -w -X github.com/Fabian-G/quest/cmd.version={{.Version}} -X github.com/Fabian-G/quest/cmd.commit={{.Commit}} -X github.com/Fabian-G/quest/cmd.date={{.Date}} -X github.com/Fabian-G/quest/cmd.builtBy=goreleaser
 
 archives:
   - format: tar.gz
