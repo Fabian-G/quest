@@ -17,6 +17,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	subDirName = "quest"
+	configExt  = "toml"
+	configName = "config"
+)
+
 var InternalEditTag = "quest-object-id"
 
 type StyleDef struct {
@@ -157,6 +163,15 @@ func (c Config) LineColors() qprojection.ColorFunc {
 	}
 }
 
+func DefaultConfigLocation() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(fmt.Errorf("could not determine users home directory: %w", err))
+	}
+	configHome := getConfigHome(homeDir)
+	return path.Join(configHome, subDirName, fmt.Sprintf("%s.%s", configName, configExt))
+}
+
 func buildConfig(file string) (Config, error) {
 	v := viper.New()
 	homeDir, err := os.UserHomeDir()
@@ -167,12 +182,12 @@ func buildConfig(file string) (Config, error) {
 	configHome := getConfigHome(homeDir)
 	dataHome := getDataHome(homeDir)
 
-	v.SetConfigType("toml")
+	v.SetConfigType(configExt)
 	if file != "" {
 		v.SetConfigFile(file)
 	} else {
-		v.SetConfigName("config")
-		v.AddConfigPath(path.Join(configHome, "quest"))
+		v.SetConfigName(configName)
+		v.AddConfigPath(path.Join(configHome, configExt))
 	}
 
 	err = v.ReadInConfig()
@@ -180,7 +195,7 @@ func buildConfig(file string) (Config, error) {
 	if err != nil && !errors.As(err, &notFound) {
 		return Config{}, err
 	}
-	setDefaults(v, homeDir, dataHome)
+	setDefaults(v, dataHome)
 
 	config := Config{}
 	if err := v.UnmarshalExact(&config); err != nil {
@@ -235,7 +250,7 @@ func getDataHome(home string) string {
 	return ""
 }
 
-func setDefaults(v *viper.Viper, homeDir string, dataHome string) {
+func setDefaults(v *viper.Viper, dataHome string) {
 	v.SetDefault("todo-file", path.Join(dataHome, "quest/todo.txt"))
 	v.SetDefault("done-file", path.Join(dataHome, "quest/done.txt"))
 	v.SetDefault("backup", 0)

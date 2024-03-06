@@ -24,14 +24,14 @@ type Container struct {
 
 func (d *Container) TodoTxtRepo() *todotxt.Repo {
 	if d.repo == nil {
-		d.repo = buildTodoTxtRepo(d.Config(), d.SortCompiler())
+		d.repo = buildTodoTxtRepo(d.Config())
 	}
 	return d.repo
 }
 
 func (d *Container) DoneTxtRepo() *todotxt.Repo {
 	if d.doneRepo == nil {
-		d.doneRepo = buildDoneTxtRepo(d.Config(), d.SortCompiler())
+		d.doneRepo = buildDoneTxtRepo(d.Config())
 	}
 	return d.doneRepo
 }
