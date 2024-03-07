@@ -1,0 +1,114 @@
+todo-file = "$HOME/.local/share/quest/todo.txt"
+done-file = "$HOME/.local/share/quest/done.txt"
+
+[quest-score]
+urgency-tags = ["due"]
+urgency-begin = 45
+min-priority = "E"
+
+[recurrence]
+rec-tag = "rec"
+due-tag = "due"
+threshold-tag = "t"
+
+[tracking]
+tag = "tr"
+trim-project-prefix = true 
+trim-context-prefix = true 
+
+[notes]
+tag = "n"
+id-length = 4
+dir = "$HOME/.local/share/quest/notes"
+
+[tags]
+[tags.due]
+type = "date"
+humanize = true
+styles = [
+	{ if = 'date(tag(it, "due"), maxDate) <= today + 1d', fg = "1" },
+	{ if = 'date(tag(it, "due"), maxDate) <= today + 3d', fg = "6" }
+]
+[tags.t]
+type = "date"
+humanize = true
+styles = [
+	{ if = 'date(tag(it, "t"), maxDate) <= today + 1d', fg = "1" },
+	{ if = 'date(tag(it, "t"), maxDate) <= today + 3d', fg = "6" }
+]
+[tags.rec]
+type = "duration"
+[tags.tr]
+type = "int"
+[tags.n]
+type = "string"
+
+[default-view]
+projection = ["line", "done" ,"priority","projects","contexts","description"]
+clean = ["@ALL","+ALL"]
+interactive = false
+add-suffix = '@inbox'
+
+[views.inbox]
+query = 'inbox'
+sort = ["+creation","+description"]
+clean = ["@inbox"]
+projection = ["line","creation","description"]
+
+[views.next]
+query = 'next'
+sort = ["-score"]
+clean = ["+ALL","@ALL","due","t","rec"]
+projection = ["line","score","priority","tag:due","projects","contexts","description"]
+
+[views.someday]
+query = 'someday'
+clean = ["+ALL","@ALL","@someday","due","t","rec"]
+projection = ["line","priority","projects","contexts","description"]
+
+[views.scheduled]
+query = 'scheduled'
+clean = ["+ALL","@ALL","due","t","rec"]
+sort = ["+tag:t"]
+projection = ["line","priority","tag:due","tag:t","tag:rec","projects","contexts","description"]
+
+[views.waiting]
+query = 'waiting'
+clean = ["+ALL","@ALL","@waiting","due","t","rec"]
+projection = ["line","priority","projects","contexts","description"]
+
+
+[[macro]]
+name = "scheduled"
+args = ["item"]
+result = "bool"
+query = '!done && date(tag(arg0, "t"), minDate) > today'
+inject-it = true
+
+[[macro]]
+name = "waiting"
+args = ["item"]
+result = "bool"
+query = '!done && exists c in contexts(arg0): c == "@waiting"'
+inject-it = true
+
+[[macro]]
+name = "someday"
+args = ["item"]
+result = "bool"
+query = '!done && exists c in contexts(arg0): c == "@someday"'
+inject-it = true
+
+[[macro]]
+name = "inbox"
+args = ["item"]
+result = "bool"
+query = '!done(arg0) && exists c in contexts(arg0): c == "@inbox"'
+inject-it = true
+
+[[macro]]
+name = "next"
+args = ["item"]
+result = "bool"
+query = '!done(arg0) && !inbox(arg0) && !scheduled(arg0) && !waiting(arg0) && !someday(arg0)'
+inject-it = true

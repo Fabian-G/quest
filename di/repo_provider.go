@@ -7,18 +7,17 @@ import (
 	"strings"
 
 	"github.com/Fabian-G/quest/hook"
-	"github.com/Fabian-G/quest/qsort"
 	"github.com/Fabian-G/quest/todotxt"
 )
 
-func buildTodoTxtRepo(c Config, sortCompiler qsort.Compiler) *todotxt.Repo {
+func buildTodoTxtRepo(c Config) *todotxt.Repo {
 	repo := todotxt.NewRepo(c.TodoFile)
 	repo.DefaultHooks = hooks(c)
 	repo.Keep = c.KeepBackups
 	return repo
 }
 
-func buildDoneTxtRepo(c Config, sortCompiler qsort.Compiler) *todotxt.Repo {
+func buildDoneTxtRepo(c Config) *todotxt.Repo {
 	repo := todotxt.NewRepo(c.DoneFile)
 	repo.Keep = c.KeepBackups
 	return repo

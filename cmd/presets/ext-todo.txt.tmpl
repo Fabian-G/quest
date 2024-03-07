@@ -1,0 +1,53 @@
+todo-file = "$HOME/.local/share/quest/todo.txt"
+done-file = "$HOME/.local/share/quest/done.txt"
+
+[quest-score]
+urgency-tags = ["due"]
+urgency-begin = 45
+min-priority = "E"
+
+[recurrence]
+rec-tag = "rec"
+due-tag = "due"
+threshold-tag = "t"
+
+[tracking]
+tag = "tr"
+trim-project-prefix = true 
+trim-context-prefix = true 
+
+[notes]
+tag = "n"
+id-length = 4
+dir = "$HOME/.local/share/quest/notes"
+
+[tags]
+[tags.due]
+type = "date"
+humanize = true
+styles = [
+	{ if = 'date(tag(it, "due"), maxDate) <= today + 1d', fg = "1" },
+	{ if = 'date(tag(it, "due"), maxDate) <= today + 3d', fg = "6" }
+]
+[tags.t]
+type = "date"
+humanize = true
+styles = [
+	{ if = 'date(tag(it, "t"), maxDate) <= today + 1d', fg = "1" },
+	{ if = 'date(tag(it, "t"), maxDate) <= today + 3d', fg = "6" }
+]
+[tags.rec]
+type = "duration"
+[tags.tr]
+type = "int"
+[tags.n]
+type = "string"
+
+[default-view]
+projection = ["line", "done" ,"priority","projects","contexts","description"]
+clean = ["@ALL","+ALL"]
+interactive = false
+query = '!done'
+
+[views.all]
+query = ''
