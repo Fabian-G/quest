@@ -2,6 +2,7 @@
 
 Time tracking in quest is delegated to your local installation of timewarrior.
 To enable time tracking you have to:
+
 1. Tell quest which tag to use to be able to remember what currently is being tracked.
 2. Have timewarrior installed.
 
