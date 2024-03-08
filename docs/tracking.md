@@ -81,6 +81,20 @@ Another option is to clear the tracking tag: `quest unset tr on 42`.
 
 And the last option is to complete the item, which also automatically stops tracking: `quest complete 42`.
 
+For the purpose of stopping a task it is also very convenient to have a macro at hand that matches
+the task that is actively being tracked. For example:
+
+```toml
+[[macro]]
+name = "tracked"
+args = ["item"]
+result = "bool"
+query = '!done(arg0) && !(tag(arg0, "tr") == "")'
+inject-it = true
+```
+
+Now `quest complete tracked` will also do the trick.
+
 ## Configuring timewarrior tags
 
 By default quest uses projects, contexts and the description without any projects/context/tags as timewarrior tags.
