@@ -279,7 +279,7 @@ func setDefaults(v *viper.Viper, dataHome string) {
 	v.SetDefault("default-view.sort", nil)
 	v.SetDefault("default-view.clean", nil)
 	v.SetDefault("default-view.limit", -1)
-	v.SetDefault("default-view.interactive", true)
+	v.SetDefault("default-view.interactive", false)
 	v.SetDefault("default-view.add-prefix", "")
 	v.SetDefault("default-view.add-suffix", "")
 	v.SetDefault("tags", make(map[string]TagDef))
