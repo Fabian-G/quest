@@ -189,7 +189,7 @@ func buildConfig(file string) (Config, error) {
 		v.SetConfigFile(file)
 	} else {
 		v.SetConfigName(configName)
-		v.AddConfigPath(path.Join(configHome, configExt))
+		v.AddConfigPath(path.Join(configHome, subDirName))
 	}
 
 	err = v.ReadInConfig()
