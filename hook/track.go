@@ -29,6 +29,7 @@ type Tracking struct {
 	Tag               string
 	TrimProjectPrefix bool
 	TrimContextPrefix bool
+	IncludeTags       []string
 }
 
 func (t Tracking) OnMod(list *todotxt.List, event todotxt.ModEvent) error {
@@ -108,6 +109,15 @@ func (t Tracking) trackingTags(item *todotxt.Item) []string {
 	tags := item.Tags()
 	description := item.CleanDescription(projects, contexts, tags.Keys())
 	trackingTags := make([]string, 0, len(projects)+len(contexts)+1)
+	for _, tTag := range t.IncludeTags {
+		values, ok := tags[tTag]
+		if !ok {
+			continue
+		}
+		for _, v := range values {
+			trackingTags = append(trackingTags, fmt.Sprintf("%s:%s", tTag, v))
+		}
+	}
 	for _, p := range projects {
 		if t.TrimProjectPrefix {
 			trackingTags = append(trackingTags, p.String()[1:])
