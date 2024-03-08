@@ -1,4 +1,4 @@
-# Tags
+# Tag Expansions
 
 By default Quest does not make any assumptions about what tags you use.
 You can, however, choose to tell quest more about that to get some extra benefits
