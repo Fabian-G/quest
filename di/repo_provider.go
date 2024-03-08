@@ -42,6 +42,7 @@ func hooks(c Config) []todotxt.Hook {
 		tracking := hook.NewTracking(c.Tracking.Tag, &timeWarrior{timew: timew})
 		tracking.TrimContextPrefix = c.Tracking.TrimContextPrefix
 		tracking.TrimProjectPrefix = c.Tracking.TrimProjectPrefix
+		tracking.IncludeTags = c.Tracking.IncludeTags
 		hooks = append(hooks, tracking)
 	}
 	return hooks

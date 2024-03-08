@@ -77,9 +77,10 @@ type Config struct {
 		UrgencyDefault string   `mapstructure:"urgency-default,omitempty"`
 	} `mapstructure:"quest-score,omitempty"`
 	Tracking struct {
-		Tag               string `mapstructure:"tag,omitempty"`
-		TrimProjectPrefix bool   `mapstructure:"trim-project-prefix,omitempty"`
-		TrimContextPrefix bool   `mapstructure:"trim-context-prefix,omitempty"`
+		Tag               string   `mapstructure:"tag,omitempty"`
+		IncludeTags       []string `mapstructure:"include-tags,omitempty"`
+		TrimProjectPrefix bool     `mapstructure:"trim-project-prefix,omitempty"`
+		TrimContextPrefix bool     `mapstructure:"trim-context-prefix,omitempty"`
 	} `mapstructure:"tracking,omitempty"`
 	Recurrence struct {
 		RecTag           string `mapstructure:"rec-tag,omitempty"`
@@ -261,6 +262,7 @@ func setDefaults(v *viper.Viper, dataHome string) {
 	v.SetDefault("quest-score.min-priority", "E")
 	v.SetDefault("quest-score.urgency-default", "0d")
 	v.SetDefault("tracking.tag", "")
+	v.SetDefault("tracking.include-tags", nil)
 	v.SetDefault("tracking.trim-project-prefix", false)
 	v.SetDefault("tracking.trim-context-prefix", false)
 	v.SetDefault("clear-on-done", nil)

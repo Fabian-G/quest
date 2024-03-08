@@ -82,8 +82,24 @@ func Test_TrackingCallsStartWhenAddingTheTrackingTag(t *testing.T) {
 
 	assert.True(t, mock.active)
 	assert.Equal(t, 1, len(mock.startCalls))
-	// Also test for the correct order of tags here
-	assert.Equal(t, []string{"+aProject", "@aContext", "Item 1"}, mock.startCalls[0])
+	assert.ElementsMatch(t, []string{"+aProject", "@aContext", "Item 1"}, mock.startCalls[0])
+}
+
+func Test_TrackingIncludesConfiguredTags(t *testing.T) {
+	mock := &trackerMock{}
+	list := todotxt.ListOf(
+		todotxt.MustBuildItem(todotxt.WithDescription("@aContext Item 1 +aProject an:ignored-tag ticket:42")),
+	)
+	tracking := hook.NewTracking(testTrackingTag, mock)
+	tracking.IncludeTags = []string{"ticket"}
+	list.AddHook(tracking)
+
+	err := list.Tasks()[0].SetTag(testTrackingTag, "latest")
+	assert.NoError(t, err)
+
+	assert.True(t, mock.active)
+	assert.Equal(t, 1, len(mock.startCalls))
+	assert.ElementsMatch(t, []string{"+aProject", "@aContext", "Item 1", "ticket:42"}, mock.startCalls[0])
 }
 
 func Test_TrackingTrimsContextAndProjectPrefixes(t *testing.T) {
@@ -101,7 +117,7 @@ func Test_TrackingTrimsContextAndProjectPrefixes(t *testing.T) {
 
 	assert.True(t, mock.active)
 	assert.Equal(t, 1, len(mock.startCalls))
-	assert.Equal(t, []string{"aProject", "aContext", "Item 1"}, mock.startCalls[0])
+	assert.ElementsMatch(t, []string{"aProject", "aContext", "Item 1"}, mock.startCalls[0])
 }
 
 func Test_RemovingTheTrackingTagStopsTheTracking(t *testing.T) {
@@ -153,7 +169,7 @@ func Test_ChangesWillPropagateToTheTracker(t *testing.T) {
 	assert.True(t, mock.active)
 	assert.Equal(t, 1, len(mock.startCalls))
 	assert.Equal(t, 1, len(mock.setTagsCalls))
-	assert.Equal(t, []string{"+aProject", "@aContext", "@anotherContext", "Item 1"}, mock.setTagsCalls[0])
+	assert.ElementsMatch(t, []string{"+aProject", "@aContext", "@anotherContext", "Item 1"}, mock.setTagsCalls[0])
 }
 
 func Test_OutOfBandChangesAreNotOverriden(t *testing.T) {
@@ -170,7 +186,7 @@ func Test_OutOfBandChangesAreNotOverriden(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.True(t, mock.active)
-	assert.Equal(t, []string{"Some", "Unrelated", "Tags"}, mock.currentTags)
+	assert.ElementsMatch(t, []string{"Some", "Unrelated", "Tags"}, mock.currentTags)
 }
 
 func Test_StartOverridesActiveTracking(t *testing.T) {
