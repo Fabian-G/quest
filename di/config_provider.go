@@ -53,6 +53,7 @@ func (m MacroDef) InDTypes() []qselect.DType {
 }
 
 type ViewDef struct {
+	Description string   `mapstructure:"description,omitempty"`
 	Query       string   `mapstructure:"query,omitempty"`
 	Projection  []string `mapstructure:"projection,omitempty"`
 	Sort        []string `mapstructure:"sort,omitempty"`
@@ -270,6 +271,7 @@ func setDefaults(v *viper.Viper, dataHome string) {
 	v.SetDefault("notes.tag", "")
 	v.SetDefault("notes.id-length", 4)
 	v.SetDefault("notes.dir", path.Join(dataHome, "quest/notes"))
+	v.SetDefault("default-view.description", "Lists all tasks that match the view query")
 	v.SetDefault("default-view.query", "")
 	v.SetDefault("default-view.projection", qprojection.StarProjection)
 	v.SetDefault("default-view.sort", nil)
@@ -282,6 +284,7 @@ func setDefaults(v *viper.Viper, dataHome string) {
 	v.SetDefault("now-func", time.Now)
 
 	for viewName := range v.GetStringMap("views") {
+		v.SetDefault("views."+viewName+".description", v.GetString("default-view.description"))
 		v.SetDefault("views."+viewName+".query", v.GetString("default-view.query"))
 		v.SetDefault("views."+viewName+".projection", v.GetStringSlice("default-view.projection"))
 		v.SetDefault("views."+viewName+".sort", v.GetStringSlice("default-view.sort"))

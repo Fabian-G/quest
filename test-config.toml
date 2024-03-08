@@ -1,0 +1,190 @@
+todo-file = "$HOME/.local/share/quest/todo.txt"
+done-file = "$HOME/.local/share/quest/done.txt"
+backup = 10
+unknown-tags = false
+clear-on-done = ["do"]
+styles = [
+	{ if = 'blocked', fg = "3" },
+]
+
+[quest-score]
+urgency-tags = ["due", "t+2m"]
+urgency-begin = 45
+urgency-default = "2m"
+min-priority = "E"
+
+[recurrence]
+rec-tag = "rec"
+due-tag = "due"
+threshold-tag = "t"
+preserve-priority = true
+
+[tracking]
+tag = "tr"
+trim-project-prefix = true 
+trim-context-prefix = true 
+
+[notes]
+tag = "n"
+id-length = 4
+dir = "$HOME/.local/share/quest/notes"
+
+[tags]
+[tags.order]
+type = "int"
+[tags.due]
+type = "date"
+humanize = true
+styles = [
+	{ if = 'date(tag(it, "due"), maxDate) <= today + 1d', fg = "1" },
+	{ if = 'date(tag(it, "due"), maxDate) <= today + 3d', fg = "6" }
+]
+[tags.t]
+type = "date"
+humanize = true
+styles = [
+	{ if = 'date(tag(it, "t"), maxDate) <= today + 1d', fg = "1" },
+	{ if = 'date(tag(it, "t"), maxDate) <= today + 3d', fg = "6" }
+]
+[tags.do]
+type = "date"
+humanize = true
+styles = [
+	{ if = 'doToday', fg = "6" },
+]
+[tags.rec]
+type = "duration"
+[tags.id]
+type = "string"
+[tags.after]
+type = "string"
+[tags.tr]
+type = "int"
+[tags.n]
+type = "string"
+
+[default-view]
+projection = ["line", "done" ,"priority","projects","contexts","description"]
+clean = ["@ALL","+ALL"]
+interactive = false
+add-prefix = ''
+
+[views.inbox]
+description = "The task inbox contains tasks that need refinement"
+query = 'inbox'
+sort = ["+creation","+description"]
+clean = []
+projection = ["line","creation","description"]
+
+[views.next]
+query = 'actionable'
+sort = ["-score"]
+clean = ["+ALL","@ALL","due","t","order","rec","id","do","after"]
+projection = ["line","score","priority","tag:due", "tag:do", "projects","contexts","description"]
+
+[views.top]
+query = 'actionable'
+sort = ["-score"]
+clean = ["+ALL","@ALL","due","t","order","rec","id","do","after"]
+projection = ["line","score","priority","tag:due", "tag:do", "projects","contexts","description"]
+limit = 5
+
+[views.today]
+query = 'doToday'
+sort = ["-score"]
+clean = ["+ALL","@ALL","due","do","after","id"]
+projection = ["line","score","priority","tag:due","projects","contexts","description"]
+
+[views.someday]
+query = '!done && somedayMaybe'
+clean = ["+ALL","@ALL","due","t","order","rec"]
+projection = ["line","priority","projects","contexts","description"]
+
+[views.scheduled]
+query = '!done && scheduled'
+clean = ["+ALL","@ALL","due","t","order","rec"]
+sort = ["+tag:t"]
+projection = ["line","priority","tag:due","tag:t","tag:rec","projects","contexts","description"]
+
+[views.waiting]
+query = '!done && waiting'
+clean = ["+ALL","@ALL","due","t","order","rec"]
+projection = ["line","priority","projects","contexts","description"]
+
+[[macro]]
+name = "tracked"
+args = ["item"]
+result = "bool"
+query = '!done(arg0) && !(tag(arg0, "tr") == "")'
+inject-it = true
+
+
+[[macro]]
+name = "doToday"
+args = ["item"]
+result = "bool"
+query = '!done(arg0) && (date(tag(arg0, "do"), maxDate) <= today || date(tag(arg0, "due"), maxDate) <= today)'
+inject-it = true
+
+[[macro]]
+name = "scheduled"
+args = ["item"]
+result = "bool"
+query = 'date(tag(arg0, "t"), minDate) > today'
+inject-it = true
+
+[[macro]]
+name = "waiting"
+args = ["item"]
+result = "bool"
+query = 'exists c in contexts(arg0): c == "@waiting"'
+inject-it = true
+
+[[macro]]
+name = "somedayMaybe"
+args = ["item"]
+result = "bool"
+query = 'exists c in contexts(arg0): c == "@someday"'
+inject-it = true
+
+[[macro]]
+name = "blocked"
+args = ["item"]
+result = "bool"
+query = '!(tag(arg0, "after", "") == "") && (exists pre in items: tag(pre, "id", "") == tag(arg0, "after") && !done(pre))'
+inject-it = true
+
+[[macro]]
+name = "haveCommonProject"
+args = ["item", "item"]
+result = "bool"
+query = 'exists p in projects(arg0): exists p2 in projects(arg1): p == p2'
+inject-it = true
+
+[[macro]]
+name = "ordered"
+args = ["item"]
+result = "bool"
+query = '!(tag(arg0, "order", "") == "")'
+inject-it = true
+
+[[macro]]
+name = "nextInSequence"
+args = ["item"]
+result = "bool"
+query = '!ordered(arg0) || !done(arg0) && forall i in items: (!done(i) && ordered(i) && haveCommonProject(arg0, i)) -> (int(tag(arg0, "order")) <= int(tag(i, "order")))'
+inject-it = true
+
+[[macro]]
+name = "inbox"
+args = ["item"]
+result = "bool"
+query = '!done(arg0) && priority(arg0) == prioNone && !somedayMaybe(arg0)'
+inject-it = true
+
+[[macro]]
+name = "actionable"
+args = ["item"]
+result = "bool"
+query = '!done(arg0) && !inbox(arg0) && !scheduled(arg0) && !waiting(arg0) && !somedayMaybe(arg0) && nextInSequence(arg0) && !blocked(arg0)'
+inject-it = true
