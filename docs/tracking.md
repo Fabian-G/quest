@@ -103,3 +103,12 @@ Tracking "Add tracking chapter" quest work
   Current            11:12:18
   Total               0:17:14
 ```
+
+You can also configure which todo.txt tag should be included as timewarrior tags. 
+This is useful when you want to include some metadata like a ticket id.
+
+```toml
+[tracking]
+tag = "tr"
+include-tags = ["ticket"]
+```
