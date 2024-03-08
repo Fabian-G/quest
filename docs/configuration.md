@@ -129,8 +129,13 @@ dir = "$HOME/.local/share/quest/notes"
 # 1. It is the view that is displayed when no view is specified.
 # 2. The values set here serve as the defaults for other views
 [default-view]
+# The query for this view.
+# Usually you'll want the default-view query to match all (or all pending) tasks.
+# Making this too restrictive may be inconvenient sometimes.
+query = ""
+
 # A list of columns to be included in the output
-projection = ["line", "done", "priority", "completion", "creation", "projects", "contexts", "tags", "description"]  
+projection = [ "line", "done", "priority", "completion", "creation", "projects", "contexts", "tags", "description"]  
 
 # A list of tags, projects and contexts that should be removed 
 # from the description column.
@@ -159,6 +164,9 @@ limit = -1
 
 # A view definition with the name inbox.
 # [views.inbox]
+# # This is the message that will be shown when running quest help.
+# # Should describe the purpose of this view.
+# descripition = "Lists all tasks that match the view query"
 # query = '!done && @inbox'
 # sort = ["+creation","+description"]
 # clean = ["@inbox"]
