@@ -7,6 +7,7 @@ import (
 
 	"github.com/Fabian-G/quest/cmd/cmdutil"
 	"github.com/Fabian-G/quest/di"
+	"github.com/Fabian-G/quest/qselect"
 	"github.com/Fabian-G/quest/todotxt"
 	"github.com/Fabian-G/quest/view"
 	"github.com/erikgeiser/promptkit/selection"
@@ -60,7 +61,7 @@ func (t *trackCommand) track(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	selectedTasks := selector.Filter(list)
+	selectedTasks := qselect.And(notDoneFunc, selector).Filter(list)
 	if len(selectedTasks) == 0 {
 		fmt.Println("no matches")
 		return nil
