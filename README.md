@@ -37,8 +37,8 @@ when running `quest init`.
 
 A good way to start the day is by clearing out the task inbox, which contains
 tasks that need refinement (like rewriting it to be actionable, assigning due dates, projects or priorities).
-First let's see what is currently in the inbox.
-```bash
+First let's see what currently is in the inbox.
+```
 ~ ❯ quest inbox     
  #  Created On  Description 
  1  2024-03-11  Plan Bilbo's Birthday 
@@ -49,7 +49,7 @@ First let's see what is currently in the inbox.
 ```
 
 Often times it is most efficient to edit all the inbox tasks at once in your editor:
-```bash
+```
 ~ ❯ quest inbox edit
 ```
 
@@ -57,7 +57,7 @@ This will open the 5 inbox items in your favourite editor in todo.txt format.
 
 With this configuration a task item is considered an inbox item if it does not have a priority assigned.
 So after assigning at least a priority to each item the inbox should be cleared:
-```bash
+```
 ~ ❯ quest inbox     
 no matches
 ```
@@ -66,7 +66,7 @@ no matches
 
 The *next* view will show us all actionable tasks sorted by what Quest thinks should be done next
 (based on priority and due dates).
-```bash
+```
 ~ ❯ quest next     
  #  Score  Priority  due        Projects  Contexts  Description 
  5  7.4    (D)       in 1 day   +ring               Simply walk into Mordor       
@@ -77,14 +77,14 @@ The *next* view will show us all actionable tasks sorted by what Quest thinks sh
 ```
 
 Personally I like to pick a few tasks from this view and schedule them for the day.
-```bash
+```
 ~ ❯ quest set -a do:today on 5,1,3
 Set tag "do" to "today" on 3 items
 ```
 Note that the word "today" will actually be expanded to the date of today.
 
 Now they will show up in the *today* view.
-```bash
+```
 ~ ❯ quest today
  #  Score  Priority  due        Projects  Contexts  Description 
  5  7.4    (D)       in 1 day   +ring               Simply walk into Mordor       
@@ -93,7 +93,7 @@ Now they will show up in the *today* view.
 ```
 
 Other tasks may need to be delegated, because we can't do them ourselves.
-```bash
+```
 ~ ❯ quest set @waiting on 2
 Set context "@waiting" on item #2: Take the hobbits to Isengart due:2024-03-18 @waiting
 ```
@@ -101,12 +101,12 @@ Set context "@waiting" on item #2: Take the hobbits to Isengart due:2024-03-18 @
 ### Start working on a task
 
 Since Task #5 is due tomorrow we should better start working on it.
-```bash
+```
 ~ ❯ quest track 5
 Started tracking item #5: Simply walk into Mordor +ring due:2024-03-12 do:2024-03-11 tr:28502833
 ```
 By running `timew` you should see that tracking has been started.
-```bash
+```
 ~ ❯ timew
 Tracking "Simply walk into Mordor" ring
   Started 2024-03-11T16:14:10
@@ -120,7 +120,7 @@ Word has it that one does not simply walk into Mordor.
 So maybe we have some difficulties with task 5 and want to take some notes on that.
 With the following command Quest will create a markdown file, attach it to 
 task 5 and then open it for editing.
-```bash
+```
 ~ ❯ quest notes 5
 ```
 
@@ -128,7 +128,7 @@ task 5 and then open it for editing.
 
 When tasks pop up while we actually want to be focused on the current task
 we can easily get them out of our head by using the `add` command.
-```bash
+```
 ~ ❯ quest add Eat second breakfast
 Added task #6
 ```
@@ -137,7 +137,7 @@ Task #6 will automatically show up in the inbox view, because it does not have a
 ### Completing tasks
 
 When we are done with task #5 we can just use `complete`.
-```bash
+```
 ~ ❯ quest complete task 5  
 Completed item #5: Simply walk into Mordor +ring due:2024-03-12 tr:28502833 n:y362
 ```
@@ -148,7 +148,7 @@ matches Quest will ask you which one you mean.
 
 Plans don't always work out as expected. If there are tasks left undone at the end of the day we can
 easily schedule them for tomorrow.
-```bash
+```
 ~ ❯ quest today set -a do:tomorrow 
 Set tag "do" to "tomorrow" on 2 items
 ```
