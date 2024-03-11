@@ -41,7 +41,7 @@ First let's see what currently is in the inbox.
 ```bash
 ~ ❯ quest inbox     
  #  Created On  Description 
- 1  2024-03-11  Plan Bilbos Birthday 
+ 1  2024-03-11  Plan Bilbos birthday 
  2  2024-03-11  Take the hobbits to Isengart
  3  2024-03-11  Get stabbed by Morgul-knife      
  4  2024-03-11  Meet Gandalf      
@@ -73,7 +73,7 @@ The *next* view will show us all actionable tasks sorted by what Quest thinks sh
  4  7.1    (A)                                      Meet Gandalf            
  2  6.6    (D)       in 7 days                      Take the hobbits to Isengart      
  3  5.5    (B)                            @errands  Get stabbed by Morgul-knife            
- 1  1.0    (E)                  +bday               Plan Bilbos Birthday
+ 1  1.0    (E)                  +bday               Plan Bilbos birthday
 ```
 
 Personally I like to pick a few tasks from this view and schedule them for the day.
@@ -89,7 +89,7 @@ Now they will show up in the *today* view.
  #  Score  Priority  due        Projects  Contexts  Description 
  5  7.4    (D)       in 1 day   +ring               Simply walk into Mordor       
  3  5.5    (B)                            @errands  Get stabbed by Morgul-knife            
- 1  1.0    (E)                  +bday               Plan Bilbos Birthday
+ 1  1.0    (E)                  +bday               Plan Bilbos birthday
 ```
 
 Other tasks may need to be delegated, because we can't do them ourselves.
