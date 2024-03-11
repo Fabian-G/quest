@@ -27,7 +27,7 @@ or download the precompiled binary from the [Release Page](https://github.com/Fa
 
 ## Why Quest?
 
-The purpose of this README is to show a typical usage of quest.
+The purpose of this README is to show an example usage of quest.
 To learn how things work checkout the [documentation](https://fabian-g.github.io/quest).
 Many things that are shown in the following examples are not possible with the
 default configuration. If you want the exact behaviour shown here choose *Dev's Choice* 

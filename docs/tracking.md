@@ -1,10 +1,10 @@
 # Time Tracking
 
-Time tracking in quest is delegated to your local installation of timewarrior.
+Time tracking in Quest is delegated to your local installation of Timewarrior.
 To enable time tracking you have to:
 
-1. Tell quest which tag to use to be able to remember what currently is being tracked.
-2. Have timewarrior installed.
+1. Tell Quest which tag to use to be able to remember what currently is being tracked.
+2. Have Timewarrior installed.
 
 The following config snippet will set the tracking tag to `tr`:
 
@@ -15,15 +15,15 @@ tag = "tr"
 
 ## Starting a task
 
-First make sure that timewarrior is installed. You can verify that quest can find it by running: `quest version`.
+First make sure that Timewarrior is installed. You can verify that Quest can find it by running: `quest version`.
 
 You can now set the `tr` tag on a task to any value you like. For example:
 
 ```bash
 quest set tr:active on 42
 ```
-The actual value does not matter, it is only important that quest notices a change in the value of the tag.
-After that you will notice that timewarrior will have started tracking task 42
+The actual value does not matter, it is only important that Quest notices a change in the value of the tag.
+After that you will notice that Timewarrior will have started tracking task 42
 by using the projects, contexts and the description (without any projects/contexts/tags) as tags:
 
 ```bash
@@ -52,7 +52,7 @@ In this case you can just edit the task as you normally would for example using 
 ```bash
 quest set @work on 42
 ```
-After that you will notice that this change was automatically passed on to timewarrior:
+After that you will notice that this change was automatically passed on to Timewarrior:
 
 ```bash
 ~ ❯ timew
@@ -62,17 +62,17 @@ Tracking "Add tracking chapter" +quest @work
   Total               0:17:14
 ```
 
-Note that in order to not interfere with tasks you track with timewarrior without using quest
-this only works if the current timewarrior tags exactly match the previous state of the task.
+Note that in order to not interfere with tasks you track with Timewarrior without using Quest
+this only works if the current Timewarrior tags exactly match the previous state of the task.
 Therefore, if you manually run `timew start ...` or `timew tag ....` the currently active
-tracking will be considered unrelated to a quest task.
+tracking will be considered unrelated to a Quest task.
 
 ## Stopping a task
 
 To stop tracking a task you have several options.
 
 The easiest method is to simply run `timew stop`. In this case the tracking tag will remain
-on the previously tracked task. This is fine, though, because it will be cleared when you start
+on the previously tracked task. This is fine though, because it will be cleared when you start
 tracking another task. One thing to keep in mind is, that if you want to restart 
 tracking on a task where the tracking tag is already set you'll have to set it to a different value.
 If you just use `track` to start tracking this will be handled for you.
@@ -95,11 +95,11 @@ inject-it = true
 
 Now `quest complete tracked` will also do the trick.
 
-## Configuring timewarrior tags
+## Configuring Timewarrior tags
 
-By default quest uses projects, contexts and the description without any projects/context/tags as timewarrior tags.
+By default Quest uses projects, contexts and the description without any projects/context/tags as Timewarrior tags.
 As of now this is not configurable.
-What you can configure is whether or not project/context prefixes should be passed to timewarrior.
+What you can configure is whether or not project/context prefixes should be passed to Timewarrior.
 
 ```toml
 [tracking]
@@ -118,7 +118,7 @@ Tracking "Add tracking chapter" quest work
   Total               0:17:14
 ```
 
-You can also configure which todo.txt tag should be included as timewarrior tags. 
+You can also configure which todo.txt tag should be included as Timewarrior tags. 
 This is useful when you want to include some metadata like a ticket id.
 
 ```toml

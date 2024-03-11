@@ -180,8 +180,7 @@ With this definition in place you can then write queries like: `!done && !blocke
 
 ### A Word on Performance
 
-Since QQL is effectively a model checker for first-order logic (which is a PSPACE-Complete problem) and 
-since this implementation is certainly not the breakthrough we have been waiting for, the performance 
+Since QQL is effectively a (brute-force) model checker for first-order logic (which is a PSPACE-Complete problem) the performance 
 of running your query may theoretically be extremely bad. 
 But unless you are dealing with a massive todo file or nest your quantifiers miles deep you will probably be fine. 
 If for whatever reason you are facing performance issues anyway here are a few things you can do:

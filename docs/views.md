@@ -1,6 +1,6 @@
 # Views
 
-In quest there are two types of commands: global commands (e.g. open and init) and view commands (e.g. set and edit).
+In Quest there are two types of commands: global commands (e.g. open and init) and view commands (e.g. set and edit).
 View commands run in the context of a view and global commands do not.
 The purpose of a view is to make it more convenient to work with subsets of your todo.txt
 by defining a query, sort order and other options that apply to all view commands that 

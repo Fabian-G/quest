@@ -24,7 +24,7 @@ The quest score comes with a sensible default [configuration](configuration.md).
 ## Make old task urgent
 
 You might want to let tasks gain slightly in urgency the older they get too avoid 
-having them lying around forever.
+having them on your list forever.
 This is what the `urgency-default` option in the `[quest-score]` section is for.
 If the tasks does not have any of the configured `urgency-tags` and the `urgency-default`
 is set to a non-zero duration value, Quest will consider the creation date plus the 

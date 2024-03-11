@@ -21,7 +21,7 @@ backup = 0
 
 # If set to false Tags that are not declared in the tags section will emit an 
 # error if encountered in the todo.txt
-unknown-tags = false
+unknown-tags = true
 
 # A list of tags that should be removed from a task upon completion
 # clear-on-done = [ "do" ]

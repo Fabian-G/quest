@@ -21,7 +21,7 @@ Now you can run `quest notes 42` to open or create the note file for task 42 in 
 The note will be created in `$HOME/.local/share/quest/notes` by default. 
 To change this set the `dir` property in the `[notes]` section appropriately.
 
-As always the command takes any type of selectors as described in [Selecting Tasks](qql.md).
+As always the command takes any type of selectors as described in [Selecting Tasks](selection.md).
 However, `notes` enforces that your selection matches a single task.
 If it matches multiple task you will be prompted to select a match.
 

@@ -24,18 +24,22 @@ The available options in a `[tags.my-tag]` section are:
 
 When the `int` type is configured the validation will make sure that the value provided with the tag is a valid integer value (positive or negative).
 The tag value can also be of the form `base[+-]x` where `x` is a valid integer and `base` is one of `min`,`max`,`pmin`,`pmax`.
+
 `min` (`max`) will be replaced with the minimum (maximum) integer value that is currently present **on that tag** on **any** task. 
 `pmin` (`pmax`) will be replaced with the minimum (maximum) integer value that is currently present **on that tag** on any task that **shares** at least one **project**. 
+
+If you change the tag of multiple tasks to a `min`,`max`,`pmin`,`pmax` at once the values should be considered undefined, 
+because the order in which the tasks are processed is undefined.
 
 ## Date Type
 
 When the `date` tag is configured the validation will make sure that the value provided is a valid date of the format `YYYY-MM-dd`.
 Strings of the form `[base][+-]duration` or `base` will be expanded to the appropriate date (e.g. `tomorrow-2d` will get expanded to the date of yesterday).
 
-`Base` can be one of today, tomorrow, monday, tuesday, wednesday, thursday, friday, saturday, sunday and `duration` is a valid duration as defined by [QQL](qql.md#Durations)
+`Base` can be one of today, tomorrow, monday, tuesday, wednesday, thursday, friday, saturday, sunday and `duration` is a valid duration as defined by [QQL](selection.md)
 
 When the date type is used with the `humanize` option, dates are printed like "in 2 days", instead of the full `YYYY-MM-dd` format
 
 ## Duration Type
 
-When the duration type is set it will be checked if the tag value is a valid duration according to [QQL](qql.md#Durations).
+When the duration type is set Quest will check if the tag value is a valid duration according to [QQL](selection.md).
