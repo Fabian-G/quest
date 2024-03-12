@@ -1,7 +1,7 @@
 # Selecting Tasks
 
 When selecting tasks you can decide between 3 options: Range Query, String Search or Quest Query Language (QQL).
-QQl can do everything the other two can do, but might be slightly less convenient.
+QQL can do everything the other two can do (and more), but might be slightly less convenient.
 You can specify which type of query your are using on the command line with the `-q`, `-r` and `-w` options. 
 If you don't and simply pass your query as an argument, quest will try to guess what type of query you are using.
 "Guessing" means in this case that it tries to parse it as a QQL query, if that fails it tries to parse it as a range query and if that fails it finally treats it like a string search.
@@ -47,7 +47,7 @@ You can always use parentheses, but if you don't, the order they are listed here
 
 Example:
 ```java
-true -> false || true && !false // evaluates to true
+true -> false || true && !false // equivalent to (true -> (false || (true && (!false))))
 ```
 
 To compare values you can use the usual `<`, `<=`, `==`, `>=` and `>` operators. 
@@ -63,7 +63,7 @@ QQL also supports the numeric operators `+` and `-`.
 Obviously this works on the int type (`5+5==10` evaluates to true), but you can also use this for dates and durations (`ymd(2022,2,2)+5d==ymd(2022,2,7)`).
 
 Finally you can use the quantifiers `exists` and `forall` over any collection.
-The basic syntax is: "*quantifier* x in *collection*: *expression*". Where *quantifier* is either exists or forall, x is an arbitrary variable name and collection is any collection.
+The basic syntax is: `quantifier x in collection: expression`. Where *quantifier* is either exists or forall, x is an arbitrary variable name and collection is any collection.
 `exists x in collection: expression` will evaluate to true if there is at least one item in the collection so that the expression evaluates to true (with the variable `x` set to that particular item).
 Similarly `forall x in collection: expression` evaluates to true if `expression` is true for all items in the collection.
 There are multiple ways to obtain a collection to quantify over:
@@ -121,7 +121,7 @@ Examples: `+5y`, `-5days`, ...
 
 #### Functions
 
-A short explanation for the notation: If in the following table the function definition says for example `func(a: int, b: date = minDate): bool`, 
+A short explanation of the notation: If in the following table the function definition says for example `func(a: int, b: date = minDate): bool`, 
 this means that the function with the name `func` takes two arguments. The first one must be of type `int` and the second of type `date`.
 The second argument is optional and can be omitted. If it is omitted it will be set to `minDate`. The return type of the function is `bool`.
 
@@ -136,10 +136,10 @@ The second argument is optional and can be omitted. If it is omitted it will be 
 | contexts(i: item): []string | The contexts that are present in the description of i in a list. The elements of the list do contain the leading @ symbol |
 | priority(i: item): priority | The priority of i. If no priority is set on i `prioNone` is returned |
 | dotPrefix(s: string, prefix: string): bool | Checks if *s* starts with all the dot delimited segments of *prefix*. This is useful if you want to use sub projects or contexts. Examples: `dotPrefix("+foo.bar.baz", "+foo.bar") == true`, `dotPrefix("+foo.bar.baz", "+foo.b") == false` |
-| substring(s: string, sub: string): bool | Tests if *s* contains sub *sub* |
+| substring(s: string, sub: string): bool | Tests if *s* contains substring *sub* |
 | ymd(year: int, month: int, day: int): date | Constructs a date from the provided year, month and day |
 | date(yyyymmdd: string, default: date = minDate): date | Parses the given argument into a date (format YYYY-MM-dd). If the format does not match the default is returned |
-| tag(i: item, tag: string, default: string = ""): string | Returns the value of the first occurrence of the tag with key *tag*. If *tag* is not set *default* is returned |
+| tag(i: item, key: string, default: string = ""): string | Returns the value of the first occurrence of the tag with key *key*. If *key* is not set *default* is returned |
 | list(l: string): []string | Splits the value l at ",". For example `list("1,2,3")` becomes the list with the elements 1,2 and 3. |
 | int(num: string, default: int = 0): int | Parses *num* as an integer. If *num* is not a valid integer *default* is returned | 
 | shell(i: item, cmd: string): string | Runs *cmd* using bash. See ([shell and command](#shell-and-command)) |
@@ -162,7 +162,7 @@ then use the `command` function instead.
 ### Macros
 
 Macros are a way to give a name to parts of your query so that your queries can be reused and look cleaner.
-An simple macro definition in your `config.toml` might look like this:
+A simple macro definition in your `config.toml` might look like this:
 
 ```toml
 # Use "after" and "id" tags to express dependencies between tasks
@@ -176,12 +176,11 @@ inject-it = true # Whether or not a missing item parameter should default to "it
 
 Note that if you reference other macros from within your macro definition, the other macros must appear before this definition in your config file.
 
-With this definition in place you can then just write queries like: `!done && !blocked` to find not completed tasks that are not blocked.
+With this definition in place you can then write queries like: `!done && !blocked` to find not completed tasks that are not blocked.
 
 ### A Word on Performance
 
-Since QQL is effectively a model checker for first-order logic (which is a PSPACE-Complete Problem) and 
-since this implementation is certainly not the breakthrough we have been waiting for, the performance 
+Since QQL is effectively a (brute-force) model checker for first-order logic (which is a PSPACE-Complete problem) the performance 
 of running your query may theoretically be extremely bad. 
 But unless you are dealing with a massive todo file or nest your quantifiers miles deep you will probably be fine. 
 If for whatever reason you are facing performance issues anyway here are a few things you can do:

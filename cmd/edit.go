@@ -34,9 +34,13 @@ func newEditCommand(def di.ViewDef) *editCommand {
 
 func (e *editCommand) command() *cobra.Command {
 	var editCommand = &cobra.Command{
-		Use:      "edit [selectors...]",
-		Short:    "Opens all matching tasks in your editor",
-		Long:     `Opens all matching tasks in your editor. All tasks will receive an internal tag "quest-object-id" (which will not be written to disk though). This tag is used to reliably trigger features like recurrence. So it must not be removed or edited (except when removing the whole task). Other than that you can freely add remove or edit the lines of the file with full support for recurrence, tag expansion and validation.`,
+		Use:   "edit [selectors...]",
+		Short: "Opens all matching tasks in your editor",
+		Long: `Opens all matching tasks in your editor. 
+
+All tasks will receive an internal tag "quest-object-id" (which will not be written to disk though). 
+This tag is used to reliably trigger features like recurrence. So it must not be removed or edited (except when removing the whole task).
+Other than that you can freely add remove or edit the lines of the file with full support for recurrence, tag expansion and validation.`,
 		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList),
 		RunE:     e.edit,

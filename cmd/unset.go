@@ -36,7 +36,7 @@ func (u *unsetCommand) command() *cobra.Command {
 		Use:      "unset [attributes...] on [selectors...]",
 		Args:     cobra.MinimumNArgs(1),
 		Short:    "Removes the given attributes (+project, @context, tag) from all matching items.",
-		Example:  "quest unset +inbox on 4",
+		Example:  "quest unset +inbox due on 4",
 		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList),
 		RunE:     u.unset,

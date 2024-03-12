@@ -70,18 +70,21 @@ interactive = false
 add-prefix = ''
 
 [views.inbox]
+description = "Task inbox for recently created items"
 query = 'inbox'
 sort = ["+creation","+description"]
 clean = []
 projection = ["line","creation","description"]
 
 [views.next]
+description = "Actionable tasks"
 query = 'actionable'
 sort = ["-score"]
 clean = ["+ALL","@ALL","due","t","order","rec","id","do","after"]
 projection = ["line","score","priority","tag:due", "tag:do", "projects","contexts","description"]
 
 [views.top]
+description = "Highest scoring tasks"
 query = 'actionable'
 sort = ["-score"]
 clean = ["+ALL","@ALL","due","t","order","rec","id","do","after"]
@@ -89,26 +92,37 @@ projection = ["line","score","priority","tag:due", "tag:do", "projects","context
 limit = 5
 
 [views.today]
+description = "Tasks scheduled for today"
 query = 'doToday'
 sort = ["-score"]
 clean = ["+ALL","@ALL","due","do","after","id"]
 projection = ["line","score","priority","tag:due","projects","contexts","description"]
 
 [views.someday]
+description = "Tasks for some day in the future"
 query = '!done && somedayMaybe'
 clean = ["+ALL","@ALL","due","t","order","rec"]
 projection = ["line","priority","projects","contexts","description"]
 
 [views.scheduled]
+description = "Tasks that become relevant in the future"
 query = '!done && scheduled'
 clean = ["+ALL","@ALL","due","t","order","rec"]
 sort = ["+tag:t"]
 projection = ["line","priority","tag:due","tag:t","tag:rec","projects","contexts","description"]
 
 [views.waiting]
+description = "Delegated tasks"
 query = '!done && waiting'
 clean = ["+ALL","@ALL","due","t","order","rec"]
 projection = ["line","priority","projects","contexts","description"]
+
+[[macro]]
+name = "tracked"
+args = ["item"]
+result = "bool"
+query = '!done(arg0) && !(tag(arg0, "tr") == "")'
+inject-it = true
 
 
 [[macro]]

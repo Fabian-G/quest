@@ -50,29 +50,34 @@ interactive = false
 add-suffix = '@inbox'
 
 [views.inbox]
+description = "Task inbox for recently created items"
 query = 'inbox'
 sort = ["+creation","+description"]
 clean = ["@inbox"]
 projection = ["line","creation","description"]
 
 [views.next]
+description = "Actionable tasks"
 query = 'next'
 sort = ["-score"]
 clean = ["+ALL","@ALL","due","t","rec"]
 projection = ["line","score","priority","tag:due","projects","contexts","description"]
 
 [views.someday]
+description = "Tasks for some day in the future"
 query = 'someday'
 clean = ["+ALL","@ALL","@someday","due","t","rec"]
 projection = ["line","priority","projects","contexts","description"]
 
 [views.scheduled]
+description = "Tasks that become relevant in the future"
 query = 'scheduled'
 clean = ["+ALL","@ALL","due","t","rec"]
 sort = ["+tag:t"]
 projection = ["line","priority","tag:due","tag:t","tag:rec","projects","contexts","description"]
 
 [views.waiting]
+description = "Delegated tasks"
 query = 'waiting'
 clean = ["+ALL","@ALL","@waiting","due","t","rec"]
 projection = ["line","priority","projects","contexts","description"]

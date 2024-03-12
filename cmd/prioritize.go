@@ -29,10 +29,11 @@ func newPrioritizeCommand(def di.ViewDef) *prioritizeCommand {
 
 func (p *prioritizeCommand) command() *cobra.Command {
 	var prioritizeCommand = &cobra.Command{
-		Use:      "prioritize <prio> [selectors...]",
+		Use:      "prioritize prio [selectors...]",
 		Aliases:  []string{"priority", "prio"},
 		Args:     cobra.MinimumNArgs(1),
 		Short:    "Prioritizes all matching tasks as prio",
+		Long:     "Prioritizes all matching tasks as prio\n\nYou can use None to remove priority.",
 		Example:  "quest prioritize B 1,2,3",
 		GroupID:  "view-cmd",
 		PreRunE:  cmdutil.Steps(cmdutil.LoadList),

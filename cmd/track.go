@@ -33,9 +33,9 @@ func (t *trackCommand) command() *cobra.Command {
 	var trackCommand = &cobra.Command{
 		Use:   "track [selectors...]",
 		Short: "Starts tracking the selected task with timewarrior",
-		Long: `
-track can be used to track the time spent on a task. 
-It does so by recording the start time in a the tag configured in tracking.tag (in minutes since epoch).
+		Long: `Starts tracking the selected task with timewarrior
+
+It does so by recording the start time in a tag configured in tracking.tag (in minutes since epoch).
 Since this alone ist not very useful it is recommended to install timewarrior.
 If timewarrior is installed the tag will trigger a hook which propagates projects, contexts and description
 of the tracked task to timewarrior.
