@@ -153,3 +153,12 @@ easily schedule them for tomorrow.
 Set tag "do" to "tomorrow" on 2 items
 ```
 
+## Alternatives
+
+- There is no doubt that [Taskwarrior](https://github.com/GothenburgBitFactory/taskwarrior) is a great task management solution. Its query language is simpler than Quest's 
+    and at the same it has many more features. The number 1 reason why I ended up not using
+    it is that Taskwarrior's recurrence implementation just did not work for me. Other reasons include that there is no
+    way of bulk editing tasks like `quest edit` does and that I actually wanted the simplicity of the todo.txt format.
+- [pter](https://codeberg.org/vonshednob/pter) did everything I needed for a long time. But after trying out Taskwarrior I noticed that a CLI based
+    workflow is much more productive for me. However, if you are looking for a todo.txt TUI this is a solid choice.
+- I just recently discovered [topydo](https://github.com/topydo/topydo). I never tried it, but it looks very promising.
