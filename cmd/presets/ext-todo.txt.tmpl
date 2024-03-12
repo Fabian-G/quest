@@ -44,11 +44,11 @@ type = "int"
 type = "string"
 
 [default-view]
-projection = ["line", "done" ,"priority","projects","contexts","description"]
-clean = ["@ALL","+ALL"]
+projection = ["line", "done" ,"priority","tag:due","projects","contexts","description"]
+clean = ["@ALL","+ALL","due"]
 interactive = false
-query = '!done'
+query = '!done && date(tag("t"), minDate) <= today'
 
 [views.all]
-description = "All tasks including completed"
+description = "All tasks including completed and scheduled"
 query = ''

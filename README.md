@@ -136,9 +136,9 @@ Task #6 will automatically show up in the inbox view, because it does not have a
 
 ### Completing tasks
 
-When we are done with task #5 we can just use `complete`.
+When we are done with task #5 we can just use `complete` (e.g. with a word from the target task).
 ```bash
-~ ❯ quest complete task 5  
+~ ❯ quest complete mordor
 Completed item #5: Simply walk into Mordor +ring due:2024-03-12 tr:28502833 n:y362
 ```
 It is safe to be rather vague about which task to complete, because if there are multiple 
