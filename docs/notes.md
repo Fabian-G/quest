@@ -17,7 +17,7 @@ To start using notes you just have to tell quest which tag to use:
 tag = "n"
 ```
 
-Now you can run `quest notes 42` to open or create the note file for task 42 in your editor.
+Now you can run `quest notes 42` to open the note file for task 42 in your editor.
 The note will be created in `$HOME/.local/share/quest/notes` by default. 
 To change this set the `dir` property in the `[notes]` section appropriately.
 

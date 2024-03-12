@@ -3,7 +3,7 @@
 To start using Quest you don't necessarily need any configuration. That is, if all you need
 is a simple CLI to interface with your todo.txt without any special features.
 
-In most cases you will want a config though. Since there is probably a bit of learning curve
+In most cases you will want a config though. Since there is probably a bit of a learning curve
 for this, Quest comes with a few presets.
 Therefore, after installing Quest the first thing you will want to do is to choose your preset by running:
 ```bash

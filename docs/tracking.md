@@ -73,7 +73,7 @@ To stop tracking a task you have several options.
 
 The easiest method is to simply run `timew stop`. In this case the tracking tag will remain
 on the previously tracked task. This is fine though, because it will be cleared when you start
-tracking another task. One thing to keep in mind is, that if you want to restart 
+tracking another task. One thing to keep in mind is that if you want to restart 
 tracking on a task where the tracking tag is already set you'll have to set it to a different value.
 If you just use `track` to start tracking this will be handled for you.
 

@@ -2,7 +2,7 @@
 
 ## Basic Commands
 
-The most basic ways of modifying your todo.txt is by using the commands
+The most basic way of modifying your todo.txt is by using the commands
 `add`, `complete`, `prioritize` and `remove`.
 With the exception of `add` these commands will take any number of selectors 
 (as described in [Selection](selection.md)).
@@ -27,13 +27,13 @@ we would have been prompted to select one (or more).
 The `set` and `unset` commands can be used to add or remove projects/contexts/tags.
 Just as the "Basic Commands" these take a list of selectors as arguments, but they
 also need a list of projects, contexts or tags to set or unset.
-These to lists will be separated by the `on` keyword.
+These two lists will be separated by the `on` keyword.
 Examples:
 
 ```bash
 # Sets the do tag to the date of today on tasks 1-4
 quest set do:today on 1,2,3,4
-# Sets @fooo +bar t:tomorrow on tasks 1,2,3,4,6,7, 
+# Sets @foo +bar t:tomorrow on tasks 1,2,3,4,6,7, 
 # which are also in the baz context
 quest set @foo +bar t:tomorrow on 1-4,6-7 @baz
 ```
@@ -42,7 +42,7 @@ The tags/projects/contexts added with the `set` command will always be appended 
 description. If a tag already exists its value will be changed in place.
 If a project or context already exists, it will be left untouched.
 
-Note then when unsetting tags you specify only the tag name (not the value):
+Note that when unsetting tags you specify only the tag name (not the value):
 
 ```bash
 quest unset due on 4
@@ -56,7 +56,7 @@ Effectively, what this does is:
 
 1. Find tasks that match your query.
 2. Write them to a temporary file for you to edit.
-3. Wait for your to make your changes.
+3. Wait for you to make your changes.
 4. Validate the results.
 5. Merge the changes back into the original todo.txt
 

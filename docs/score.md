@@ -16,17 +16,17 @@ A higher priority (closer to A) means the task is more important.
 
 After that Quest will take this two dimensional vector and try to calculate 
 a scalar value between 0 and 10 from this in a meaningful way. 
-Currently it does so by calculating the squared mean.
+Currently it does so by calculating the *root mean square*.
 
-The quest score comes with a sensible default [configuration](configuration.md). So to use it, just put
+The Quest Score comes with a sensible default [configuration](configuration.md). So to use it, just put
 `score` inside some of your projections.
 
-## Make old task urgent
+## Make Old Tasks Urgent
 
 You might want to let tasks gain slightly in urgency the older they get too avoid 
 having them on your list forever.
 This is what the `urgency-default` option in the `[quest-score]` section is for.
-If the tasks does not have any of the configured `urgency-tags` and the `urgency-default`
+If the task does not have any of the configured `urgency-tags` and the `urgency-default`
 is set to a non-zero duration value, Quest will consider the creation date plus the 
 `urgency-default` as the urgency date.
 This has one minor drawback though. Imagine you know 6 months in advance that you need to bake a cake.
