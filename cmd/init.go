@@ -101,7 +101,7 @@ func (i *initCommand) init(cmd *cobra.Command, args []string) error {
 			Value:  s.Value.name,
 		})
 	}
-	prompt.KeyMap.Down = append(prompt.KeyMap.Up, "j")
+	prompt.KeyMap.Down = append(prompt.KeyMap.Down, "j")
 	prompt.KeyMap.Up = append(prompt.KeyMap.Up, "k")
 	preset, err := prompt.RunPrompt()
 	if err != nil {
