@@ -18,7 +18,6 @@ import (
 )
 
 const (
-	subDirName = "quest"
 	configExt  = "toml"
 	configName = "config"
 )
@@ -170,8 +169,8 @@ func DefaultConfigLocation() string {
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not determine users home directory: %w", err))
 	}
-	configHome := getConfigHome(homeDir)
-	return path.Join(configHome, subDirName, fmt.Sprintf("%s.%s", configName, configExt))
+	configHome := getConfigDir(homeDir)
+	return path.Join(configHome, fmt.Sprintf("%s.%s", configName, configExt))
 }
 
 func buildConfig(file string) (Config, error) {
@@ -181,15 +180,15 @@ func buildConfig(file string) (Config, error) {
 		log.Fatal(fmt.Errorf("could not determine users home directory: %w", err))
 	}
 
-	configHome := getConfigHome(homeDir)
-	dataHome := getDataHome(homeDir)
+	configHome := getConfigDir(homeDir)
+	dataHome := getDataDir(homeDir)
 
 	v.SetConfigType(configExt)
 	if file != "" {
 		v.SetConfigFile(file)
 	} else {
 		v.SetConfigName(configName)
-		v.AddConfigPath(path.Join(configHome, subDirName))
+		v.AddConfigPath(configHome)
 	}
 
 	err = v.ReadInConfig()
@@ -214,42 +213,42 @@ func buildConfig(file string) (Config, error) {
 	return config, nil
 }
 
-func getConfigHome(home string) string {
+func getConfigDir(home string) string {
 	switch runtime.GOOS {
-	case "linux":
+	case "linux", "android":
 		if cHome, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
-			return cHome
+			return path.Join(cHome, "quest")
 		}
-		return path.Join(home, ".config")
+		return path.Join(home, ".config", "quest")
 	case "windows":
 		if cHome, ok := os.LookupEnv("APPDATA"); ok {
-			return cHome
+			return path.Join(cHome, "quest")
 		}
-		return path.Join(home, "AppData", "Roaming")
+		return path.Join(home, "AppData", "Roaming", "quest")
 	case "darwin":
-		return path.Join(home, "Library", "Application Support")
+		return path.Join(home, "Library", "Application Support", "quest")
+	default:
+		return path.Join(home, ".quest")
 	}
-	log.Fatalln("os not supported")
-	return ""
 }
 
-func getDataHome(home string) string {
+func getDataDir(home string) string {
 	switch runtime.GOOS {
-	case "linux":
+	case "linux", "android":
 		if dHome, ok := os.LookupEnv("XDG_DATA_HOME"); ok {
-			return dHome
+			return path.Join(dHome, "quest")
 		}
-		return path.Join(home, ".local", "share")
+		return path.Join(home, ".local", "share", "quest")
 	case "windows":
 		if dHome, ok := os.LookupEnv("LOCALAPPDATA"); ok {
-			return dHome
+			return path.Join(dHome, "quest")
 		}
-		return path.Join(home, "AppData", "Local")
+		return path.Join(home, "AppData", "Local", "quest")
 	case "darwin":
-		return path.Join(home, "Library")
+		return path.Join(home, "Library", "quest")
+	default:
+		return path.Join(home, ".quest")
 	}
-	log.Fatalln("os not supported")
-	return ""
 }
 
 func setDefaults(v *viper.Viper, dataHome string) {
