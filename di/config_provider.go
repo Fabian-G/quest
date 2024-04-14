@@ -252,8 +252,8 @@ func getDataDir(home string) string {
 }
 
 func setDefaults(v *viper.Viper, dataHome string) {
-	v.SetDefault("todo-file", path.Join(dataHome, "quest/todo.txt"))
-	v.SetDefault("done-file", path.Join(dataHome, "quest/done.txt"))
+	v.SetDefault("todo-file", path.Join(dataHome, "todo.txt"))
+	v.SetDefault("done-file", path.Join(dataHome, "done.txt"))
 	v.SetDefault("backup", 0)
 	v.SetDefault("editor", getDefaultEditor())
 	v.SetDefault("unknown-tags", true)
@@ -271,7 +271,7 @@ func setDefaults(v *viper.Viper, dataHome string) {
 	v.SetDefault("recurrence.preserve-priority", false)
 	v.SetDefault("notes.tag", "")
 	v.SetDefault("notes.id-length", 4)
-	v.SetDefault("notes.dir", path.Join(dataHome, "quest/notes"))
+	v.SetDefault("notes.dir", path.Join(dataHome, "notes"))
 	v.SetDefault("default-view.description", "Quest is a command line interface for managing your todo.txt.")
 	v.SetDefault("default-view.query", "")
 	v.SetDefault("default-view.projection", qprojection.StarProjection)
